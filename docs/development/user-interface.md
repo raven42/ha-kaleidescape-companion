@@ -133,15 +133,15 @@ choices have independent profile values. Shared fuzzy search is a native
 household setting; legacy personal search values are retained for compatibility
 but no longer determine behavior.
 
-| Area             | Stored choices                                                                                                             |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `interface`      | Administrator Basic/Advanced presentation                                                                                  |
-| `library`        | List/covers, page size, badge style, cover/cast presentation, sort/direction, column widths and administrator cost display |
-| `journal`        | List/calendar, day size and fit-to-screen                                                                                  |
-| `database`       | Table, count mode, system-table visibility and per-table sort/order                                                        |
-| `search`         | Legacy personal fuzzy-search values retained for compatibility; no longer used by the views                                |
-| `library_random` | One random seed shared across the user's display profiles                                                                  |
-| Shared UI        | Administrator-maintained hidden collection names and initial inherited defaults                                            |
+| Area             | Stored choices                                                                                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `interface`      | Administrator Basic/Advanced presentation                                                                                                   |
+| `library`        | List/covers, page size, badge style, cover/cast presentation, cache retention, sort/direction, column widths and administrator cost display |
+| `journal`        | List/calendar, day size and fit-to-screen                                                                                                   |
+| `database`       | Table, count mode, system-table visibility and per-table sort/order                                                                         |
+| `search`         | Legacy personal fuzzy-search values retained for compatibility; no longer used by the views                                                 |
+| `library_random` | One random seed shared across the user's display profiles                                                                                   |
+| Shared UI        | Administrator-maintained hidden collection names and initial inherited defaults                                                             |
 
 Updates use entry/dataset scope, a cryptographic request UUID, row revision and
 validated field patch. The worker patches the latest row, preserving unrelated

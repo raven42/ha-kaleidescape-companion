@@ -54,3 +54,28 @@ it("prefers offscreen eviction, notifies mounted readers, and releases subscript
   expect(offscreen).toHaveBeenCalledOnce();
   expect(cache.get("visible")).toBeUndefined();
 });
+
+it("retains more than a thousand covers under the default limits", () => {
+  const { revoke } = urls();
+  const cache = new CoverCache();
+  const blob = new Blob(["cover"]);
+  for (let index = 0; index < 1500; index++) cache.put(String(index), blob);
+  expect(cache.get("0")).toBeDefined();
+  expect(cache.get("1499")).toBeDefined();
+  expect(revoke).not.toHaveBeenCalled();
+  cache.dispose();
+});
+
+it("can retain every cover for a session and trims when balanced mode resumes", () => {
+  const { revoke } = urls();
+  const cache = new CoverCache(10, 2);
+  cache.setUnlimited(true);
+  for (let index = 0; index < 5; index++)
+    cache.put(String(index), new Blob(["1234"]));
+  expect(revoke).not.toHaveBeenCalled();
+  expect(cache.get("0")).toBeDefined();
+  cache.setUnlimited(false);
+  expect(revoke).toHaveBeenCalledTimes(3);
+  expect(cache.get("0")).toBeDefined();
+  cache.dispose();
+});

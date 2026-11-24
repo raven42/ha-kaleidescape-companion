@@ -1,3 +1,4 @@
+import { CoverSession } from "../library/cover";
 import "./journal-shortcuts";
 import "./journal-calendar";
 import { responsiveViewport } from "./viewport";
@@ -53,6 +54,7 @@ export class KaleidescapeReader extends LitElement {
   client?: JournalClient;
   narrow = false;
   private api: JournalClient | null = null;
+  private coverSession = new CoverSession();
   private connection?: Hass["connection"];
   private userKey = "";
   private generation = 0;
@@ -154,6 +156,7 @@ export class KaleidescapeReader extends LitElement {
     this.bind(null);
   }
   private clear() {
+    this.coverSession.reset();
     this.controlLocked = false;
     this.generation++;
     this.scope = null;
@@ -217,6 +220,7 @@ export class KaleidescapeReader extends LitElement {
       if (generation !== this.generation) return;
       if (!entries[0]?.permissions.read || entries[0].api_version !== 1)
         throw new ApiError("not_ready");
+      this.coverSession.bind(entries[0]);
       this.scope = {
         ...entries[0],
         permissions: { read: true, edit: false, export: false },
@@ -442,6 +446,9 @@ export class KaleidescapeReader extends LitElement {
               ? html`<kaleidescape-library
                   .client=${this.api ?? undefined}
                   .scope=${this.scope}
+                  .coverQueue=${this.coverSession.queue}
+                  .pageCache=${this.coverSession.pages}
+                  .cacheUser=${this.hass?.user?.id}
                   .openTitleId=${this.libraryTitleId}
                   .openCriterion=${this.libraryCriterion}
                   @access-denied=${() => this.fail(new ApiError("unauthorized"))}

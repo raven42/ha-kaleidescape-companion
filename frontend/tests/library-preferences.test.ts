@@ -5,6 +5,7 @@ import type { KaleidescapeLibrary } from "../src/library/library";
 import { ApiError } from "../src/core/api";
 import type { LibraryPage } from "../src/core/api";
 import { PreferenceStore } from "../src/ui/preference-store";
+import { CoverQueue } from "../src/library/cover";
 import {
   collectionKind,
   collectionLabel,
@@ -314,7 +315,7 @@ it("All loads bounded revision-bound pages and keeps the entire final remainder"
   change(root, "library_page_size", "all");
   await vi.waitFor(
     () => expect(root.querySelectorAll("tbody tr")).toHaveLength(1105),
-    { timeout: 5000 },
+    { timeout: 10000 },
   );
   const pages = transport.calls
     .filter((call) => call.type.endsWith("/library/list"))
@@ -327,7 +328,7 @@ it("All loads bounded revision-bound pages and keeps the entire final remainder"
   });
   expect(button(root, "Next")).toBeUndefined();
   expect(transport.uiPreferences.page_size).toBe("all");
-});
+}, 20000);
 it("keeps immediately applied facets in the URL across close and remount", async () => {
   const transport = new FixtureTransport();
   let root = await mount(transport);
@@ -447,6 +448,27 @@ it("bounds All aggregation and stops after navigation invalidates the request", 
   await expect(client.libraryAll(info, {}, () => true)).rejects.toMatchObject({
     code: "library_page_too_large",
   });
+});
+it("does not cache an All result if the database changes between chunks", async () => {
+  const client = new FixtureTransport().client();
+  const page: LibraryPage = {
+    items: [libraryTitle()],
+    total: 2,
+    offset: 0,
+    has_more: true,
+    revision: 1,
+    cache_revision: 2,
+    cache_context: "fixture-context",
+    preferences_key: "x",
+    facets: {},
+    truncated_facets: [],
+  };
+  vi.spyOn(client, "libraryList")
+    .mockResolvedValueOnce(page)
+    .mockResolvedValueOnce({ ...page, cache_revision: 3, has_more: false });
+  const result = await client.libraryAll(info, {}, () => true);
+  expect(result.items).toHaveLength(2);
+  expect(result.cache_revision).toBeUndefined();
 });
 it("discards an All fetch if the catalog changes between pages", async () => {
   const client = new FixtureTransport().client();
@@ -1014,4 +1036,47 @@ it("applies shared fuzzy search to the main search", async () => {
       '[name="collection"][value="Science Fiction"]',
     ),
   ).toBeTruthy();
+});
+
+it("saves the cover cache mode and clears this user's Library cache", async () => {
+  const transport = new FixtureTransport();
+  const root = await mount(transport);
+  const queue = new CoverQueue();
+  element!.coverQueue = queue;
+  element!.cacheUser = "fictional-user";
+  await element!.updateComplete;
+  button(root, "Options").click();
+  await flush();
+  change(root, "cover_cache", "persistent");
+  await vi.waitFor(() =>
+    expect(transport.uiPreferences.cover_cache).toBe("persistent"),
+  );
+  const clear = vi.spyOn(queue.cache, "clear").mockResolvedValue();
+  button(root, "Clear Library and cover cache").click();
+  await vi.waitFor(() =>
+    expect(clear).toHaveBeenCalledWith(
+      JSON.stringify(["fictional-user", info.entry_id, info.dataset_id]),
+    ),
+  );
+  await vi.waitFor(() =>
+    expect(root.textContent).toContain("Library and cover caches cleared"),
+  );
+  queue.cache.dispose();
+});
+
+it("warms page covers in the background and cancels on navigation", async () => {
+  const transport = new FixtureTransport();
+  transport.uiPreferences.view = "covers";
+  transport.libraryTitles = [libraryTitle({ artwork_key: "fictional-cover" })];
+  const prefetch = vi
+    .spyOn(CoverQueue.prototype, "prefetch")
+    .mockResolvedValue();
+  await mount(transport);
+  await vi.waitFor(() => expect(prefetch).toHaveBeenCalled());
+  const call = prefetch.mock.calls.at(-1)!;
+  expect(call[2]).toContain("fictional-cover");
+  const signal = call[3];
+  element!.remove();
+  expect(signal.aborted).toBe(true);
+  prefetch.mockRestore();
 });

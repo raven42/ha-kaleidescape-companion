@@ -1,18 +1,19 @@
-/** Visibility-triggered fetching with bounded session retention of completed covers. */
+/** Near-viewport fetching with bounded session retention of completed covers. */
 import { LitElement, css, html } from "lit";
 import type { PropertyValues } from "lit";
 import { errorCode } from "../core/api";
 import type { JournalClient, JournalInfo } from "../core/api";
 import { CoverCache } from "./image-cache";
+import { LibraryPageCache } from "./page-cache";
 
 export class CoverQueue {
   readonly cache = new CoverCache();
   private active = 0;
-  private waiting: (() => void)[] = [];
-  acquire(signal: AbortSignal): Promise<() => void> {
+  private waiting: { start: () => void; background: boolean }[] = [];
+  acquire(signal: AbortSignal, background = false): Promise<() => void> {
     return new Promise((resolve, reject) => {
       const abort = () => {
-        this.waiting = this.waiting.filter((item) => item !== start);
+        this.waiting = this.waiting.filter((item) => item.start !== start);
         reject(new DOMException("Aborted", "AbortError"));
       };
       const start = () => {
@@ -23,16 +24,94 @@ export class CoverQueue {
           if (released) return;
           released = true;
           this.active--;
-          this.waiting.shift()?.();
+          this.waiting.shift()?.start();
         });
       };
       if (signal.aborted) return abort();
       if (this.active < 3) start();
       else {
-        this.waiting.push(start);
+        const item = { start, background };
+        const firstBackground = this.waiting.findIndex(
+          (entry) => entry.background,
+        );
+        if (!background && firstBackground >= 0)
+          this.waiting.splice(firstBackground, 0, item);
+        else this.waiting.push(item);
         signal.addEventListener("abort", abort, { once: true });
       }
     });
+  }
+  async prefetch(
+    client: JournalClient,
+    scope: JournalInfo,
+    keys: string[],
+    signal: AbortSignal,
+    onDenied: () => void,
+  ) {
+    for (const artwork of new Set(keys)) {
+      if (signal.aborted) return;
+      const key = JSON.stringify([scope.entry_id, scope.dataset_id, artwork]);
+      if (this.cache.get(key)) continue;
+      let release: (() => void) | undefined;
+      const controller = new AbortController();
+      const abort = () => controller.abort();
+      signal.addEventListener("abort", abort, { once: true });
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        release = await this.acquire(controller.signal, true);
+        if (
+          signal.aborted ||
+          this.cache.get(key) ||
+          (await this.cache.restore(key))
+        )
+          continue;
+        if (signal.aborted) return;
+        timeout = setTimeout(abort, 5000);
+        const blob = await client.libraryArtwork(
+          scope,
+          artwork,
+          controller.signal,
+        );
+        if (!signal.aborted && !controller.signal.aborted)
+          this.cache.put(key, blob);
+      } catch (error) {
+        if (!signal.aborted && errorCode(error) === "unauthorized") {
+          onDenied();
+          return;
+        }
+      } finally {
+        clearTimeout(timeout);
+        signal.removeEventListener("abort", abort);
+        release?.();
+      }
+    }
+  }
+}
+
+/** Own a cover cache for one authenticated panel and Library scope. */
+export class CoverSession {
+  private key = "";
+  queue = new CoverQueue();
+  pages = new LibraryPageCache();
+  bind(scope: JournalInfo) {
+    const key = JSON.stringify([
+      scope.entry_id,
+      scope.dataset_id,
+      scope.library_enabled,
+      scope.permissions.read,
+      scope.permissions.edit,
+    ]);
+    if (key !== this.key) {
+      this.reset();
+      this.key = key;
+    }
+  }
+  reset() {
+    this.queue.cache.dispose();
+    this.pages.dispose();
+    this.pages = new LibraryPageCache();
+    this.queue = new CoverQueue();
+    this.key = "";
   }
 }
 
@@ -76,6 +155,7 @@ export class LibraryCover extends LitElement {
   private controller?: AbortController;
   private generation = 0;
   private url?: string;
+  private failed = false;
   private unwatch?: () => void;
   private get cacheKey() {
     return JSON.stringify([
@@ -91,11 +171,14 @@ export class LibraryCover extends LitElement {
   connectedCallback() {
     super.connectedCallback();
     document.addEventListener("visibilitychange", this.visibility);
-    this.observer = new IntersectionObserver((entries) => {
-      this.visible = entries.some((entry) => entry.isIntersecting);
-      if (this.visible) void this.load();
-      else this.cancelLoad();
-    });
+    this.observer = new IntersectionObserver(
+      (entries) => {
+        this.visible = entries.some((entry) => entry.isIntersecting);
+        if (this.visible) void this.load();
+        else this.cancelLoad();
+      },
+      { rootMargin: "600px 0px" },
+    );
     this.observer.observe(this);
     this.requestUpdate("queue");
   }
@@ -118,6 +201,7 @@ export class LibraryCover extends LitElement {
           this.requestUpdate();
         },
         visible: () => this.visible && this.isConnected && !document.hidden,
+        refresh: () => void this.load(),
       });
       void this.load();
     }
@@ -132,6 +216,7 @@ export class LibraryCover extends LitElement {
     this.unwatch?.();
     this.unwatch = undefined;
     this.url = undefined;
+    this.failed = false;
   }
   private async load() {
     if (
@@ -153,6 +238,7 @@ export class LibraryCover extends LitElement {
       }
       return;
     }
+    this.failed = false;
     const generation = this.generation;
     const controller = (this.controller = new AbortController());
     let release: (() => void) | undefined;
@@ -163,6 +249,19 @@ export class LibraryCover extends LitElement {
       const cached = this.queue.cache.get(this.cacheKey);
       if (cached) {
         this.url = cached;
+        this.requestUpdate();
+        return;
+      }
+      const restored = await this.queue.cache.restore(this.cacheKey);
+      if (
+        generation !== this.generation ||
+        controller.signal.aborted ||
+        !this.isConnected ||
+        document.hidden
+      )
+        return;
+      if (restored) {
+        this.url = restored;
         this.requestUpdate();
         return;
       }
@@ -182,6 +281,10 @@ export class LibraryCover extends LitElement {
       this.url = this.queue.cache.put(this.cacheKey, blob);
       this.requestUpdate();
     } catch (error) {
+      if (generation === this.generation) {
+        this.failed = true;
+        this.requestUpdate();
+      }
       if (generation === this.generation && errorCode(error) === "unauthorized")
         this.dispatchEvent(
           new CustomEvent("access-denied", { bubbles: true, composed: true }),
@@ -198,9 +301,14 @@ export class LibraryCover extends LitElement {
           src=${this.url}
           alt=${`Cover for ${this.title}`}
           style=${`object-fit: ${this.fit}`}
-          @error=${() => this.queue?.cache.drop(this.cacheKey)}
+          @error=${() => {
+            this.failed = true;
+            this.queue?.cache.discard(this.cacheKey);
+          }}
         />`
-      : html`<span>No cached artwork</span>`;
+      : html`<span
+          >${this.artworkKey && !this.failed ? "Loading artwork…" : "No cached artwork"}</span
+        >`;
   }
 }
 if (!customElements.get("kaleidescape-library-cover"))

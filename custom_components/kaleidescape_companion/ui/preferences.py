@@ -20,6 +20,7 @@ LIBRARY_DEFAULTS = {
     "view": "covers",
     "page_size": 100,
     "cover_size": 150,
+    "cover_cache": "balanced",
     "show_titles": True,
     "show_format": True,
     "show_audio_format": True,
@@ -120,6 +121,8 @@ def validate_library(patch, previous=None):
         )
     ):
         raise invalid("Invalid display toggle")
+    if values["cover_cache"] not in ("balanced", "session", "persistent"):
+        raise invalid("Invalid cover cache mode")
     if type(values["cover_size"]) is not int or not 90 <= values["cover_size"] <= 300:
         raise invalid("Invalid cover size")
     if type(values["cast_limit"]) is not int or not 1 <= values["cast_limit"] <= 30:

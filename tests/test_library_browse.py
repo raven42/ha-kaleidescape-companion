@@ -9,6 +9,7 @@ from uuid import uuid4
 
 import test_backend as backend_tests
 import test_library as library_tests
+import test_repository as repository_tests
 from test_library import (
     ORIGIN,
     ROWS,
@@ -26,6 +27,41 @@ class GroupedLibraryTest(unittest.IsolatedAsyncioTestCase):
     seed = library_tests.LibraryStorageTest.seed
     page = library_tests.LibraryStorageTest.page
     assert_error = library_tests.LibraryStorageTest.assert_error
+
+    def test_cache_context_changes_for_date_window_and_timezone(self):
+        from custom_components.kaleidescape_companion.ui.websocket import (
+            _library_cache_context,
+        )
+
+        base = _library_cache_context("2026-11-23", 2, "UTC", SOURCE)
+        self.assertEqual(len(base), 64)
+        self.assertNotEqual(
+            base, _library_cache_context("2026-11-24", 2, "UTC", SOURCE)
+        )
+        self.assertNotEqual(
+            base, _library_cache_context("2026-11-23", 4, "UTC", SOURCE)
+        )
+        self.assertNotEqual(
+            base, _library_cache_context("2026-11-23", 2, "America/Chicago", SOURCE)
+        )
+        self.assertNotEqual(
+            base, _library_cache_context("2026-11-23", 2, "UTC", "other-source")
+        )
+
+    async def test_cache_revision_tracks_journal_changes_without_catalog_changes(self):
+        await self.repository.async_library_catalog(ORIGIN, ROWS, {})
+        before = await self.repository.async_library_info(SOURCE)
+        for grouped in (True, False):
+            page = await self.repository.async_library_list(
+                SOURCE, {"grouped": grouped}
+            )
+            self.assertEqual(page["cache_revision"], before["cache_revision"])
+        await self.repository.async_create(str(uuid4()), repository_tests.viewing())
+        after = await self.repository.async_library_info(SOURCE)
+        self.assertEqual(after["revision"], before["revision"])
+        self.assertGreater(after["cache_revision"], before["cache_revision"])
+        page = await self.repository.async_library_list(SOURCE, {"grouped": True})
+        self.assertEqual(page["cache_revision"], after["cache_revision"])
 
     async def test_system_filters_are_grouped_validated_and_combine_with_facets(self):
         await self.repository.async_library_catalog(ORIGIN, ROWS, {})

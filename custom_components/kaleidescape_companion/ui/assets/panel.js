@@ -280,12 +280,12 @@ function he(e, t, n = e, r) {
 	let i = r === void 0 ? n._$Cl : n._$Co?.[r], a = we(t) ? void 0 : t._$litDirective$;
 	return i?.constructor !== a && (i?._$AO?.(!1), a === void 0 ? i = void 0 : (i = new a(e), i._$AT(e, n, r)), r === void 0 ? n._$Cl = i : (n._$Co ??= [])[r] = i), i !== void 0 && (t = he(e, i._$AS(e, t.values), i, r)), t;
 }
-var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me, Ne, Pe, v, y, b, x, Fe, S, Ie, Le, Re, ze, Be, Ve, He, Ue, We, Ge, Ke, qe, Je = t((() => {
+var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me, Ne, Pe, v, y, b, x, Fe, Ie, Le, Re, ze, Be, Ve, He, Ue, We, Ge, Ke, qe, Je, Ye = t((() => {
 	ge = globalThis, _e = (e) => e, ve = ge.trustedTypes, ye = ve ? ve.createPolicy("lit-html", { createHTML: (e) => e }) : void 0, be = "$lit$", h = `lit$${Math.random().toFixed(9).slice(2)}$`, xe = "?" + h, Se = `<${xe}>`, g = document, Ce = () => g.createComment(""), we = (e) => e === null || typeof e != "object" && typeof e != "function", Te = Array.isArray, Ee = (e) => Te(e) || typeof e?.[Symbol.iterator] == "function", De = "[ 	\n\f\r]", Oe = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, ke = /-->/g, Ae = />/g, _ = RegExp(`>|${De}(?:([^\\s"'>=/]+)(${De}*=${De}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`, "g"), je = /'/g, Me = /"/g, Ne = /^(?:script|style|textarea|title)$/i, Pe = (e) => (t, ...n) => ({
 		_$litType$: e,
 		strings: t,
 		values: n
-	}), v = Pe(1), y = Pe(2), Pe(3), b = Symbol.for("lit-noChange"), x = Symbol.for("lit-nothing"), Fe = /* @__PURE__ */ new WeakMap(), S = g.createTreeWalker(g, 129), Ie = (e, t) => {
+	}), v = Pe(1), y = Pe(2), Pe(3), b = Symbol.for("lit-noChange"), x = Symbol.for("lit-nothing"), Fe = /* @__PURE__ */ new WeakMap(), Ie = g.createTreeWalker(g, 129), Le = (e, t) => {
 		let n = e.length - 1, r = [], i, a = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", o = Oe;
 		for (let t = 0; t < n; t++) {
 			let n = e[t], s, c, l = -1, u = 0;
@@ -294,16 +294,16 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			a += o === Oe ? n + Se : l >= 0 ? (r.push(s), n.slice(0, l) + be + n.slice(l) + h + d) : n + h + (l === -2 ? t : d);
 		}
 		return [me(e, a + (e[n] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), r];
-	}, Le = class e {
+	}, Re = class e {
 		constructor({ strings: t, _$litType$: n }, r) {
 			let i;
 			this.parts = [];
-			let a = 0, o = 0, s = t.length - 1, c = this.parts, [l, u] = Ie(t, n);
-			if (this.el = e.createElement(l, r), S.currentNode = this.el.content, n === 2 || n === 3) {
+			let a = 0, o = 0, s = t.length - 1, c = this.parts, [l, u] = Le(t, n);
+			if (this.el = e.createElement(l, r), Ie.currentNode = this.el.content, n === 2 || n === 3) {
 				let e = this.el.content.firstChild;
 				e.replaceWith(...e.childNodes);
 			}
-			for (; (i = S.nextNode()) !== null && c.length < s;) {
+			for (; (i = Ie.nextNode()) !== null && c.length < s;) {
 				if (i.nodeType === 1) {
 					if (i.hasAttributes()) for (let e of i.getAttributeNames()) if (e.endsWith(be)) {
 						let t = u[o++], n = i.getAttribute(e).split(h), r = /([.?@])?(.*)/.exec(t);
@@ -312,7 +312,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 							index: a,
 							name: r[2],
 							strings: n,
-							ctor: r[1] === "." ? Ve : r[1] === "?" ? He : r[1] === "@" ? Ue : Be
+							ctor: r[1] === "." ? He : r[1] === "?" ? Ue : r[1] === "@" ? We : Ve
 						}), i.removeAttribute(e);
 					} else e.startsWith(h) && (c.push({
 						type: 6,
@@ -322,7 +322,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 						let e = i.textContent.split(h), t = e.length - 1;
 						if (t > 0) {
 							i.textContent = ve ? ve.emptyScript : "";
-							for (let n = 0; n < t; n++) i.append(e[n], Ce()), S.nextNode(), c.push({
+							for (let n = 0; n < t; n++) i.append(e[n], Ce()), Ie.nextNode(), c.push({
 								type: 2,
 								index: ++a
 							});
@@ -349,7 +349,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			let n = g.createElement("template");
 			return n.innerHTML = e, n;
 		}
-	}, Re = class {
+	}, ze = class {
 		constructor(e, t) {
 			this._$AV = [], this._$AN = void 0, this._$AD = e, this._$AM = t;
 		}
@@ -361,22 +361,22 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 		}
 		u(e) {
 			let { el: { content: t }, parts: n } = this._$AD, r = (e?.creationScope ?? g).importNode(t, !0);
-			S.currentNode = r;
-			let i = S.nextNode(), a = 0, o = 0, s = n[0];
+			Ie.currentNode = r;
+			let i = Ie.nextNode(), a = 0, o = 0, s = n[0];
 			for (; s !== void 0;) {
 				if (a === s.index) {
 					let t;
-					s.type === 2 ? t = new ze(i, i.nextSibling, this, e) : s.type === 1 ? t = new s.ctor(i, s.name, s.strings, this, e) : s.type === 6 && (t = new We(i, this, e)), this._$AV.push(t), s = n[++o];
+					s.type === 2 ? t = new Be(i, i.nextSibling, this, e) : s.type === 1 ? t = new s.ctor(i, s.name, s.strings, this, e) : s.type === 6 && (t = new Ge(i, this, e)), this._$AV.push(t), s = n[++o];
 				}
-				a !== s?.index && (i = S.nextNode(), a++);
+				a !== s?.index && (i = Ie.nextNode(), a++);
 			}
-			return S.currentNode = g, r;
+			return Ie.currentNode = g, r;
 		}
 		p(e) {
 			let t = 0;
 			for (let n of this._$AV) n !== void 0 && (n.strings === void 0 ? n._$AI(e[t]) : (n._$AI(e, n, t), t += n.strings.length - 2)), t++;
 		}
-	}, ze = class e {
+	}, Be = class e {
 		get _$AU() {
 			return this._$AM?._$AU ?? this._$Cv;
 		}
@@ -406,16 +406,16 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			this._$AH !== x && we(this._$AH) ? this._$AA.nextSibling.data = e : this.T(g.createTextNode(e)), this._$AH = e;
 		}
 		$(e) {
-			let { values: t, _$litType$: n } = e, r = typeof n == "number" ? this._$AC(e) : (n.el === void 0 && (n.el = Le.createElement(me(n.h, n.h[0]), this.options)), n);
+			let { values: t, _$litType$: n } = e, r = typeof n == "number" ? this._$AC(e) : (n.el === void 0 && (n.el = Re.createElement(me(n.h, n.h[0]), this.options)), n);
 			if (this._$AH?._$AD === r) this._$AH.p(t);
 			else {
-				let e = new Re(r, this), n = e.u(this.options);
+				let e = new ze(r, this), n = e.u(this.options);
 				e.p(t), this.T(n), this._$AH = e;
 			}
 		}
 		_$AC(e) {
 			let t = Fe.get(e.strings);
-			return t === void 0 && Fe.set(e.strings, t = new Le(e)), t;
+			return t === void 0 && Fe.set(e.strings, t = new Re(e)), t;
 		}
 		k(t) {
 			Te(this._$AH) || (this._$AH = [], this._$AR());
@@ -432,7 +432,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 		setConnected(e) {
 			this._$AM === void 0 && (this._$Cv = e, this._$AP?.(e));
 		}
-	}, Be = class {
+	}, Ve = class {
 		get tagName() {
 			return this.element.tagName;
 		}
@@ -454,21 +454,21 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 		j(e) {
 			e === x ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
 		}
-	}, Ve = class extends Be {
+	}, He = class extends Ve {
 		constructor() {
 			super(...arguments), this.type = 3;
 		}
 		j(e) {
 			this.element[this.name] = e === x ? void 0 : e;
 		}
-	}, He = class extends Be {
+	}, Ue = class extends Ve {
 		constructor() {
 			super(...arguments), this.type = 4;
 		}
 		j(e) {
 			this.element.toggleAttribute(this.name, !!e && e !== x);
 		}
-	}, Ue = class extends Be {
+	}, We = class extends Ve {
 		constructor(e, t, n, r, i) {
 			super(e, t, n, r, i), this.type = 5;
 		}
@@ -480,7 +480,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 		handleEvent(e) {
 			typeof this._$AH == "function" ? this._$AH.call(this.options?.host ?? this.element, e) : this._$AH.handleEvent(e);
 		}
-	}, We = class {
+	}, Ge = class {
 		constructor(e, t, n) {
 			this.element = e, this.type = 6, this._$AN = void 0, this._$AM = t, this.options = n;
 		}
@@ -490,31 +490,31 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 		_$AI(e) {
 			he(this, e);
 		}
-	}, Ge = {
+	}, Ke = {
 		M: be,
 		P: h,
 		A: xe,
 		C: 1,
-		L: Ie,
-		R: Re,
+		L: Le,
+		R: ze,
 		D: Ee,
 		V: he,
-		I: ze,
-		H: Be,
-		N: He,
-		U: Ue,
-		B: Ve,
-		F: We
-	}, Ke = ge.litHtmlPolyfillSupport, Ke?.(Le, ze), (ge.litHtmlVersions ??= []).push("3.3.3"), qe = (e, t, n) => {
+		I: Be,
+		H: Ve,
+		N: Ue,
+		U: We,
+		B: He,
+		F: Ge
+	}, qe = ge.litHtmlPolyfillSupport, qe?.(Re, Be), (ge.litHtmlVersions ??= []).push("3.3.3"), Je = (e, t, n) => {
 		let r = n?.renderBefore ?? t, i = r._$litPart$;
 		if (i === void 0) {
 			let e = n?.renderBefore ?? null;
-			r._$litPart$ = i = new ze(t.insertBefore(Ce(), e), e, void 0, n ?? {});
+			r._$litPart$ = i = new Be(t.insertBefore(Ce(), e), e, void 0, n ?? {});
 		}
 		return i._$AI(e), i;
 	};
-})), Ye, C, Xe, Ze = t((() => {
-	pe(), pe(), Je(), Je(), Ye = globalThis, C = class extends fe {
+})), Xe, S, Ze, Qe = t((() => {
+	pe(), pe(), Ye(), Ye(), Xe = globalThis, S = class extends fe {
 		constructor() {
 			super(...arguments), this.renderOptions = { host: this }, this._$Do = void 0;
 		}
@@ -524,7 +524,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 		}
 		update(e) {
 			let t = this.render();
-			this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = qe(t, this.renderRoot, this.renderOptions);
+			this.hasUpdated || (this.renderOptions.isConnected = this.isConnected), super.update(e), this._$Do = Je(t, this.renderRoot, this.renderOptions);
 		}
 		connectedCallback() {
 			super.connectedCallback(), this._$Do?.setConnected(!0);
@@ -535,11 +535,1392 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 		render() {
 			return b;
 		}
-	}, C._$litElement$ = !0, C.finalized = !0, Ye.litElementHydrateSupport?.({ LitElement: C }), Xe = Ye.litElementPolyfillSupport, Xe?.({ LitElement: C }), (Ye.litElementVersions ??= []).push("4.2.2");
-})), Qe = t((() => {})), w = t((() => {
-	pe(), Je(), Ze(), Qe();
-})), T, E = t((() => {
-	w(), T = l`
+	}, S._$litElement$ = !0, S.finalized = !0, Xe.litElementHydrateSupport?.({ LitElement: S }), Ze = Xe.litElementPolyfillSupport, Ze?.({ LitElement: S }), (Xe.litElementVersions ??= []).push("4.2.2");
+})), $e = t((() => {})), C = t((() => {
+	pe(), Ye(), Qe(), $e();
+}));
+// src/core/display-profile.ts
+function et() {
+	let e = window.innerWidth;
+	return e <= 600 ? "mobile" : e <= 1024 ? "tablet" : "desktop";
+}
+var tt = t((() => {}));
+// src/core/api.ts
+function nt() {
+	let e = globalThis.crypto;
+	if (typeof e?.randomUUID == "function") return e.randomUUID();
+	if (typeof e?.getRandomValues != "function") throw new D("request_id_unavailable");
+	let t = e.getRandomValues(/* @__PURE__ */ new Uint8Array(16));
+	t[6] = t[6] & 15 | 64, t[8] = t[8] & 63 | 128;
+	let n = Array.from(t, (e) => e.toString(16).padStart(2, "0")).join("");
+	return `${n.slice(0, 8)}-${n.slice(8, 12)}-${n.slice(12, 16)}-${n.slice(16, 20)}-${n.slice(20)}`;
+}
+async function rt(e, t, n) {
+	let r = e.body?.getReader();
+	if (!r) throw new D("storage_error");
+	let i = [], a = 0;
+	try {
+		for (;;) {
+			let { value: e, done: n } = await r.read();
+			if (n) break;
+			if (a += e.byteLength, a > t) throw new D("export_too_large");
+			i.push(new Uint8Array(e));
+		}
+		return new Blob(i, { type: n });
+	} finally {
+		await r.cancel().catch(() => {}), r.releaseLock();
+	}
+}
+function w(e) {
+	return typeof e == "object" && e && "code" in e && typeof e.code == "string" ? e.code : "connection_lost";
+}
+function T(e) {
+	return {
+		unauthorized: "Access to this operation is denied. Your journal has been cleared from this view.",
+		not_ready: "The integration is not loaded. Reload the connection after it starts.",
+		not_found: "This record or dataset is no longer available. Refresh the journal.",
+		conflict: "This entry changed elsewhere. Reload the entry and review your changes before saving again.",
+		refresh_required: "The journal changed. Return to the first page to refresh the results.",
+		invalid_request: "Some values were rejected. Check the fields and try again.",
+		invalid_format: "Home Assistant rejected the request format. Reload Companion and try again.",
+		busy: "The journal is busy. Wait a moment, then retry.",
+		backup_in_progress: "A backup is running. Retry after it finishes.",
+		blueprint_unavailable: "The bundled blueprint is missing or unreadable. Reinstall the complete integration and restart Home Assistant.",
+		storage_error: "The journal could not access storage. Check HA diagnostics and available space.",
+		export_too_large: "This export exceeds the download size limit.",
+		export_timeout: "The export timed out. Try again when the server is less busy.",
+		request_id_unavailable: "This browser cannot create a secure request ID. Try a supported browser. No change was sent.",
+		tracking_enabled: "Disable automatic tracking in Settings before importing or purging entries.",
+		import_too_large: "Choose an import file no larger than 32 MiB.",
+		import_timeout: "The import result is unconfirmed. Retry the same file and request to confirm it.",
+		library_disabled: "Enable library sync in Settings to use the Library.",
+		library_storage_limit: "Library refresh reached its database storage ceiling. Cached data is retained and journal storage headroom is reserved.",
+		library_unreachable: "The library host could not be reached. Check the hostname and HA network access. Cached data is retained.",
+		library_timeout: "The library server took too long to respond. Check its status and the Home Assistant logs.",
+		library_destination: "The library must use a private LAN hostname or address.",
+		library_format: "The library page format was not recognized. Cached data is retained.",
+		library_response: "The library returned an unsupported response. Cached data is retained.",
+		library_changed: "The library changed during sync. Previous collection data was retained; try again later.",
+		query_limit: "This search exceeded its execution budget. Refine the text or simplify the conditions and try again.",
+		repair_limit: "Metadata repair exceeded its 10,000-entry or execution limit. No changes were saved.",
+		query_syntax: "Check the field names, operators and quoted values in the condition.",
+		database_page_too_large: "The database page is too large. Choose fewer rows per page.",
+		library_page_too_large: "This library page is too large. Reduce entries per page and try again.",
+		journal_page_too_large: "This Journal result exceeds the All limit. Choose a smaller page size or narrow the search.",
+		collection_disabled: "Enable collection changes and collection sync in Settings first.",
+		collection_form: "The server’s collection form was not recognized. Refresh or sync before trying again.",
+		collection_uncertain: "Check or acknowledge the previous unconfirmed collection change first.",
+		collection_limit: "Collection request history reached its storage limit.",
+		library_too_large: "A library response exceeded its safety limit. Cached data is retained.",
+		library_artwork: "Some artwork could not be cached. Previous artwork is retained when available.",
+		provider_destination: "The provider request destination or path failed the network allowlist checks. No request was sent to that destination.",
+		provider_content_type: "The provider returned an unsupported content type or the image bytes did not match that type.",
+		provider_encoding: "The provider returned compressed content despite requesting an uncompressed response.",
+		provider_response_too_large: "The provider response exceeded the download size limit.",
+		provider_http_error: "The provider returned an unsuccessful HTTP response. Check the preceding HTTP status event.",
+		provider_access_denied: "The provider denied access. Check the scraper credentials and permissions.",
+		provider_rate_limited: "The provider rate limit was reached. Wait before trying again.",
+		provider_artwork_unavailable: "The selected image is no longer available from this provider.",
+		provider_disabled: "The required provider or artwork feature is disabled.",
+		metadata_disabled: "Enable and configure a scraper in Settings first.",
+		metadata_unavailable: "Metadata retrieval failed. Try again.",
+		provider_identity_mismatch: "The provider could not verify this movie's title and release year.",
+		tmdb_not_found: "TMDB did not find a matching title and release year.",
+		tmdb_ambiguous: "TMDB returned more than one matching movie. No data was imported.",
+		store_search_truncated: "The Kaleidescape Store returned too many results to verify a unique match. Refine the search and choose a match for review.",
+		store_missing_library_credits: "The Library needs four scanned actors and a director before this Store match can be verified.",
+		store_credit_mismatch: "The Store results did not match the scanned cast and director. Choose a match for review."
+	}[w(e)] ?? "The connection was interrupted. The result could not be confirmed.";
+}
+async function E(e, t = it) {
+	let n;
+	try {
+		return await Promise.race([e, new Promise((e, r) => {
+			n = setTimeout(() => r(new D("connection_lost")), t);
+		})]);
+	} finally {
+		clearTimeout(n);
+	}
+}
+var D, O, it, k, at, ot, st, A = t((() => {
+	tt(), D = class extends Error {
+		constructor(e) {
+			super(e), this.code = e;
+		}
+	}, O = "kaleidescape_companion", it = 15e3, k = ({ entry_id: e, dataset_id: t }) => ({
+		entry_id: e,
+		dataset_id: t
+	}), at = 268435456, ot = 5242880, st = class {
+		constructor(e) {
+			this.transport = e;
+		}
+		call(e) {
+			return E(this.transport.callWS(e));
+		}
+		automationStatuses(e) {
+			return this.call({
+				type: `${O}/automations/status`,
+				...k(e)
+			});
+		}
+		updateAutomationBlueprint(e, t, n) {
+			return this.call({
+				type: `${O}/automations/update`,
+				...k(e),
+				template: t,
+				revision: n
+			});
+		}
+		automationTemplate(e, t) {
+			return this.call({
+				type: `${O}/automations/template`,
+				...k(e),
+				template: t
+			});
+		}
+		installAutomationBlueprint(e, t, n = !1) {
+			return this.call({
+				type: "blueprint/save",
+				domain: "automation",
+				path: e,
+				yaml: t,
+				...n ? { allow_override: !0 } : {}
+			});
+		}
+		controlInfo(e) {
+			return this.call({
+				type: `${O}/control/info`,
+				...k(e)
+			});
+		}
+		controlDiscover(e) {
+			return E(this.transport.callWS({
+				type: `${O}/control/discover`,
+				...k(e)
+			}), 7e4);
+		}
+		controlStatus(e, t) {
+			return this.call({
+				type: `${O}/control/status`,
+				...k(e),
+				...t ? { player_id: t } : {}
+			});
+		}
+		controlInputStatus(e, t) {
+			return this.call({
+				type: `${O}/control/input_status`,
+				...k(e),
+				...t ? { player_id: t } : {}
+			});
+		}
+		controlPrepare(e, t, n, r, i) {
+			return this.call({
+				type: `${O}/control/prepare`,
+				...k(e),
+				operation: t,
+				...n ? { title_id: n } : {},
+				...r ? { player_id: r } : {},
+				...i === void 0 ? {} : { input_text: i }
+			});
+		}
+		prepareControl(e, t) {
+			return this.prepareCommand(e, "control/execute", { token: t });
+		}
+		controlExecute(e) {
+			return this.call({ ...e.message });
+		}
+		controlAcknowledge(e, t) {
+			return this.call({
+				type: `${O}/control/acknowledge`,
+				...k(e),
+				request_id: t,
+				confirmation: "REVIEWED"
+			});
+		}
+		metadataStatus(e, t = !1, n = !1) {
+			return this.call({
+				type: `${O}/metadata/${t ? "sync" : "status"}`,
+				...k(e),
+				...t && n ? { missing_titles_only: !0 } : {}
+			});
+		}
+		titleScrapeOptions(e, t) {
+			return this.call({
+				type: `${O}/metadata/title/options`,
+				...k(e),
+				title_id: t
+			});
+		}
+		titleScrapePreview(e, t, n, r = "", i = "") {
+			return E(this.transport.callWS({
+				type: `${O}/metadata/title/preview`,
+				...k(e),
+				title_id: t,
+				provider: n,
+				search_id: r,
+				choice: i
+			}), 185e3);
+		}
+		titleScrapeSearch(e, t, n, r, i) {
+			return E(this.transport.callWS({
+				type: `${O}/metadata/title/search`,
+				...k(e),
+				title_id: t,
+				provider: n,
+				query: r,
+				...i === void 0 ? {} : { year: i }
+			}), 185e3);
+		}
+		titleScrapeRefresh(e, t, n, r, i, a = !1) {
+			return E(this.transport.callWS({
+				type: `${O}/metadata/title/refresh`,
+				...k(e),
+				request_id: nt(),
+				title_id: t,
+				provider: n,
+				query: r,
+				...i === void 0 ? {} : { year: i },
+				stage: a
+			}), 185e3);
+		}
+		titleScrapeRefreshChoice(e, t, n, r, i, a = !1) {
+			return E(this.transport.callWS({
+				type: `${O}/metadata/title/refresh_choice`,
+				...k(e),
+				request_id: nt(),
+				title_id: t,
+				provider: n,
+				search_id: r,
+				choice: i,
+				stage: a
+			}), 185e3);
+		}
+		prepareMetadataAction(e, t) {
+			return this.prepareCommand(e, "metadata/title/action", { data: t });
+		}
+		prepareMetadataDraft(e, t) {
+			return this.prepareCommand(e, "metadata/title/draft", { data: t });
+		}
+		applyMetadataDraft(e) {
+			return E(this.transport.callWS({ ...e.message }), 185e3);
+		}
+		prepareTitleScrape(e, t) {
+			return this.prepareCommand(e, "metadata/title/apply", { data: t });
+		}
+		prepareScraperAvailability(e, t) {
+			return this.prepareCommand(e, "metadata/title/availability", { data: t });
+		}
+		prepareArtworkAvailability(e, t) {
+			return this.prepareCommand(e, "metadata/title/availability", { data: t });
+		}
+		prepareScrapeExpectations(e, t) {
+			return this.prepareCommand(e, "metadata/title/availability", { data: t });
+		}
+		cancelTitleScrape(e, t) {
+			return this.call({
+				type: `${O}/metadata/title/cancel`,
+				...k(e),
+				plan_id: t
+			});
+		}
+		applyTitleScrape(e) {
+			return E(this.transport.callWS({ ...e.message }), 8e4);
+		}
+		async titleScrapeImage(e, t, n, r) {
+			if (!/^[a-f0-9-]{36}$/.test(t) || !/^(poster|backdrop|match)-[0-9]{1,3}$/.test(n)) throw new D("invalid_request");
+			return this.raster(`/api/${O}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/metadata/review/${t}/image/${n}`, r);
+		}
+		metadataPreview(e) {
+			return this.call({
+				type: `${O}/journal/metadata/preview`,
+				...k(e)
+			});
+		}
+		prepareMetadataRepair(e, t) {
+			return this.prepareCommand(e, "journal/metadata/repair", {
+				token: t,
+				confirmation: "REPAIR METADATA"
+			});
+		}
+		repairMetadata(e) {
+			return this.call({ ...e.message });
+		}
+		prepareLibraryReset(e, t, n) {
+			return this.prepareCommand(e, "library/edit/reset", {
+				title_id: t,
+				snapshot: n,
+				confirmation: "RESTORE SOURCE"
+			});
+		}
+		libraryEdit(e, t) {
+			return this.call({
+				type: `${O}/library/edit/get`,
+				...k(e),
+				title_id: t
+			});
+		}
+		groupPurchaseEdit(e, t) {
+			return this.call({
+				...k(e),
+				type: `${O}/library/purchases/edit/get`,
+				title_id: t
+			});
+		}
+		prepareGroupPurchaseEdit(e, t, n, r) {
+			return this.prepareCommand(e, "library/purchases/edit/save", {
+				title_id: t,
+				snapshot: n,
+				data: r
+			});
+		}
+		saveGroupPurchaseEdit(e) {
+			return this.call({ ...e.message });
+		}
+		prepareLibraryEdit(e, t, n, r) {
+			return this.prepareCommand(e, "library/edit/save", {
+				title_id: t,
+				snapshot: n,
+				patch: r
+			});
+		}
+		saveLibraryEdit(e) {
+			return this.call({ ...e.message });
+		}
+		uiPreferences(e, t = !1, n = "library", r = et()) {
+			return this.call({
+				type: `${O}/ui/${t ? "shared" : "preferences"}/get`,
+				...n === "library" ? {} : { area: n },
+				...t ? {} : { profile: r },
+				...k(e)
+			});
+		}
+		prepareUIPreferences(e, t, n, r, i = "library", a = et()) {
+			return this.prepareCommand(e, `ui/${t ? "shared" : "preferences"}/update`, {
+				revision: n,
+				patch: r,
+				...i === "library" ? {} : { area: i },
+				...t ? {} : { profile: a }
+			});
+		}
+		saveUIPreferences(e) {
+			return this.call({ ...e.message });
+		}
+		testDashboard(e, t, n) {
+			return this.call({
+				type: `${O}/dashboard/preview`,
+				...k(e),
+				request_id: t,
+				name: n
+			});
+		}
+		verifyTestDashboard(e, t) {
+			return this.call({
+				type: `${O}/dashboard/verify`,
+				...k(e),
+				request_id: t
+			});
+		}
+		haDashboards() {
+			return this.call({ type: "lovelace/dashboards/list" });
+		}
+		createHATestDashboard(e) {
+			return this.call({
+				type: "lovelace/dashboards/create",
+				title: e.title,
+				url_path: e.url_path,
+				mode: "storage",
+				icon: "mdi:test-tube",
+				show_in_sidebar: !0,
+				require_admin: !1
+			});
+		}
+		haTestDashboardConfig(e) {
+			return this.call({
+				type: "lovelace/config",
+				url_path: e,
+				force: !0
+			});
+		}
+		saveHATestDashboard(e) {
+			return this.call({
+				type: "lovelace/config/save",
+				url_path: e.url_path,
+				config: e.config
+			});
+		}
+		info() {
+			return this.call({ type: `${O}/info` });
+		}
+		list(e, t = "", n = "", r, i = "completed_at", a = !0, o = !1, s, c = 25) {
+			return this.call({
+				type: `${O}/${s ? "library/viewings" : "journal/list"}`,
+				...s ? { title_id: s } : {},
+				...k(e),
+				query: t,
+				limit: c,
+				sort: i,
+				descending: a,
+				fuzzy: o,
+				...n ? { status: n } : {},
+				...r ? { cursor: r } : {}
+			});
+		}
+		async listSized(e, t, n) {
+			let r = [], i = t.cursor, a, o = 0, s = /* @__PURE__ */ new Set(), c = t.pageSize === "all" ? 1e4 : t.pageSize;
+			for (; n();) {
+				if (i) {
+					if (s.has(i)) throw new D("refresh_required");
+					s.add(i);
+				}
+				let l = await this.list(e, t.query, t.status, i, t.sort, t.descending, t.fuzzy, t.libraryTitleId, Math.min(100, c - r.length));
+				if (!n()) throw new D("not_ready");
+				if (a !== void 0 && a !== l.revision) throw new D("refresh_required");
+				if (a = l.revision, o += new TextEncoder().encode(JSON.stringify(l.items)).byteLength, r.length + l.items.length > c || o > 33554432) throw new D("journal_page_too_large");
+				if (r.push(...l.items), c <= 100 || !l.next_cursor) return {
+					...l,
+					items: r
+				};
+				if (!l.items.length) throw new D("refresh_required");
+				if (r.length >= c) {
+					if (t.pageSize === "all") throw new D("journal_page_too_large");
+					return {
+						...l,
+						items: r
+					};
+				}
+				i = l.next_cursor;
+			}
+			throw new D("not_ready");
+		}
+		get(e, t) {
+			return this.call({
+				type: `${O}/journal/get`,
+				...k(e),
+				viewing_id: t
+			});
+		}
+		calendarMonth(e, t, n, r = "", i = "", a = !1, o) {
+			return this.call({
+				type: `${O}/journal/calendar`,
+				...k(e),
+				start: t,
+				end: n,
+				query: r,
+				fuzzy: a,
+				...i ? { status: i } : {},
+				...o ? { title_id: o } : {}
+			});
+		}
+		calendarDetails(e, t) {
+			return this.call({
+				type: `${O}/journal/calendar/get`,
+				...k(e),
+				viewing_id: t
+			});
+		}
+		viewingLibrary(e, t) {
+			return this.call({
+				type: `${O}/library/viewing`,
+				...k(e),
+				viewing_id: t
+			});
+		}
+		sessions(e, t) {
+			return this.call({
+				type: `${O}/journal/sessions`,
+				...k(e),
+				viewing_id: t
+			});
+		}
+		nowPlaying(e, t) {
+			return this.call({
+				type: `${O}/now_playing`,
+				...k(e),
+				...t ? { player_id: t } : {}
+			});
+		}
+		libraryInfo(e) {
+			return this.call({
+				type: `${O}/library/info`,
+				...k(e)
+			});
+		}
+		libraryPurchaseTotals(e) {
+			return this.call({
+				type: `${O}/library/purchases/summary`,
+				...k(e)
+			});
+		}
+		libraryList(e, t = {}) {
+			return this.call({
+				type: `${O}/library/list`,
+				...k(e),
+				filters: t
+			});
+		}
+		libraryVersions(e, t, n = 0, r) {
+			return this.call({
+				type: `${O}/library/versions`,
+				...k(e),
+				title_id: t,
+				offset: n,
+				...r === void 0 ? {} : { revision: r }
+			});
+		}
+		librarySync(e) {
+			return this.call({
+				type: `${O}/library/sync`,
+				...k(e)
+			});
+		}
+		collectionTargets(e, t, n) {
+			return this.call({
+				type: `${O}/library/collections/targets`,
+				...k(e),
+				title_id: t,
+				revision: n
+			});
+		}
+		refreshTitleCollections(e, t, n) {
+			return E(this.transport.callWS({
+				type: `${O}/library/collections/refresh`,
+				...k(e),
+				title_id: t,
+				revision: n
+			}), 31e4);
+		}
+		dismissCollectionJob(e, t) {
+			return this.call({
+				type: `${O}/library/collections/dismiss`,
+				...k(e),
+				request_id: t
+			});
+		}
+		prepareCollectionAdd(e, t, n, r) {
+			return this.prepareCommand(e, "library/collections/add", {
+				title_id: t,
+				collection: n,
+				revision: r
+			});
+		}
+		prepareCollectionChange(e, t, n, r, i) {
+			return this.prepareCommand(e, "library/collections/queue", {
+				title_id: t,
+				collection: n,
+				operation: r,
+				revision: i
+			});
+		}
+		queueCollectionChange(e) {
+			return this.call({ ...e.message });
+		}
+		collectionAdd(e) {
+			return this.call({ ...e.message });
+		}
+		collectionCheck(e, t) {
+			return this.call({
+				type: `${O}/library/collections/check`,
+				...k(e),
+				request_id: t
+			});
+		}
+		collectionAcknowledge(e, t) {
+			return this.call({
+				type: `${O}/library/collections/acknowledge`,
+				...k(e),
+				request_id: t,
+				confirmation: "ACKNOWLEDGE"
+			});
+		}
+		async libraryArtwork(e, t, n) {
+			if (!/^[a-f0-9]{64}$/.test(t)) throw new D("invalid_request");
+			return this.raster(`/api/${O}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`, n);
+		}
+		async raster(e, t) {
+			let n = await this.transport.fetchWithAuth(e, {
+				signal: t,
+				cache: "no-store",
+				redirect: "error"
+			});
+			if (!n.ok) throw await n.body?.cancel(), new D([401, 403].includes(n.status) ? "unauthorized" : "not_found");
+			let r = n.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
+			if (!r || ![
+				"image/jpeg",
+				"image/png",
+				"image/webp"
+			].includes(r)) throw await n.body?.cancel(), new D("invalid_request");
+			return rt(n, ot, r);
+		}
+		settingsTransfer(e, t, n, r = {}, i = "") {
+			return this.call({
+				...k(e),
+				type: `${O}/settings/transfer`,
+				operation: t,
+				categories: n,
+				data: r,
+				request_id: i
+			});
+		}
+		settings(e, t, n = {}) {
+			return this.call({
+				...n,
+				...k(e),
+				type: `${O}/settings/${t}`
+			});
+		}
+		inspect(e, t, n = 0, r, i) {
+			return this.call({
+				type: `${O}/database/inspect`,
+				...k(e),
+				table: t,
+				offset: n,
+				...r == null ? {} : { revision: r },
+				...i
+			});
+		}
+		referencedBy(e, t, n, r, i) {
+			return this.call({
+				type: `${O}/database/referenced_by`,
+				...k(e),
+				table: t,
+				key: n,
+				token: r,
+				revision: i
+			});
+		}
+		cleanupPreview(e, t) {
+			return this.call({
+				type: `${O}/database/cleanup/preview`,
+				...k(e),
+				policies: t
+			});
+		}
+		cleanupDatabase(e, t) {
+			return this.call({
+				type: `${O}/database/cleanup/apply`,
+				...k(e),
+				as_of: t.as_of,
+				policies: t.policies,
+				revision: t.revision
+			});
+		}
+		preparePurge(e, t) {
+			return this.prepareCommand(e, "database/purge", t);
+		}
+		prepareDatabaseUpdate(e, t) {
+			return this.prepareCommand(e, "database/update", t);
+		}
+		searchImportMatches(e, t, n, r) {
+			return this.call({
+				type: `${O}/database/import/search`,
+				...k(e),
+				plan_id: t.plan_id,
+				revision: t.revision,
+				purchase_key: n,
+				query: r
+			});
+		}
+		matchImportPurchase(e, t, n, r) {
+			return this.call({
+				type: `${O}/database/import/match`,
+				...k(e),
+				plan_id: t.plan_id,
+				revision: t.revision,
+				purchase_key: n,
+				title_id: r
+			});
+		}
+		prepareImport(e, t, n) {
+			return this.prepareCommand(e, "database/import", {
+				plan_id: t.plan_id,
+				revision: t.revision,
+				selected: [...n].sort()
+			});
+		}
+		applyImport(e) {
+			return this.call({ ...e.message });
+		}
+		async previewImport(e, t, n, r = !1) {
+			let i = /\.(sqlite|sqlite3|db)$/i.test(t.name) ? "sqlite" : /\.json$/i.test(t.name) ? "json" : null;
+			if (!i) throw new D("invalid_request");
+			if (!t.size || t.size > 33554432) throw new D("import_too_large");
+			let a = await this.transport.fetchWithAuth(`/api/${O}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${i}${r ? "&purchase_only=true" : ""}`, {
+				method: "POST",
+				body: t,
+				signal: n,
+				redirect: "error",
+				cache: "no-store",
+				headers: { "Content-Type": "application/octet-stream" }
+			});
+			if (!a.ok) {
+				let e = {
+					401: "unauthorized",
+					403: "unauthorized",
+					413: "import_too_large",
+					404: "not_found"
+				};
+				if (e[a.status]) throw new D(e[a.status]);
+				let t = await a.json().catch(() => null);
+				throw new D(t?.code ?? "connection_lost");
+			}
+			let o = await rt(a, 8388608, "application/json");
+			return JSON.parse(await o.text());
+		}
+		autoMatchPurchases(e) {
+			return this.call({
+				type: `${O}/purchases/auto_match`,
+				...k(e)
+			});
+		}
+		reconcilePurchases(e) {
+			return this.call({
+				type: `${O}/purchases/reconcile`,
+				...k(e)
+			});
+		}
+		previewPurchaseRepair(e, t, n, r, i) {
+			return this.call({
+				...k(e),
+				type: `${O}/purchases/repair/preview`,
+				action: t,
+				key: n,
+				token: r,
+				changes: i
+			});
+		}
+		preparePurchaseRepair(e, t) {
+			return this.prepareCommand(e, "purchases/repair/apply", {
+				plan_id: t.plan_id,
+				revision: t.revision
+			});
+		}
+		applyPurchaseRepair(e) {
+			return this.call({ ...e.message });
+		}
+		purge(e) {
+			return this.call({ ...e.message });
+		}
+		async artwork(e, t) {
+			if (!/^media_player\.[a-z0-9_]{1,255}$/.test(e)) throw new D("invalid_request");
+			let n = await this.transport.fetchWithAuth(`/api/media_player_proxy/${e}`, {
+				signal: t,
+				cache: "no-store",
+				redirect: "error"
+			});
+			if (!n.ok) {
+				if (await n.body?.cancel(), n.status === 404) return null;
+				throw new D([401, 403].includes(n.status) ? "unauthorized" : "not_ready");
+			}
+			let r = n.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
+			return !r || ![
+				"image/jpeg",
+				"image/png",
+				"image/webp"
+			].includes(r) ? (await n.body?.cancel(), null) : rt(n, ot, r);
+		}
+		librarySuggestions(e, t, n, r = !1) {
+			return this.call({
+				type: `${O}/library/suggest`,
+				...k(e),
+				field: t,
+				query: n,
+				fuzzy: r
+			});
+		}
+		librarySearch(e, t, n = !0) {
+			return this.call({
+				type: `${O}/library/search`,
+				...k(e),
+				query: t,
+				fuzzy: n
+			});
+		}
+		calendarStatus(e) {
+			return this.call({
+				type: `${O}/calendar/status`,
+				...k(e)
+			});
+		}
+		prepareCalendarSync(e, t) {
+			return this.prepareCommand(e, "calendar/sync", {
+				fingerprint: t,
+				confirmation: "EXPORT JOURNAL"
+			});
+		}
+		calendarSync(e) {
+			return this.call({ ...e.message });
+		}
+		calendarMaintain(e, t, n, r = "") {
+			return this.call({
+				type: `${O}/calendar/maintain`,
+				...k(e),
+				action: t,
+				fingerprint: n,
+				review_token: r,
+				confirmation: t === "acknowledge" ? "ACKNOWLEDGE" : ""
+			});
+		}
+		calendarCancel(e, t) {
+			return this.call({
+				type: `${O}/calendar/cancel`,
+				...k(e),
+				job_id: t
+			});
+		}
+		validateDatabaseQuery(e, t, n) {
+			return this.call({
+				type: `${O}/database/validate_query`,
+				...k(e),
+				table: t,
+				query: n
+			});
+		}
+		prepareDatabaseMutation(e, t) {
+			return this.prepareCommand(e, "database/mutate", { data: t });
+		}
+		databaseMutation(e) {
+			return this.call({ ...e.message });
+		}
+		async libraryAll(e, t, n) {
+			let r, i = [], a = 0, o = !0;
+			for (; n();) {
+				let s = await this.libraryList(e, {
+					...t,
+					grouped: !0,
+					limit: 1e3,
+					offset: i.length,
+					...r ? {
+						revision: r.revision,
+						preferences_key: r.preferences_key,
+						...r.random_seed === void 0 ? {} : { random_seed: r.random_seed }
+					} : {}
+				});
+				if (!n()) throw new D("not_ready");
+				if (r && (s.revision !== r.revision || s.preferences_key !== r.preferences_key)) throw new D("refresh_required");
+				if (r && (s.cache_revision !== r.cache_revision || JSON.stringify(s.cache_context) !== JSON.stringify(r.cache_context)) && (o = !1), a += new TextEncoder().encode(JSON.stringify(s.items)).byteLength, i.length + s.items.length > 1e4 || a > 33554432) throw new D("library_page_too_large");
+				if (i.push(...s.items), r = s, !s.has_more) return {
+					...s,
+					cache_revision: o ? s.cache_revision : void 0,
+					cache_context: o ? s.cache_context : void 0,
+					items: i,
+					offset: 0,
+					limit: i.length,
+					has_more: !1
+				};
+				if (!s.items.length) throw new D("refresh_required");
+			}
+			throw new D("not_ready");
+		}
+		prepare(e, t, n) {
+			return this.prepareCommand(e, `journal/${t}`, n);
+		}
+		prepareCommand(e, t, n) {
+			let r = structuredClone({
+				...n,
+				...k(e),
+				type: `${O}/${t}`,
+				request_id: nt()
+			});
+			return {
+				scope: k(e),
+				message: Object.freeze(r)
+			};
+		}
+		mutate(e) {
+			return this.call({ ...e.message });
+		}
+		async download(e, t, n) {
+			let r = `/api/${O}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, i = await this.transport.fetchWithAuth(r, {
+				signal: n,
+				cache: "no-store",
+				redirect: "error"
+			});
+			if (!i.ok) throw new D({
+				401: "unauthorized",
+				403: "unauthorized",
+				404: "not_found",
+				413: "export_too_large",
+				503: "busy"
+			}[i.status] ?? "storage_error");
+			return rt(i, at, t === "json" ? "application/json" : "application/vnd.sqlite3");
+		}
+	};
+})), ct, lt = t((() => {
+	ct = class {
+		constructor(e) {
+			this.namespace = e;
+		}
+		open() {
+			return this.db ??= new Promise((e, t) => {
+				let n = indexedDB.open("kaleidescape-companion-covers", 1);
+				n.onupgradeneeded = () => n.result.createObjectStore("covers"), n.onsuccess = () => e(n.result), n.onerror = () => t(n.error), n.onblocked = () => t(/* @__PURE__ */ Error("Cover storage is blocked"));
+			});
+		}
+		key(e) {
+			return JSON.stringify([this.namespace, e]);
+		}
+		close() {
+			this.db?.then((e) => e.close()).catch(() => {}), this.db = void 0;
+		}
+		async get(e) {
+			let t = await this.open();
+			return new Promise((n, r) => {
+				let i = t.transaction("covers", "readonly").objectStore("covers").get(this.key(e));
+				i.onsuccess = () => n(i.result instanceof Blob ? i.result : void 0), i.onerror = () => r(i.error);
+			});
+		}
+		async remove(e) {
+			let t = await this.open();
+			return new Promise((n, r) => {
+				let i = t.transaction("covers", "readwrite");
+				i.objectStore("covers").delete(this.key(e)), i.oncomplete = () => n(), i.onerror = () => r(i.error), i.onabort = () => r(i.error);
+			});
+		}
+		async clear() {
+			let e = await this.open();
+			return new Promise((t, n) => {
+				let r = e.transaction("covers", "readwrite"), i = r.objectStore("covers").openCursor();
+				i.onsuccess = () => {
+					let e = i.result;
+					if (e) {
+						try {
+							let t = typeof e.key == "string" ? JSON.parse(e.key) : null;
+							Array.isArray(t) && t[0] === this.namespace && e.delete();
+						} catch {}
+						e.continue();
+					}
+				}, r.oncomplete = () => t(), r.onerror = () => n(r.error), r.onabort = () => n(r.error);
+			});
+		}
+		async put(e, t) {
+			let n = await this.open();
+			return new Promise((r, i) => {
+				let a = n.transaction("covers", "readwrite");
+				a.objectStore("covers").put(t, this.key(e)), a.oncomplete = () => r(), a.onerror = () => i(a.error), a.onabort = () => i(a.error);
+			});
+		}
+	};
+})), ut, dt = t((() => {
+	lt(), ut = class {
+		constructor(e = 536870912, t = 4096) {
+			this.maxBytes = e, this.maxEntries = t, this.entries = /* @__PURE__ */ new Map(), this.readers = /* @__PURE__ */ new Map(), this.bytes = 0, this.closed = !1, this.unlimited = !1, this.epoch = 0, this.clearing = !1, this.writes = /* @__PURE__ */ new Set();
+		}
+		get(e) {
+			let t = this.entries.get(e);
+			return t && (this.entries.delete(e), this.entries.set(e, t)), t?.url;
+		}
+		setPersistent(e) {
+			this.persistent?.close(), this.epoch++, this.persistent = e ? new ct(e) : void 0;
+			let t = this.persistent, n = this.epoch;
+			if (t) {
+				let e = (async () => {
+					for (let [e, r] of this.entries) {
+						if (this.closed || this.clearing || this.epoch !== n) return;
+						await t.put(e, r.blob);
+					}
+				})().catch(() => {});
+				this.trackWrite(e);
+			}
+		}
+		trackWrite(e) {
+			this.writes.add(e), e.then(() => this.writes.delete(e));
+		}
+		async restore(e) {
+			let t = this.persistent, n = this.epoch;
+			if (t && !this.closed) try {
+				let r, i = await Promise.race([t.get(e), new Promise((e) => {
+					r = setTimeout(() => e(void 0), 1500);
+				})]).finally(() => clearTimeout(r));
+				return !i || this.closed || n !== this.epoch ? void 0 : this.putMemory(e, i);
+			} catch {
+				return;
+			}
+		}
+		setUnlimited(e) {
+			this.unlimited = e, e || this.evictToFit(0, 0);
+		}
+		put(e, t) {
+			if (!this.closed && !this.clearing && this.persistent) {
+				let n = this.persistent.put(e, t).catch(() => {});
+				this.trackWrite(n);
+			}
+			return this.putMemory(e, t);
+		}
+		putMemory(e, t) {
+			if (this.closed || !this.unlimited && t.size > this.maxBytes) return;
+			let n = this.get(e);
+			if (n) return n;
+			this.unlimited || this.evictToFit(t.size, 1);
+			let r = {
+				url: URL.createObjectURL(t),
+				size: t.size,
+				blob: t
+			};
+			return this.entries.set(e, r), this.bytes += r.size, r.url;
+		}
+		evictToFit(e, t) {
+			for (; this.bytes + e > this.maxBytes || this.entries.size + t > this.maxEntries;) {
+				let e = [...this.entries.keys()], t = e.find((e) => ![...this.readers.get(e) ?? []].some((e) => e.visible())) ?? e[0];
+				if (t === void 0) return;
+				this.drop(t);
+			}
+		}
+		async clear(e) {
+			this.epoch++, this.clearing = !0, await Promise.all([...this.writes]);
+			let t;
+			if (e) {
+				let n = new ct(e);
+				try {
+					await n.clear();
+				} catch (e) {
+					t = e;
+				} finally {
+					n.close();
+				}
+			}
+			if (this.clearing = !1, !this.closed) {
+				for (let e of [...this.entries.keys()]) this.drop(e);
+				for (let e of this.readers.values()) for (let t of e) t.refresh?.();
+				if (t) throw t;
+			}
+		}
+		watch(e, t) {
+			if (this.closed) return () => {};
+			let n = this.readers.get(e) ?? /* @__PURE__ */ new Set();
+			return n.add(t), this.readers.set(e, n), () => {
+				n.delete(t), n.size || this.readers.delete(e);
+			};
+		}
+		drop(e) {
+			let t = this.entries.get(e);
+			if (t) {
+				this.entries.delete(e), this.bytes -= t.size, URL.revokeObjectURL(t.url);
+				for (let t of this.readers.get(e) ?? []) t.invalidate();
+			}
+		}
+		discard(e) {
+			this.drop(e), this.persistent && this.persistent.remove(e).catch(() => {});
+		}
+		dispose() {
+			this.closed = !0, this.persistent?.close(), this.epoch++, this.persistent = void 0;
+			for (let e of this.entries.keys()) this.drop(e);
+			this.readers.clear();
+		}
+	};
+})), ft, pt, mt, ht, gt = t((() => {
+	ft = 8388608, pt = 4, mt = class {
+		constructor(e) {
+			this.namespace = e;
+		}
+		open() {
+			return this.db ??= new Promise((e, t) => {
+				let n = indexedDB.open("kaleidescape-companion-library-pages", 1);
+				n.onupgradeneeded = () => n.result.createObjectStore("pages"), n.onsuccess = () => e(n.result), n.onerror = () => t(n.error), n.onblocked = () => t(/* @__PURE__ */ Error("Library storage is blocked"));
+			});
+		}
+		close() {
+			this.db?.then((e) => e.close()).catch(() => {}), this.db = void 0;
+		}
+		async get(e) {
+			let t = await this.open();
+			return new Promise((n, r) => {
+				let i = t.transaction("pages", "readonly").objectStore("pages").get(this.namespace);
+				i.onsuccess = () => {
+					let t = i.result, r = (Array.isArray(t) ? t.find((t) => t?.key === e) : void 0)?.page;
+					n(r && Array.isArray(r.items) && typeof r.revision == "number" && typeof r.cache_revision == "number" && typeof r.cache_context == "string" && r.facets && Array.isArray(r.truncated_facets) ? r : void 0);
+				}, i.onerror = () => r(i.error);
+			});
+		}
+		async put(e) {
+			let t = await this.open();
+			return new Promise((n, r) => {
+				let i = t.transaction("pages", "readwrite"), a = i.objectStore("pages"), o = a.get(this.namespace);
+				o.onsuccess = () => {
+					let t = o.result, n = Array.isArray(t) ? t.filter((t) => t && typeof t.key == "string" && t.key !== e.key && typeof t.bytes == "number" && t.bytes >= 0 && t.bytes <= ft) : [];
+					n.push(e);
+					let r = n.reduce((e, t) => e + t.bytes, 0);
+					for (; n.length > pt || r > ft;) r -= n.shift().bytes;
+					a.put(n, this.namespace);
+				}, i.oncomplete = () => n(), i.onerror = () => r(i.error), i.onabort = () => r(i.error);
+			});
+		}
+		async clear() {
+			let e = await this.open();
+			return new Promise((t, n) => {
+				let r = e.transaction("pages", "readwrite");
+				r.objectStore("pages").delete(this.namespace), r.oncomplete = () => t(), r.onerror = () => n(r.error), r.onabort = () => n(r.error);
+			});
+		}
+	}, ht = class {
+		constructor() {
+			this.entries = /* @__PURE__ */ new Map(), this.bytes = 0, this.epoch = 0, this.closed = !1, this.clearing = !1, this.writes = /* @__PURE__ */ new Set();
+		}
+		setPersistent(e) {
+			this.store?.close(), this.epoch++, this.store = e ? new mt(e) : void 0;
+			let t = this.store, n = this.epoch;
+			t && this.track((async () => {
+				for (let e of this.entries.values()) {
+					if (this.closed || this.clearing || this.epoch !== n) return;
+					await t.put(e);
+				}
+			})().catch(() => {}));
+		}
+		track(e) {
+			this.writes.add(e), e.then(() => this.writes.delete(e));
+		}
+		get(e) {
+			let t = this.entries.get(e);
+			if (t && !this.closed) return this.entries.delete(e), this.entries.set(e, t), structuredClone(t.page);
+		}
+		async restore(e) {
+			let t = this.store, n = this.epoch;
+			if (t && !this.closed) try {
+				let r, i = await Promise.race([t.get(e), new Promise((e) => {
+					r = setTimeout(() => e(void 0), 1500);
+				})]).finally(() => clearTimeout(r));
+				return !i || this.closed || n !== this.epoch ? void 0 : (this.putMemory(e, i), structuredClone(i));
+			} catch {
+				return;
+			}
+		}
+		put(e, t) {
+			let n = this.putMemory(e, t);
+			n && this.store && !this.clearing && this.track(this.store.put(n).catch(() => {}));
+		}
+		putMemory(e, t) {
+			if (this.closed) return;
+			let n = new TextEncoder().encode(JSON.stringify(t)).byteLength;
+			if (this.remove(e), n > ft) return;
+			for (; this.entries.size >= pt || this.bytes + n > ft;) {
+				let e = this.entries.keys().next().value;
+				if (e === void 0) break;
+				this.remove(e);
+			}
+			let r = {
+				key: e,
+				page: structuredClone(t),
+				bytes: n
+			};
+			return this.entries.set(e, r), this.bytes += n, r;
+		}
+		remove(e) {
+			let t = this.entries.get(e);
+			t && (this.bytes -= t.bytes), this.entries.delete(e);
+		}
+		async clear(e) {
+			this.epoch++, this.clearing = !0, await Promise.all([...this.writes]), this.entries.clear(), this.bytes = 0;
+			try {
+				if (e) {
+					let t = new mt(e);
+					try {
+						await t.clear();
+					} finally {
+						t.close();
+					}
+				}
+			} finally {
+				this.clearing = !1;
+			}
+		}
+		dispose() {
+			this.closed = !0, this.epoch++, this.store?.close(), this.store = void 0, this.entries.clear(), this.bytes = 0;
+		}
+	};
+})), j, _t, vt, M = t((() => {
+	C(), A(), dt(), gt(), j = class {
+		constructor() {
+			this.cache = new ut(), this.active = 0, this.waiting = [];
+		}
+		acquire(e, t = !1) {
+			return new Promise((n, r) => {
+				let i = () => {
+					this.waiting = this.waiting.filter((e) => e.start !== a), r(new DOMException("Aborted", "AbortError"));
+				}, a = () => {
+					e.removeEventListener("abort", i), this.active++;
+					let t = !1;
+					n(() => {
+						t || (t = !0, this.active--, this.waiting.shift()?.start());
+					});
+				};
+				if (e.aborted) return i();
+				if (this.active < 3) a();
+				else {
+					let n = {
+						start: a,
+						background: t
+					}, r = this.waiting.findIndex((e) => e.background);
+					!t && r >= 0 ? this.waiting.splice(r, 0, n) : this.waiting.push(n), e.addEventListener("abort", i, { once: !0 });
+				}
+			});
+		}
+		async prefetch(e, t, n, r, i) {
+			for (let a of new Set(n)) {
+				if (r.aborted) return;
+				let n = JSON.stringify([
+					t.entry_id,
+					t.dataset_id,
+					a
+				]);
+				if (this.cache.get(n)) continue;
+				let o, s = new AbortController(), c = () => s.abort();
+				r.addEventListener("abort", c, { once: !0 });
+				let l;
+				try {
+					if (o = await this.acquire(s.signal, !0), r.aborted || this.cache.get(n) || await this.cache.restore(n)) continue;
+					if (r.aborted) return;
+					l = setTimeout(c, 5e3);
+					let i = await e.libraryArtwork(t, a, s.signal);
+					!r.aborted && !s.signal.aborted && this.cache.put(n, i);
+				} catch (e) {
+					if (!r.aborted && w(e) === "unauthorized") {
+						i();
+						return;
+					}
+				} finally {
+					clearTimeout(l), r.removeEventListener("abort", c), o?.();
+				}
+			}
+		}
+	}, _t = class {
+		constructor() {
+			this.key = "", this.queue = new j(), this.pages = new ht();
+		}
+		bind(e) {
+			let t = JSON.stringify([
+				e.entry_id,
+				e.dataset_id,
+				e.library_enabled,
+				e.permissions.read,
+				e.permissions.edit
+			]);
+			t !== this.key && (this.reset(), this.key = t);
+		}
+		reset() {
+			this.queue.cache.dispose(), this.pages.dispose(), this.pages = new ht(), this.queue = new j(), this.key = "";
+		}
+	}, vt = class extends S {
+		constructor(...e) {
+			super(...e), this.fit = "cover", this.title = "", this.visible = !1, this.generation = 0, this.failed = !1, this.visibility = () => {
+				document.hidden ? this.cancelLoad() : this.load();
+			};
+		}
+		static {
+			this.properties = {
+				client: { attribute: !1 },
+				scope: { attribute: !1 },
+				queue: { attribute: !1 },
+				artworkKey: { attribute: !1 },
+				fit: { type: String },
+				title: { type: String }
+			};
+		}
+		static {
+			this.styles = l`
+    :host {
+      display: grid;
+      width: 100%;
+      height: 100%;
+      place-items: center;
+      background: var(--secondary-background-color, #262626);
+      overflow: hidden;
+    }
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    span {
+      padding: 8px;
+      color: var(--secondary-text-color, #888);
+      font: inherit;
+    }
+  `;
+		}
+		get cacheKey() {
+			return JSON.stringify([
+				this.scope?.entry_id,
+				this.scope?.dataset_id,
+				this.artworkKey
+			]);
+		}
+		connectedCallback() {
+			super.connectedCallback(), document.addEventListener("visibilitychange", this.visibility), this.observer = new IntersectionObserver((e) => {
+				this.visible = e.some((e) => e.isIntersecting), this.visible ? this.load() : this.cancelLoad();
+			}, { rootMargin: "600px 0px" }), this.observer.observe(this), this.requestUpdate("queue");
+		}
+		disconnectedCallback() {
+			super.disconnectedCallback(), document.removeEventListener("visibilitychange", this.visibility), this.observer?.disconnect(), this.visible = !1, this.clear(), this.requestUpdate();
+		}
+		willUpdate(e) {
+			[
+				"client",
+				"scope",
+				"artworkKey",
+				"queue"
+			].some((t) => e.has(t)) && (this.clear(), this.unwatch = this.queue?.cache.watch(this.cacheKey, {
+				invalidate: () => {
+					this.url = void 0, this.requestUpdate();
+				},
+				visible: () => this.visible && this.isConnected && !document.hidden,
+				refresh: () => void this.load()
+			}), this.load());
+		}
+		cancelLoad() {
+			this.generation++, this.controller?.abort(), this.controller = void 0;
+		}
+		clear() {
+			this.cancelLoad(), this.unwatch?.(), this.unwatch = void 0, this.url = void 0, this.failed = !1;
+		}
+		async load() {
+			if (!this.visible || document.hidden || !this.isConnected || this.controller || !this.client || !this.scope?.library_enabled || !this.artworkKey || !this.queue) return;
+			let e = this.queue.cache.get(this.cacheKey);
+			if (e) {
+				this.url !== e && (this.url = e, this.requestUpdate());
+				return;
+			}
+			this.failed = !1;
+			let t = this.generation, n = this.controller = new AbortController(), r, i;
+			try {
+				if (r = await this.queue.acquire(n.signal), n.signal.aborted) return;
+				let e = this.queue.cache.get(this.cacheKey);
+				if (e) {
+					this.url = e, this.requestUpdate();
+					return;
+				}
+				let a = await this.queue.cache.restore(this.cacheKey);
+				if (t !== this.generation || n.signal.aborted || !this.isConnected || document.hidden) return;
+				if (a) {
+					this.url = a, this.requestUpdate();
+					return;
+				}
+				i = setTimeout(() => n.abort(), 5e3);
+				let o = await this.client.libraryArtwork(this.scope, this.artworkKey, n.signal);
+				if (t !== this.generation || n.signal.aborted || !this.isConnected || document.hidden) return;
+				this.url = this.queue.cache.put(this.cacheKey, o), this.requestUpdate();
+			} catch (e) {
+				t === this.generation && (this.failed = !0, this.requestUpdate()), t === this.generation && w(e) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
+					bubbles: !0,
+					composed: !0
+				}));
+			} finally {
+				clearTimeout(i), r?.(), t === this.generation && (this.controller = void 0);
+			}
+		}
+		render() {
+			return this.url ? v`<img
+          src=${this.url}
+          alt=${`Cover for ${this.title}`}
+          style=${`object-fit: ${this.fit}`}
+          @error=${() => {
+				this.failed = !0, this.queue?.cache.discard(this.cacheKey);
+			}}
+        />` : v`<span
+          >${this.artworkKey && !this.failed ? "Loading artwork…" : "No cached artwork"}</span
+        >`;
+		}
+	}, customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", vt);
+})), N, P = t((() => {
+	C(), N = l`
   :host {
     display: block;
     min-height: 0;
@@ -1349,7 +2730,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 `;
 }));
 // src/ui/action-icons.ts
-function D(e) {
+function F(e) {
 	let t = {
 		add: y`<path d="M12 4v16M4 12h16"/>`,
 		search: y`<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>`,
@@ -1373,7 +2754,7 @@ function D(e) {
 	};
 	return y`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t[e]}</svg>`;
 }
-function $e(e, t, n, r, i = "") {
+function yt(e, t, n, r, i = "") {
 	return v`<span
     class="icon-action-wrap"
     @pointerenter=${(e) => e.currentTarget.removeAttribute("data-tooltip-dismissed")}
@@ -1390,14 +2771,14 @@ function $e(e, t, n, r, i = "") {
 		e.currentTarget.parentElement.setAttribute("data-tooltip-dismissed", ""), r();
 	}}
     >
-      ${D(t)}<span class="icon-action-label">${e}</span></button
+      ${F(t)}<span class="icon-action-label">${e}</span></button
     ><span class="action-tooltip" id="action-tooltip" role="tooltip"
       >${e}</span
     ></span
   >`;
 }
-var et, O = t((() => {
-	w(), et = l`
+var bt, I = t((() => {
+	C(), bt = l`
   .icon-action-wrap {
     position: relative;
     display: inline-flex;
@@ -1461,8 +2842,8 @@ var et, O = t((() => {
   }
 `;
 }));
-w(), E(), O();
-var tt = class extends C {
+M(), C(), P(), I();
+var xt = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.allowAdd = !1, this.filtered = !1, this.filterLabel = "", this.count = 0;
 	}
@@ -1476,7 +2857,7 @@ var tt = class extends C {
 		};
 	}
 	static {
-		this.styles = [T, l`
+		this.styles = [N, l`
       :host {
         display: none;
       }
@@ -1530,7 +2911,7 @@ var tt = class extends C {
       aria-label="Journal shortcuts"
     >
       <h2>Viewings (${this.count})</h2>
-      ${this.allowAdd ? v`<button type="button" aria-label="Add viewing" title="Add viewing" ?disabled=${this.disabled} @click=${() => this.signal("journal-add")}>${D("add")}</button>` : x}
+      ${this.allowAdd ? v`<button type="button" aria-label="Add viewing" title="Add viewing" ?disabled=${this.disabled} @click=${() => this.signal("journal-add")}>${F("add")}</button>` : x}
       ${this.filterLabel ? v`<button type="button" aria-label="Show all viewings" title="Show all viewings" ?disabled=${this.disabled} @click=${() => this.signal("journal-clear-movie")}>All</button>` : x}
       <button
         type="button"
@@ -1539,7 +2920,7 @@ var tt = class extends C {
         ?disabled=${this.disabled}
         @click=${() => this.signal("journal-refresh")}
       >
-        ${D("refresh")}
+        ${F("refresh")}
       </button>
       <button
         type="button"
@@ -1550,919 +2931,14 @@ var tt = class extends C {
         class=${this.filtered ? "active" : ""}
         @click=${() => this.signal("journal-open-options")}
       >
-        ${D("options")}
+        ${F("options")}
       </button>
     </div>`;
 	}
 };
-customElements.get("kaleidescape-journal-shortcuts") || customElements.define("kaleidescape-journal-shortcuts", tt);
-// src/core/display-profile.ts
-function nt() {
-	let e = window.innerWidth;
-	return e <= 600 ? "mobile" : e <= 1024 ? "tablet" : "desktop";
-}
-var rt = t((() => {}));
-// src/core/api.ts
-function it() {
-	let e = globalThis.crypto;
-	if (typeof e?.randomUUID == "function") return e.randomUUID();
-	if (typeof e?.getRandomValues != "function") throw new M("request_id_unavailable");
-	let t = e.getRandomValues(/* @__PURE__ */ new Uint8Array(16));
-	t[6] = t[6] & 15 | 64, t[8] = t[8] & 63 | 128;
-	let n = Array.from(t, (e) => e.toString(16).padStart(2, "0")).join("");
-	return `${n.slice(0, 8)}-${n.slice(8, 12)}-${n.slice(12, 16)}-${n.slice(16, 20)}-${n.slice(20)}`;
-}
-async function at(e, t, n) {
-	let r = e.body?.getReader();
-	if (!r) throw new M("storage_error");
-	let i = [], a = 0;
-	try {
-		for (;;) {
-			let { value: e, done: n } = await r.read();
-			if (n) break;
-			if (a += e.byteLength, a > t) throw new M("export_too_large");
-			i.push(new Uint8Array(e));
-		}
-		return new Blob(i, { type: n });
-	} finally {
-		await r.cancel().catch(() => {}), r.releaseLock();
-	}
-}
-function k(e) {
-	return typeof e == "object" && e && "code" in e && typeof e.code == "string" ? e.code : "connection_lost";
-}
-function A(e) {
-	return {
-		unauthorized: "Access to this operation is denied. Your journal has been cleared from this view.",
-		not_ready: "The integration is not loaded. Reload the connection after it starts.",
-		not_found: "This record or dataset is no longer available. Refresh the journal.",
-		conflict: "This entry changed elsewhere. Reload the entry and review your changes before saving again.",
-		refresh_required: "The journal changed. Return to the first page to refresh the results.",
-		invalid_request: "Some values were rejected. Check the fields and try again.",
-		invalid_format: "Home Assistant rejected the request format. Reload Companion and try again.",
-		busy: "The journal is busy. Wait a moment, then retry.",
-		backup_in_progress: "A backup is running. Retry after it finishes.",
-		blueprint_unavailable: "The bundled blueprint is missing or unreadable. Reinstall the complete integration and restart Home Assistant.",
-		storage_error: "The journal could not access storage. Check HA diagnostics and available space.",
-		export_too_large: "This export exceeds the download size limit.",
-		export_timeout: "The export timed out. Try again when the server is less busy.",
-		request_id_unavailable: "This browser cannot create a secure request ID. Try a supported browser. No change was sent.",
-		tracking_enabled: "Disable automatic tracking in Settings before importing or purging entries.",
-		import_too_large: "Choose an import file no larger than 32 MiB.",
-		import_timeout: "The import result is unconfirmed. Retry the same file and request to confirm it.",
-		library_disabled: "Enable library sync in Settings to use the Library.",
-		library_storage_limit: "Library refresh reached its database storage ceiling. Cached data is retained and journal storage headroom is reserved.",
-		library_unreachable: "The library host could not be reached. Check the hostname and HA network access. Cached data is retained.",
-		library_timeout: "The library server took too long to respond. Check its status and the Home Assistant logs.",
-		library_destination: "The library must use a private LAN hostname or address.",
-		library_format: "The library page format was not recognized. Cached data is retained.",
-		library_response: "The library returned an unsupported response. Cached data is retained.",
-		library_changed: "The library changed during sync. Previous collection data was retained; try again later.",
-		query_limit: "This search exceeded its execution budget. Refine the text or simplify the conditions and try again.",
-		repair_limit: "Metadata repair exceeded its 10,000-entry or execution limit. No changes were saved.",
-		query_syntax: "Check the field names, operators and quoted values in the condition.",
-		database_page_too_large: "The database page is too large. Choose fewer rows per page.",
-		library_page_too_large: "This library page is too large. Reduce entries per page and try again.",
-		journal_page_too_large: "This Journal result exceeds the All limit. Choose a smaller page size or narrow the search.",
-		collection_disabled: "Enable collection changes and collection sync in Settings first.",
-		collection_form: "The server’s collection form was not recognized. Refresh or sync before trying again.",
-		collection_uncertain: "Check or acknowledge the previous unconfirmed collection change first.",
-		collection_limit: "Collection request history reached its storage limit.",
-		library_too_large: "A library response exceeded its safety limit. Cached data is retained.",
-		library_artwork: "Some artwork could not be cached. Previous artwork is retained when available.",
-		provider_destination: "The provider request destination or path failed the network allowlist checks. No request was sent to that destination.",
-		provider_content_type: "The provider returned an unsupported content type or the image bytes did not match that type.",
-		provider_encoding: "The provider returned compressed content despite requesting an uncompressed response.",
-		provider_response_too_large: "The provider response exceeded the download size limit.",
-		provider_http_error: "The provider returned an unsuccessful HTTP response. Check the preceding HTTP status event.",
-		provider_access_denied: "The provider denied access. Check the scraper credentials and permissions.",
-		provider_rate_limited: "The provider rate limit was reached. Wait before trying again.",
-		provider_artwork_unavailable: "The selected image is no longer available from this provider.",
-		provider_disabled: "The required provider or artwork feature is disabled.",
-		metadata_disabled: "Enable and configure a scraper in Settings first.",
-		metadata_unavailable: "Metadata retrieval failed. Try again.",
-		provider_identity_mismatch: "The provider could not verify this movie's title and release year.",
-		tmdb_not_found: "TMDB did not find a matching title and release year.",
-		tmdb_ambiguous: "TMDB returned more than one matching movie. No data was imported.",
-		store_search_truncated: "The Kaleidescape Store returned too many results to verify a unique match. Refine the search and choose a match for review.",
-		store_missing_library_credits: "The Library needs four scanned actors and a director before this Store match can be verified.",
-		store_credit_mismatch: "The Store results did not match the scanned cast and director. Choose a match for review."
-	}[k(e)] ?? "The connection was interrupted. The result could not be confirmed.";
-}
-async function j(e, t = ot) {
-	let n;
-	try {
-		return await Promise.race([e, new Promise((e, r) => {
-			n = setTimeout(() => r(new M("connection_lost")), t);
-		})]);
-	} finally {
-		clearTimeout(n);
-	}
-}
-var M, N, ot, P, st, ct, lt, F = t((() => {
-	rt(), M = class extends Error {
-		constructor(e) {
-			super(e), this.code = e;
-		}
-	}, N = "kaleidescape_companion", ot = 15e3, P = ({ entry_id: e, dataset_id: t }) => ({
-		entry_id: e,
-		dataset_id: t
-	}), st = 268435456, ct = 5242880, lt = class {
-		constructor(e) {
-			this.transport = e;
-		}
-		call(e) {
-			return j(this.transport.callWS(e));
-		}
-		automationStatuses(e) {
-			return this.call({
-				type: `${N}/automations/status`,
-				...P(e)
-			});
-		}
-		updateAutomationBlueprint(e, t, n) {
-			return this.call({
-				type: `${N}/automations/update`,
-				...P(e),
-				template: t,
-				revision: n
-			});
-		}
-		automationTemplate(e, t) {
-			return this.call({
-				type: `${N}/automations/template`,
-				...P(e),
-				template: t
-			});
-		}
-		installAutomationBlueprint(e, t, n = !1) {
-			return this.call({
-				type: "blueprint/save",
-				domain: "automation",
-				path: e,
-				yaml: t,
-				...n ? { allow_override: !0 } : {}
-			});
-		}
-		controlInfo(e) {
-			return this.call({
-				type: `${N}/control/info`,
-				...P(e)
-			});
-		}
-		controlDiscover(e) {
-			return j(this.transport.callWS({
-				type: `${N}/control/discover`,
-				...P(e)
-			}), 7e4);
-		}
-		controlStatus(e, t) {
-			return this.call({
-				type: `${N}/control/status`,
-				...P(e),
-				...t ? { player_id: t } : {}
-			});
-		}
-		controlInputStatus(e, t) {
-			return this.call({
-				type: `${N}/control/input_status`,
-				...P(e),
-				...t ? { player_id: t } : {}
-			});
-		}
-		controlPrepare(e, t, n, r, i) {
-			return this.call({
-				type: `${N}/control/prepare`,
-				...P(e),
-				operation: t,
-				...n ? { title_id: n } : {},
-				...r ? { player_id: r } : {},
-				...i === void 0 ? {} : { input_text: i }
-			});
-		}
-		prepareControl(e, t) {
-			return this.prepareCommand(e, "control/execute", { token: t });
-		}
-		controlExecute(e) {
-			return this.call({ ...e.message });
-		}
-		controlAcknowledge(e, t) {
-			return this.call({
-				type: `${N}/control/acknowledge`,
-				...P(e),
-				request_id: t,
-				confirmation: "REVIEWED"
-			});
-		}
-		metadataStatus(e, t = !1, n = !1) {
-			return this.call({
-				type: `${N}/metadata/${t ? "sync" : "status"}`,
-				...P(e),
-				...t && n ? { missing_titles_only: !0 } : {}
-			});
-		}
-		titleScrapeOptions(e, t) {
-			return this.call({
-				type: `${N}/metadata/title/options`,
-				...P(e),
-				title_id: t
-			});
-		}
-		titleScrapePreview(e, t, n, r = "", i = "") {
-			return j(this.transport.callWS({
-				type: `${N}/metadata/title/preview`,
-				...P(e),
-				title_id: t,
-				provider: n,
-				search_id: r,
-				choice: i
-			}), 185e3);
-		}
-		titleScrapeSearch(e, t, n, r, i) {
-			return j(this.transport.callWS({
-				type: `${N}/metadata/title/search`,
-				...P(e),
-				title_id: t,
-				provider: n,
-				query: r,
-				...i === void 0 ? {} : { year: i }
-			}), 185e3);
-		}
-		titleScrapeRefresh(e, t, n, r, i, a = !1) {
-			return j(this.transport.callWS({
-				type: `${N}/metadata/title/refresh`,
-				...P(e),
-				request_id: it(),
-				title_id: t,
-				provider: n,
-				query: r,
-				...i === void 0 ? {} : { year: i },
-				stage: a
-			}), 185e3);
-		}
-		titleScrapeRefreshChoice(e, t, n, r, i, a = !1) {
-			return j(this.transport.callWS({
-				type: `${N}/metadata/title/refresh_choice`,
-				...P(e),
-				request_id: it(),
-				title_id: t,
-				provider: n,
-				search_id: r,
-				choice: i,
-				stage: a
-			}), 185e3);
-		}
-		prepareMetadataAction(e, t) {
-			return this.prepareCommand(e, "metadata/title/action", { data: t });
-		}
-		prepareMetadataDraft(e, t) {
-			return this.prepareCommand(e, "metadata/title/draft", { data: t });
-		}
-		applyMetadataDraft(e) {
-			return j(this.transport.callWS({ ...e.message }), 185e3);
-		}
-		prepareTitleScrape(e, t) {
-			return this.prepareCommand(e, "metadata/title/apply", { data: t });
-		}
-		prepareScraperAvailability(e, t) {
-			return this.prepareCommand(e, "metadata/title/availability", { data: t });
-		}
-		prepareArtworkAvailability(e, t) {
-			return this.prepareCommand(e, "metadata/title/availability", { data: t });
-		}
-		prepareScrapeExpectations(e, t) {
-			return this.prepareCommand(e, "metadata/title/availability", { data: t });
-		}
-		cancelTitleScrape(e, t) {
-			return this.call({
-				type: `${N}/metadata/title/cancel`,
-				...P(e),
-				plan_id: t
-			});
-		}
-		applyTitleScrape(e) {
-			return j(this.transport.callWS({ ...e.message }), 8e4);
-		}
-		async titleScrapeImage(e, t, n, r) {
-			if (!/^[a-f0-9-]{36}$/.test(t) || !/^(poster|backdrop|match)-[0-9]{1,3}$/.test(n)) throw new M("invalid_request");
-			return this.raster(`/api/${N}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/metadata/review/${t}/image/${n}`, r);
-		}
-		metadataPreview(e) {
-			return this.call({
-				type: `${N}/journal/metadata/preview`,
-				...P(e)
-			});
-		}
-		prepareMetadataRepair(e, t) {
-			return this.prepareCommand(e, "journal/metadata/repair", {
-				token: t,
-				confirmation: "REPAIR METADATA"
-			});
-		}
-		repairMetadata(e) {
-			return this.call({ ...e.message });
-		}
-		prepareLibraryReset(e, t, n) {
-			return this.prepareCommand(e, "library/edit/reset", {
-				title_id: t,
-				snapshot: n,
-				confirmation: "RESTORE SOURCE"
-			});
-		}
-		libraryEdit(e, t) {
-			return this.call({
-				type: `${N}/library/edit/get`,
-				...P(e),
-				title_id: t
-			});
-		}
-		groupPurchaseEdit(e, t) {
-			return this.call({
-				...P(e),
-				type: `${N}/library/purchases/edit/get`,
-				title_id: t
-			});
-		}
-		prepareGroupPurchaseEdit(e, t, n, r) {
-			return this.prepareCommand(e, "library/purchases/edit/save", {
-				title_id: t,
-				snapshot: n,
-				data: r
-			});
-		}
-		saveGroupPurchaseEdit(e) {
-			return this.call({ ...e.message });
-		}
-		prepareLibraryEdit(e, t, n, r) {
-			return this.prepareCommand(e, "library/edit/save", {
-				title_id: t,
-				snapshot: n,
-				patch: r
-			});
-		}
-		saveLibraryEdit(e) {
-			return this.call({ ...e.message });
-		}
-		uiPreferences(e, t = !1, n = "library", r = nt()) {
-			return this.call({
-				type: `${N}/ui/${t ? "shared" : "preferences"}/get`,
-				...n === "library" ? {} : { area: n },
-				...t ? {} : { profile: r },
-				...P(e)
-			});
-		}
-		prepareUIPreferences(e, t, n, r, i = "library", a = nt()) {
-			return this.prepareCommand(e, `ui/${t ? "shared" : "preferences"}/update`, {
-				revision: n,
-				patch: r,
-				...i === "library" ? {} : { area: i },
-				...t ? {} : { profile: a }
-			});
-		}
-		saveUIPreferences(e) {
-			return this.call({ ...e.message });
-		}
-		testDashboard(e, t, n) {
-			return this.call({
-				type: `${N}/dashboard/preview`,
-				...P(e),
-				request_id: t,
-				name: n
-			});
-		}
-		verifyTestDashboard(e, t) {
-			return this.call({
-				type: `${N}/dashboard/verify`,
-				...P(e),
-				request_id: t
-			});
-		}
-		haDashboards() {
-			return this.call({ type: "lovelace/dashboards/list" });
-		}
-		createHATestDashboard(e) {
-			return this.call({
-				type: "lovelace/dashboards/create",
-				title: e.title,
-				url_path: e.url_path,
-				mode: "storage",
-				icon: "mdi:test-tube",
-				show_in_sidebar: !0,
-				require_admin: !1
-			});
-		}
-		haTestDashboardConfig(e) {
-			return this.call({
-				type: "lovelace/config",
-				url_path: e,
-				force: !0
-			});
-		}
-		saveHATestDashboard(e) {
-			return this.call({
-				type: "lovelace/config/save",
-				url_path: e.url_path,
-				config: e.config
-			});
-		}
-		info() {
-			return this.call({ type: `${N}/info` });
-		}
-		list(e, t = "", n = "", r, i = "completed_at", a = !0, o = !1, s, c = 25) {
-			return this.call({
-				type: `${N}/${s ? "library/viewings" : "journal/list"}`,
-				...s ? { title_id: s } : {},
-				...P(e),
-				query: t,
-				limit: c,
-				sort: i,
-				descending: a,
-				fuzzy: o,
-				...n ? { status: n } : {},
-				...r ? { cursor: r } : {}
-			});
-		}
-		async listSized(e, t, n) {
-			let r = [], i = t.cursor, a, o = 0, s = /* @__PURE__ */ new Set(), c = t.pageSize === "all" ? 1e4 : t.pageSize;
-			for (; n();) {
-				if (i) {
-					if (s.has(i)) throw new M("refresh_required");
-					s.add(i);
-				}
-				let l = await this.list(e, t.query, t.status, i, t.sort, t.descending, t.fuzzy, t.libraryTitleId, Math.min(100, c - r.length));
-				if (!n()) throw new M("not_ready");
-				if (a !== void 0 && a !== l.revision) throw new M("refresh_required");
-				if (a = l.revision, o += new TextEncoder().encode(JSON.stringify(l.items)).byteLength, r.length + l.items.length > c || o > 33554432) throw new M("journal_page_too_large");
-				if (r.push(...l.items), c <= 100 || !l.next_cursor) return {
-					...l,
-					items: r
-				};
-				if (!l.items.length) throw new M("refresh_required");
-				if (r.length >= c) {
-					if (t.pageSize === "all") throw new M("journal_page_too_large");
-					return {
-						...l,
-						items: r
-					};
-				}
-				i = l.next_cursor;
-			}
-			throw new M("not_ready");
-		}
-		get(e, t) {
-			return this.call({
-				type: `${N}/journal/get`,
-				...P(e),
-				viewing_id: t
-			});
-		}
-		calendarMonth(e, t, n, r = "", i = "", a = !1, o) {
-			return this.call({
-				type: `${N}/journal/calendar`,
-				...P(e),
-				start: t,
-				end: n,
-				query: r,
-				fuzzy: a,
-				...i ? { status: i } : {},
-				...o ? { title_id: o } : {}
-			});
-		}
-		calendarDetails(e, t) {
-			return this.call({
-				type: `${N}/journal/calendar/get`,
-				...P(e),
-				viewing_id: t
-			});
-		}
-		viewingLibrary(e, t) {
-			return this.call({
-				type: `${N}/library/viewing`,
-				...P(e),
-				viewing_id: t
-			});
-		}
-		sessions(e, t) {
-			return this.call({
-				type: `${N}/journal/sessions`,
-				...P(e),
-				viewing_id: t
-			});
-		}
-		nowPlaying(e, t) {
-			return this.call({
-				type: `${N}/now_playing`,
-				...P(e),
-				...t ? { player_id: t } : {}
-			});
-		}
-		libraryInfo(e) {
-			return this.call({
-				type: `${N}/library/info`,
-				...P(e)
-			});
-		}
-		libraryPurchaseTotals(e) {
-			return this.call({
-				type: `${N}/library/purchases/summary`,
-				...P(e)
-			});
-		}
-		libraryList(e, t = {}) {
-			return this.call({
-				type: `${N}/library/list`,
-				...P(e),
-				filters: t
-			});
-		}
-		libraryVersions(e, t, n = 0, r) {
-			return this.call({
-				type: `${N}/library/versions`,
-				...P(e),
-				title_id: t,
-				offset: n,
-				...r === void 0 ? {} : { revision: r }
-			});
-		}
-		librarySync(e) {
-			return this.call({
-				type: `${N}/library/sync`,
-				...P(e)
-			});
-		}
-		collectionTargets(e, t, n) {
-			return this.call({
-				type: `${N}/library/collections/targets`,
-				...P(e),
-				title_id: t,
-				revision: n
-			});
-		}
-		refreshTitleCollections(e, t, n) {
-			return j(this.transport.callWS({
-				type: `${N}/library/collections/refresh`,
-				...P(e),
-				title_id: t,
-				revision: n
-			}), 31e4);
-		}
-		dismissCollectionJob(e, t) {
-			return this.call({
-				type: `${N}/library/collections/dismiss`,
-				...P(e),
-				request_id: t
-			});
-		}
-		prepareCollectionAdd(e, t, n, r) {
-			return this.prepareCommand(e, "library/collections/add", {
-				title_id: t,
-				collection: n,
-				revision: r
-			});
-		}
-		prepareCollectionChange(e, t, n, r, i) {
-			return this.prepareCommand(e, "library/collections/queue", {
-				title_id: t,
-				collection: n,
-				operation: r,
-				revision: i
-			});
-		}
-		queueCollectionChange(e) {
-			return this.call({ ...e.message });
-		}
-		collectionAdd(e) {
-			return this.call({ ...e.message });
-		}
-		collectionCheck(e, t) {
-			return this.call({
-				type: `${N}/library/collections/check`,
-				...P(e),
-				request_id: t
-			});
-		}
-		collectionAcknowledge(e, t) {
-			return this.call({
-				type: `${N}/library/collections/acknowledge`,
-				...P(e),
-				request_id: t,
-				confirmation: "ACKNOWLEDGE"
-			});
-		}
-		async libraryArtwork(e, t, n) {
-			if (!/^[a-f0-9]{64}$/.test(t)) throw new M("invalid_request");
-			return this.raster(`/api/${N}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/library/artwork/${t}`, n);
-		}
-		async raster(e, t) {
-			let n = await this.transport.fetchWithAuth(e, {
-				signal: t,
-				cache: "no-store",
-				redirect: "error"
-			});
-			if (!n.ok) throw await n.body?.cancel(), new M([401, 403].includes(n.status) ? "unauthorized" : "not_found");
-			let r = n.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
-			if (!r || ![
-				"image/jpeg",
-				"image/png",
-				"image/webp"
-			].includes(r)) throw await n.body?.cancel(), new M("invalid_request");
-			return at(n, ct, r);
-		}
-		settingsTransfer(e, t, n, r = {}, i = "") {
-			return this.call({
-				...P(e),
-				type: `${N}/settings/transfer`,
-				operation: t,
-				categories: n,
-				data: r,
-				request_id: i
-			});
-		}
-		settings(e, t, n = {}) {
-			return this.call({
-				...n,
-				...P(e),
-				type: `${N}/settings/${t}`
-			});
-		}
-		inspect(e, t, n = 0, r, i) {
-			return this.call({
-				type: `${N}/database/inspect`,
-				...P(e),
-				table: t,
-				offset: n,
-				...r == null ? {} : { revision: r },
-				...i
-			});
-		}
-		referencedBy(e, t, n, r, i) {
-			return this.call({
-				type: `${N}/database/referenced_by`,
-				...P(e),
-				table: t,
-				key: n,
-				token: r,
-				revision: i
-			});
-		}
-		cleanupPreview(e, t) {
-			return this.call({
-				type: `${N}/database/cleanup/preview`,
-				...P(e),
-				policies: t
-			});
-		}
-		cleanupDatabase(e, t) {
-			return this.call({
-				type: `${N}/database/cleanup/apply`,
-				...P(e),
-				as_of: t.as_of,
-				policies: t.policies,
-				revision: t.revision
-			});
-		}
-		preparePurge(e, t) {
-			return this.prepareCommand(e, "database/purge", t);
-		}
-		prepareDatabaseUpdate(e, t) {
-			return this.prepareCommand(e, "database/update", t);
-		}
-		searchImportMatches(e, t, n, r) {
-			return this.call({
-				type: `${N}/database/import/search`,
-				...P(e),
-				plan_id: t.plan_id,
-				revision: t.revision,
-				purchase_key: n,
-				query: r
-			});
-		}
-		matchImportPurchase(e, t, n, r) {
-			return this.call({
-				type: `${N}/database/import/match`,
-				...P(e),
-				plan_id: t.plan_id,
-				revision: t.revision,
-				purchase_key: n,
-				title_id: r
-			});
-		}
-		prepareImport(e, t, n) {
-			return this.prepareCommand(e, "database/import", {
-				plan_id: t.plan_id,
-				revision: t.revision,
-				selected: [...n].sort()
-			});
-		}
-		applyImport(e) {
-			return this.call({ ...e.message });
-		}
-		async previewImport(e, t, n, r = !1) {
-			let i = /\.(sqlite|sqlite3|db)$/i.test(t.name) ? "sqlite" : /\.json$/i.test(t.name) ? "json" : null;
-			if (!i) throw new M("invalid_request");
-			if (!t.size || t.size > 33554432) throw new M("import_too_large");
-			let a = await this.transport.fetchWithAuth(`/api/${N}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/import/preview?format=${i}${r ? "&purchase_only=true" : ""}`, {
-				method: "POST",
-				body: t,
-				signal: n,
-				redirect: "error",
-				cache: "no-store",
-				headers: { "Content-Type": "application/octet-stream" }
-			});
-			if (!a.ok) {
-				let e = {
-					401: "unauthorized",
-					403: "unauthorized",
-					413: "import_too_large",
-					404: "not_found"
-				};
-				if (e[a.status]) throw new M(e[a.status]);
-				let t = await a.json().catch(() => null);
-				throw new M(t?.code ?? "connection_lost");
-			}
-			let o = await at(a, 8388608, "application/json");
-			return JSON.parse(await o.text());
-		}
-		autoMatchPurchases(e) {
-			return this.call({
-				type: `${N}/purchases/auto_match`,
-				...P(e)
-			});
-		}
-		reconcilePurchases(e) {
-			return this.call({
-				type: `${N}/purchases/reconcile`,
-				...P(e)
-			});
-		}
-		previewPurchaseRepair(e, t, n, r, i) {
-			return this.call({
-				...P(e),
-				type: `${N}/purchases/repair/preview`,
-				action: t,
-				key: n,
-				token: r,
-				changes: i
-			});
-		}
-		preparePurchaseRepair(e, t) {
-			return this.prepareCommand(e, "purchases/repair/apply", {
-				plan_id: t.plan_id,
-				revision: t.revision
-			});
-		}
-		applyPurchaseRepair(e) {
-			return this.call({ ...e.message });
-		}
-		purge(e) {
-			return this.call({ ...e.message });
-		}
-		async artwork(e, t) {
-			if (!/^media_player\.[a-z0-9_]{1,255}$/.test(e)) throw new M("invalid_request");
-			let n = await this.transport.fetchWithAuth(`/api/media_player_proxy/${e}`, {
-				signal: t,
-				cache: "no-store",
-				redirect: "error"
-			});
-			if (!n.ok) {
-				if (await n.body?.cancel(), n.status === 404) return null;
-				throw new M([401, 403].includes(n.status) ? "unauthorized" : "not_ready");
-			}
-			let r = n.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
-			return !r || ![
-				"image/jpeg",
-				"image/png",
-				"image/webp"
-			].includes(r) ? (await n.body?.cancel(), null) : at(n, ct, r);
-		}
-		librarySuggestions(e, t, n, r = !1) {
-			return this.call({
-				type: `${N}/library/suggest`,
-				...P(e),
-				field: t,
-				query: n,
-				fuzzy: r
-			});
-		}
-		librarySearch(e, t, n = !0) {
-			return this.call({
-				type: `${N}/library/search`,
-				...P(e),
-				query: t,
-				fuzzy: n
-			});
-		}
-		calendarStatus(e) {
-			return this.call({
-				type: `${N}/calendar/status`,
-				...P(e)
-			});
-		}
-		prepareCalendarSync(e, t) {
-			return this.prepareCommand(e, "calendar/sync", {
-				fingerprint: t,
-				confirmation: "EXPORT JOURNAL"
-			});
-		}
-		calendarSync(e) {
-			return this.call({ ...e.message });
-		}
-		calendarMaintain(e, t, n, r = "") {
-			return this.call({
-				type: `${N}/calendar/maintain`,
-				...P(e),
-				action: t,
-				fingerprint: n,
-				review_token: r,
-				confirmation: t === "acknowledge" ? "ACKNOWLEDGE" : ""
-			});
-		}
-		calendarCancel(e, t) {
-			return this.call({
-				type: `${N}/calendar/cancel`,
-				...P(e),
-				job_id: t
-			});
-		}
-		validateDatabaseQuery(e, t, n) {
-			return this.call({
-				type: `${N}/database/validate_query`,
-				...P(e),
-				table: t,
-				query: n
-			});
-		}
-		prepareDatabaseMutation(e, t) {
-			return this.prepareCommand(e, "database/mutate", { data: t });
-		}
-		databaseMutation(e) {
-			return this.call({ ...e.message });
-		}
-		async libraryAll(e, t, n) {
-			let r, i = [], a = 0;
-			for (; n();) {
-				let o = await this.libraryList(e, {
-					...t,
-					grouped: !0,
-					limit: 1e3,
-					offset: i.length,
-					...r ? {
-						revision: r.revision,
-						preferences_key: r.preferences_key,
-						...r.random_seed === void 0 ? {} : { random_seed: r.random_seed }
-					} : {}
-				});
-				if (!n()) throw new M("not_ready");
-				if (r && (o.revision !== r.revision || o.preferences_key !== r.preferences_key)) throw new M("refresh_required");
-				if (a += new TextEncoder().encode(JSON.stringify(o.items)).byteLength, i.length + o.items.length > 1e4 || a > 33554432) throw new M("library_page_too_large");
-				if (i.push(...o.items), r = o, !o.has_more) return {
-					...o,
-					items: i,
-					offset: 0,
-					limit: i.length,
-					has_more: !1
-				};
-				if (!o.items.length) throw new M("refresh_required");
-			}
-			throw new M("not_ready");
-		}
-		prepare(e, t, n) {
-			return this.prepareCommand(e, `journal/${t}`, n);
-		}
-		prepareCommand(e, t, n) {
-			let r = structuredClone({
-				...n,
-				...P(e),
-				type: `${N}/${t}`,
-				request_id: it()
-			});
-			return {
-				scope: P(e),
-				message: Object.freeze(r)
-			};
-		}
-		mutate(e) {
-			return this.call({ ...e.message });
-		}
-		async download(e, t, n) {
-			let r = `/api/${N}/${encodeURIComponent(e.entry_id)}/${encodeURIComponent(e.dataset_id)}/export?format=${t}`, i = await this.transport.fetchWithAuth(r, {
-				signal: n,
-				cache: "no-store",
-				redirect: "error"
-			});
-			if (!i.ok) throw new M({
-				401: "unauthorized",
-				403: "unauthorized",
-				404: "not_found",
-				413: "export_too_large",
-				503: "busy"
-			}[i.status] ?? "storage_error");
-			return at(i, st, t === "json" ? "application/json" : "application/vnd.sqlite3");
-		}
-	};
-}));
+customElements.get("kaleidescape-journal-shortcuts") || customElements.define("kaleidescape-journal-shortcuts", xt);
 // src/ui/dialog.ts
-function I(e, t = !1) {
+function L(e, t = !1) {
 	return v`<button
     type="button"
     class="dialog-close"
@@ -2482,26 +2958,26 @@ function I(e, t = !1) {
     </svg>
   </button>`;
 }
-function L(e) {
+function R(e) {
 	let t = e.currentTarget;
 	if (e.target !== t) return;
 	let n = t.getBoundingClientRect();
 	e.clientX >= n.left && e.clientX <= n.right && e.clientY >= n.top && e.clientY <= n.bottom || t.dispatchEvent(new Event("cancel", { cancelable: !0 })) && t.close();
 }
-var R = t((() => {
-	w();
+var z = t((() => {
+	C();
 }));
-F(), R(), w(), O();
-var ut = {
+z(), C(), I();
+var St = {
 	calendar_show_month: !0,
 	calendar_show_year: !0,
 	calendar_show_total: !0
 };
-function dt(e = 0) {
+function Ct(e = 0) {
 	let t = Math.floor(e / 60);
 	return `${Math.floor(t / 60)}h ${t % 60}m`;
 }
-function ft(e, t, n = !!t, r = ut) {
+function wt(e, t, n = !!t, r = St) {
 	if (n) {
 		let n = [
 			r.calendar_show_month ? v`<span
@@ -2520,10 +2996,10 @@ function ft(e, t, n = !!t, r = ut) {
 	}
 	return v`<span
     >Total Viewings ${e?.viewing_count ?? 0} · Watched Time
-    ${dt(e?.watched_seconds)}</span
+    ${Ct(e?.watched_seconds)}</span
   >`;
 }
-function pt(e, t, n, r, i) {
+function Tt(e, t, n, r, i) {
 	return v`<form
     class="journal-mobile-search"
     role="search"
@@ -2542,18 +3018,18 @@ function pt(e, t, n, r, i) {
     />
     ${e ? v`<button type="button" aria-label="Clear Journal search" ?disabled=${t} @click=${i}>×</button>` : x}
     <button type="submit" aria-label="Search Journal" ?disabled=${t}>
-      ${D("search")}
+      ${F("search")}
     </button>
   </form>`;
 }
-function mt(e, t) {
+function Et(e, t) {
 	return e ? e.error ? v`<span class="error" role="alert"
         >${e.error} <button @click=${t}>Retry month</button></span
       >` : e.loading ? v`<span role="status">Loading month…</span>` : e.empty ? v`<span class="calendar-empty-notice" role="status"
             >No viewings match this month</span
           >` : x : x;
 }
-function ht(e, t, n, r = !1) {
+function Dt(e, t, n, r = !1) {
 	let i = new Date(e.started_at), a = Number.isNaN(i.getTime()) ? "—" : i.toLocaleDateString();
 	return v`<li
     class=${t === e.id ? "journal-row selected" : "journal-row"}
@@ -2573,7 +3049,7 @@ function ht(e, t, n, r = !1) {
     >
   </li>`;
 }
-function gt(e, t, n) {
+function Ot(e, t, n) {
 	let r = n ? v`<button type="button" class="link" @click=${n}>
         ${e.title}
       </button>` : e.title;
@@ -2607,7 +3083,7 @@ function gt(e, t, n) {
       </div>
     </dl>`;
 }
-var _t = l`
+var kt = l`
   .calendar-totals {
     display: grid;
     width: 100%;
@@ -2631,8 +3107,8 @@ var _t = l`
       display: none;
     }
   }
-`, vt = l`
-  ${_t}
+`, At = l`
+  ${kt}
   .journal [hidden] {
     display: none;
   }
@@ -3028,17 +3504,17 @@ var _t = l`
       font-size: 18px;
     }
   }
-`, yt, bt = t((() => {
-	yt = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='positive'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(1.33,%200)'%3e%3cg%20transform='translate(0,%2016.27)'%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.000109100102%200.246970954%2077.0827837%200.246970954%2077.0827837%2063.7145228%200.000109100102%2063.7145228'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M77.0137759,27.0426556%20C76.2423237,14.6741909%2069.9521992,5.42041494%2060.4876349,0.246970954%20C60.5414108,0.548381743%2060.273195,0.925145228%2059.9678008,0.791701245%20C53.7772614,-1.91634855%2043.2753527,6.84780083%2035.9365975,2.25825726%20C35.9917012,3.90539419%2035.6700415,11.940249%2024.3515353,12.4063071%20C24.0843154,12.4172614%2023.9372614,12.1443983%2024.1062241,11.9512033%20C25.619917,10.2247303%2027.1482158,5.85360996%2024.9507054,3.5233195%20C20.2446473,7.74041494%2017.5117012,9.32746888%208.48829876,7.23319502%20C2.71103734,13.2740249%20-0.562655602,21.5419087%200.08,31.8413278%20C1.39120332,52.86639%2021.0848133,64.8846473%2040.9165145,63.6471369%20C60.746888,62.4106224%2078.3253112,48.0677178%2077.0137759,27.0426556'%20fill='%23FA320A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M40.8717012,11.4648963%20C44.946722,10.49361%2056.6678838,11.3702905%2060.4232365,16.3518672%20C60.6486307,16.6506224%2060.3312863,17.2159336%2059.9678008,17.0572614%20C53.7772614,14.3492116%2043.2753527,23.113361%2035.9365975,18.5238174%20C35.9917012,20.1709544%2035.6700415,28.2058091%2024.3515353,28.6718672%20C24.0843154,28.6828216%2023.9372614,28.4099585%2024.1062241,28.2167635%20C25.619917,26.4902905%2027.1478838,22.1191701%2024.9507054,19.7888797%20C19.8243983,24.3827386%2017.0453112,25.8589212%205.91900415,22.8514523%20C5.55485477,22.753195%205.67900415,22.1679668%206.06639004,22.020249%20C8.16929461,21.2165975%2012.933444,17.6965975%2017.4406639,16.1450622%20C18.2987552,15.8499585%2019.1541909,15.6209129%2019.9890456,15.4878008%20C15.02639,15.0443154%2012.7893776,14.3541909%209.63286307,14.8302075%20C9.28697095,14.8823237%209.05195021,14.479668%209.26639004,14.2034855%20C13.5193361,8.7253112%2021.3540249,7.07087137%2026.1878838,9.98107884%20C23.2082988,6.28912863%2020.8743568,3.34473029%2020.8743568,3.34473029%20L26.4046473,0.203485477%20C26.4046473,0.203485477%2028.6894606,5.30821577%2030.3518672,9.02340249%20C34.4657261,2.94506224%2042.119834,2.38406639%2045.3536929,6.69676349%20C45.5455602,6.95302905%2045.3450622,7.31751037%2045.0247303,7.30987552%20C42.3926971,7.24580913%2040.9434025,9.63983402%2040.833527,11.4605809%20L40.8717012,11.4648963'%20fill='%2300912D'%3e%3c/path%3e%3c/g%3e%3c/svg%3e";
-})), xt, St = t((() => {
-	xt = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='negative'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%201.23)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0%200.161950465%2079.7417075%200.161950465%2079.7417075%2077.522807%200%2077.522807'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M71.4638596,70.225614%20C56.3459649,71.0192982%2053.2568421,53.7203509%2047.325614,53.8435088%20C44.7982456,53.8964912%2042.8063158,56.5389474%2043.6810526,59.6185965%20C44.1621053,61.3115789%2045.4964912,63.794386%2046.337193,65.3350877%20C49.302807,70.7719298%2044.9185965,76.9245614%2039.7880702,77.4449123%20C31.2621053,78.3098246%2027.705614,73.3638596%2027.925614,68.3007018%20C28.1729825,62.6168421%2032.9922807,56.8091228%2028.0494737,54.3378947%20C22.8694737,51.7480702%2018.6585965,61.8754386%2013.7017544,64.1357895%20C9.2154386,66.1817544%202.9877193,64.5954386%200.773684211,59.6136842%20C-0.781403509,56.1129825%20-0.498596491,49.3722807%206.42526316,46.8003509%20C10.7501754,45.1940351%2020.3880702,48.9010526%2020.8824561,44.205614%20C21.4522807,38.7929825%2010.7575439,38.3364912%207.53754386,37.0385965%20C1.84,34.7424561%20-1.52280702,29.8291228%201.11192982,24.5582456%20C3.08877193,20.6045614%208.90526316,18.9957895%2013.3449123,20.7277193%20C18.6635088,22.8024561%2019.517193,28.3189474%2022.2421053,30.6129825%20C24.5894737,32.5901754%2027.8021053,32.8375439%2029.9031579,31.4782456%20C31.4526316,30.4754386%2031.9684211,28.2729825%2031.3838596,26.2610526%20C30.6084211,23.5901754%2028.5505263,21.9235088%2026.542807,20.2905263%20C22.9698246,17.3859649%2017.925614,14.8884211%2020.9768421,6.96035088%20C23.4778947,0.463157895%2030.8133333,0.229122807%2030.8133333,0.229122807%20C33.7277193,-0.0985964912%2036.3375439,0.781403509%2038.4642105,2.68140351%20C41.3073684,5.22140351%2041.8610526,8.61649123%2041.3852632,12.2385965%20C40.9505263,15.5449123%2039.7803509,18.4407018%2039.1701754,21.7164912%20C38.4621053,25.5196491%2040.4947368,29.3519298%2044.3603509,29.5010526%20C49.4449123,29.6975439%2050.9694737,25.7894737%2051.5915789,23.3122807%20C52.5024561,19.6877193%2053.6978947,16.322807%2057.0617544,14.2035088%20C61.8894737,11.1617544%2068.5954386,11.8284211%2071.7066667,17.674386%20C74.1677193,22.3%2073.3775439,28.6677193%2069.6024561,32.1449123%20C67.9087719,33.7045614%2065.8722807,34.254386%2063.6694737,34.2698246%20C60.5105263,34.2922807%2057.3529825,34.2147368%2054.4207018,35.6929825%20C52.4245614,36.6989474%2051.5547368,38.3382456%2051.5550877,40.5354386%20C51.5550877,42.6768421%2052.6698246,44.0754386%2054.4761404,44.985614%20C57.8782456,46.7003509%2061.6336842,47.0508772%2065.3087719,47.694386%20C70.6382456,48.6277193%2075.3242105,50.5049123%2078.3326316,55.4505263%20C78.3596491,55.4940351%2078.3859649,55.5378947%2078.4115789,55.5821053%20C81.8666667,61.4375439%2078.2533333,69.8687719%2071.4638596,70.225614'%20fill='%230AC855'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
-})), Ct, wt = t((() => {
-	Ct = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(10.1,%200)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.0178438662%200.124907063%2059.6019307%200.124907063%2059.6019307%2079.9821561%200.0178438662%2079.9821561'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M2.53115242,19.0988848%20C2.76163569,23.9952416%2014.8892193,27.8762825%2029.8007435,27.7912268%20C42.8237918,27.7168773%2053.6874349,24.6411896%2056.3485502,20.6004461%20C55.7421561,19.9265428%2054.904684,19.4643866%2053.9613383,19.3391822%20C53.9714498,19.220223%2053.9779926,19.1003717%2053.9773978,18.9787361%20C53.9663941,17.0423792%2052.5460223,15.4477323%2050.695316,15.1503346%20C50.7440892,14.8999257%2050.7696654,14.6408922%2050.7681784,14.3759108%20C50.7559851,12.2194796%2048.9977695,10.481487%2046.8413383,10.4936803%20C46.7925651,10.4939777%2046.7449814,10.4999257%2046.6965056,10.5020074%20C46.8344981,10.0987361%2046.9118216,9.66780669%2046.9094424,9.21784387%20C46.8969517,7.06141264%2045.1390335,5.32342007%2042.9826022,5.33561338%20C42.4877323,5.33858736%2042.0169517,5.43702602%2041.5821561,5.60743494%20C40.9653532,4.44639405%2039.7811152,3.63717472%2038.4002974,3.54379182%20C38.1597026,1.60743494%2036.5055762,0.113605948%2034.506171,0.124843367%20C33.247881,0.13204461%2032.1350186,0.736356877%2031.4263197,1.66453532%20C30.7075093,0.882379182%2029.6773234,0.391672862%2028.5314498,0.398215613%20C26.3750186,0.410408922%2024.637026,2.16862454%2024.6492193,4.32475836%20C24.6515985,4.73665428%2024.718513,5.13249071%2024.8386617,5.50453532%20C23.9586617,5.66780669%2023.1848327,6.12520446%2022.6191822,6.77144981%20C22.1701115,5.09888476%2020.642974,3.86973978%2018.8297398,3.8798513%20C17.1357621,3.88966543%2015.7040892,4.97873606%2015.172342,6.48981413%20C13.7332342,7.07182156%2012.7202974,8.48356877%2012.7298141,10.1302602%20C12.7318959,10.4960595%2012.7878067,10.8481784%2012.8838662,11.1836431%20C12.398513,10.9713011%2011.8634944,10.852342%2011.2996283,10.8556134%20C9.5994052,10.8654275%208.16327138,11.9622305%207.63598513,13.4822305%20C7.13040892,13.2472862%206.56832714,13.1137546%205.973829,13.1173234%20C3.81739777,13.1295167%202.07910781,14.8874349%202.09153162,17.0438662%20C2.09546468,17.7549442%202.29263941,18.4187361%202.62810409,18.9909294%20C2.59390335,19.0254275%202.56386617,19.063197%202.53115242,19.0988848'%20fill='%23F9D320'%20mask='url(%23mask-2)'%3e%3c/path%3e%3cpath%20d='M50.9736803,68.1576208%20C49.8275093,69.89829%2047.6002974,71.7008178%2045.2692937,72.9026022%20L49.2541264,32.4853532%20C51.7894424,31.6707807%2054.2634944,30.5915242%2056.085948,29.0438662%20L50.9736803,68.1576208%20Z%20M41.3037918,74.5885502%20C37.4450558,75.8655762%2035.201487,76.2614126%2031.9895911,76.5766543%20L32.4901115,35.0432714%20C36.0383643,34.9415613%2040.6301859,34.4606691%2044.5427509,33.6255762%20L41.3037918,74.5885502%20Z%20M18.29829,74.5885502%20L15.0596283,33.6255762%20C18.9718959,34.4606691%2023.5637175,34.9415613%2027.1119703,35.0432714%20L27.6124907,76.5766543%20C24.4005948,76.2614126%2022.1573234,75.8655762%2018.29829,74.5885502%20Z%20M8.62869888,68.1576208%20L3.51613383,29.0438662%20C5.33858736,30.5915242%207.81263941,31.6707807%2010.3479554,32.4853532%20L14.3327881,72.9026022%20C12.0017844,71.7008178%209.77457249,69.89829%208.62869888,68.1576208%20Z%20M50.687881,13.6110037%20C50.7384387,13.8578439%2050.7666914,14.1130112%2050.7681784,14.3750186%20C50.7696654,14.64%2050.7440892,14.8990335%2050.6950186,15.1494424%20C52.5460223,15.4465428%2053.9663941,17.0411896%2053.9773978,18.9778439%20C53.9779926,19.0991822%2053.9714498,19.2193309%2053.9613383,19.3379926%20C54.904684,19.463197%2055.7421561,19.9253532%2056.3485502,20.5992565%20C53.6877323,24.6402974%2042.8237918,27.7159851%2029.8010409,27.790632%20C14.8895167,27.8759851%202.76193309,23.9952416%202.53115242,19.0985874%20C2.56386617,19.063197%202.59390335,19.0251301%202.62810409,18.9909294%20C2.39791822,18.5983643%202.23910781,18.1608922%202.15702602,17.6966543%20C0.729219331,19.0518959%20-0.13472119,20.1445353%200.0172490706,21.7356134%20C0.0318215613,21.9482528%206.3339777,67.0709294%206.3339777,67.0709294%20C7.06111524,74.2173978%2017.4388104,79.9292193%2029.8010409,80%20C42.1632714,79.9292193%2052.5412639,74.2173978%2053.2681041,67.0709294%20C53.2681041,67.0709294%2059.5702602,21.9482528%2059.5848327,21.7356134%20C59.8866914,18.5531599%2056.162974,15.6642379%2050.687881,13.6110037%20L50.687881,13.6110037%20Z'%20fill='%23DB382A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M15.0596283,33.6255762%20L18.29829,74.5885502%20C22.1573234,75.8655762%2024.4005948,76.2614126%2027.6124907,76.5766543%20L27.1119703,35.0432714%20C23.5637175,34.9415613%2018.9718959,34.4606691%2015.0596283,33.6255762'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M31.9895911,76.5766543%20C35.201487,76.2614126%2037.4447584,75.8655762%2041.3037918,74.5885502%20L44.5424535,33.6255762%20C40.6301859,34.4606691%2036.0383643,34.9415613%2032.4901115,35.0432714%20L31.9895911,76.5766543'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2692937,72.9026022%20C47.6002974,71.7008178%2049.8275093,69.89829%2050.9733829,68.1576208%20L56.085948,29.0438662%20C54.2634944,30.5915242%2051.7894424,31.6707807%2049.2541264,32.4853532%20L45.2692937,72.9026022'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M3.51613383,29.0438662%20L8.62840149,68.1576208%20C9.77457249,69.89829%2012.0017844,71.7008178%2014.3327881,72.9026022%20L10.3479554,32.4853532%20C7.81263941,31.6707807%205.33858736,30.5915242%203.51613383,29.0438662'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/svg%3e";
-})), Tt, Et = t((() => {
-	Tt = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%2012.46)'%3e%3cg%3e%3cpath%20d='M45.4780328,39.6152131%20C45.9506885,38.4445902%2047.6259672,37.7314098%2048.8288525,37.8148197%20C50.114623,37.904%2051.4803934,39.2556066%2051.719082,40.584918%20C51.7634098,40.5366557%2051.8098361,40.4910164%2051.8570492,40.4461639%20C52.2699016,40.0516721%2052.7871475,39.7899016%2053.3531803,39.7177705%20C53.266623,39.3342951%2053.2459016,38.9238033%2053.3051803,38.5025574%20C53.5142295,37.0205902%2054.7034754,35.9092459%2056.0650492,35.9202623%20C56.9437377,35.9273443%2057.714623,36.376918%2058.216918,37.067541%20C58.2617705,37.0114098%2058.3113443,36.96%2058.3596066,36.907541%20C58.9340328,33.9152787%2059.2980984,30.5345574%2059.3809836,26.9468852%20C59.6655738,14.6103607%2056.5356066,4.53193443%2052.3902951,4.43645902%20C48.2447213,4.34072131%2044.653377,14.2638689%2044.3687869,26.6003934%20C44.3687869,26.6003934%2044.1492459,31.1000656%2045.4780328,39.6152131'%20id='Fill-1'%20fill='%23185A30'%3e%3c/path%3e%3cpath%20d='M73.5446557,53.1058361%20C73.7896393,52.696918%2073.9265574,52.2066885%2073.9171148,51.6857705%20C73.9965902,50.002623%2072.8411803,48.4768525%2071.2335738,48.6457705%20C71.28,48.4532459%2071.3104262,48.2531148%2071.3222295,48.0466885%20C71.4184918,46.3606557%2070.2557377,44.907541%2068.7249836,44.8013115%20C68.6914098,44.7992131%2068.6583607,44.7981639%2068.6250492,44.7971148%20C68.7842623,44.3787541%2068.8632131,43.9116066%2068.8351475,43.4166557%20C68.7559344,42.0139016%2067.7885902,40.832%2066.5300984,40.5993443%20C66.075541,40.5154098%2065.634623,40.5571148%2065.2309508,40.696918%20C64.8495738,39.757377%2064.0487869,39.060459%2063.074623,38.9133115%20C62.9975082,37.3878033%2061.8956066,36.1321967%2060.4768525,36.0338361%20C59.5847869,35.9719344%2058.7651148,36.3816393%2058.216918,37.067541%20C57.714623,36.376918%2056.9437377,35.9276066%2056.0650492,35.9204395%20C54.7034754,35.9092459%2053.5142295,37.0205902%2053.3051803,38.5028197%20C53.2459016,38.9238033%2053.266623,39.3342951%2053.3531803,39.7180328%20C52.7871475,39.7899016%2052.2699016,40.0519344%2051.8570492,40.4461639%20C51.8098361,40.4910164%2051.7634098,40.5366557%2051.719082,40.584918%20C51.4803934,39.2556066%2050.114623,37.9042623%2048.8288525,37.8148197%20C47.6259672,37.7314098%2045.928918,38.4621639%2045.4780328,39.6152131%20C45.6758033,41.6259672%2046.9327213,47.1071475%2051.4788197,52.0241311%20L51.5192131,52.0270164%20C51.9575082,52.4236066%2052.5298361,52.6420984%2053.1399344,52.5878033%20C53.5181639,52.5539672%2053.8664918,52.418623%2054.1665574,52.2098361%20L54.2397377,52.2148197%20C54.6397377,52.4925902%2055.1205246,52.6379016%2055.6285902,52.5927869%20C55.8226885,52.5754754%2056.0078689,52.5287869%2056.1838689,52.4621639%20C56.6192787,53.3623607%2057.5902951,53.9441311%2058.6740984,53.8486557%20C59.5134426,53.7746885%2060.2268852,53.3104262%2060.6462951,52.6570492%20L60.7821639,52.6664918%20C61.2010492,53.0817049%2061.7579016,53.323541%2062.3585574,53.3054426%20C62.855082,54.0566557%2063.767082,54.5188197%2064.7735082,54.4304262%20C65.1525246,54.3971148%2065.5063607,54.2874754%2065.8219016,54.1214426%20C66.3483279,54.7690492%2067.2123279,55.1540984%2068.1602623,55.0706885%20C69.0974426,54.9885902%2069.8890492,54.4689836%2070.3197377,53.7505574%20C70.7428197,54.0902295%2071.272918,54.2725246%2071.8358033,54.2224262%20C72.3819016,54.1736393%2072.8671475,53.9158033%2073.2317377,53.5257705%20L73.2925902,53.5299672%20C73.3754754,53.4098361%2073.4462951,53.2868197%2073.5121311,53.1627541%20C73.5137049,53.1603934%2073.5150164,53.1577705%2073.5163279,53.1554098%20C73.5252459,53.1388852%2073.5362623,53.122623%2073.5446557,53.1058361'%20fill='%23F9D320'%3e%3c/path%3e%3cpath%20d='M42.2090492,9.21232787%20L6.56209836,12.7268197%20C7.62203279,10.6709508%209.21206557,8.70662295%2010.7472787,7.6957377%20L45.2440656,3.18662295%20C43.8793443,4.79422951%2042.9272131,6.9762623%2042.2090492,9.21232787%20Z%20M45.2440656,49.5517377%20L10.7472787,45.042623%20C9.21206557,44.032%207.62203279,42.0674098%206.56209836,40.0118033%20L42.2090492,43.5262951%20C42.9272131,45.7620984%2043.8793443,47.9443934%2045.2440656,49.5517377%20Z%20M5.07514754,36.5143607%20C3.94885246,33.1108197%203.6,31.1323279%203.32170492,28.2992787%20L39.9527869,28.7409836%20C40.0427541,31.8701639%2040.4668852,35.9202623%2041.2031475,39.3707541%20L5.07514754,36.5143607%20Z%20M5.07514754,16.224%20L41.2031475,13.3676066%20C40.4668852,16.8180984%2040.0427541,20.8681967%2039.9527869,23.9976393%20L3.32170492,24.439082%20C3.6,21.6062951%203.94885246,19.627541%205.07514754,16.224%20Z%20M56.7186885,3.84865574%20C54.4333115,1.18767213%2052.7926557,-0.0616393443%2051.3872787,0.100721311%20C51.1252459,0.134032787%2011.4032787,5.67213115%2011.4032787,5.67213115%20C5.10006557,6.31318033%200.0624262295,15.4659672%200,26.3693115%20C0.0624262295,37.2723934%205.10006557,46.4251803%2011.4032787,47.0664918%20C11.4032787,47.0664918%2051.1997377,52.6247869%2051.3872787,52.6376393%20C51.7196066,52.635541%2052.0477377,52.5909508%2052.3711475,52.5080656%20C52.0563934,52.4144262%2051.7660328,52.2504918%2051.5192131,52.0270164%20L51.4788197,52.0241311%20C46.9327213,47.1074098%2045.6758033,41.6259672%2045.4780328,39.6152131%20C45.4785574,39.6136393%2045.4796066,39.6123279%2045.4801311,39.6107541%20C45.4796066,39.6123279%2045.4785574,39.6136393%2045.4780328,39.6152131%20C44.1492459,31.1000656%2044.3687869,26.6003934%2044.3687869,26.6003934%20C44.653377,14.2638689%2048.2447213,4.34072131%2052.3902951,4.43619672%20C56.5356066,4.53193443%2059.6655738,14.6103607%2059.3809836,26.9468852%20C59.2980984,30.5345574%2058.9340328,33.9152787%2058.3596066,36.907541%20C58.9497705,36.2562623%2059.741377,35.9819016%2060.4768525,36.0338361%20C60.6121967,36.043541%2060.7438689,36.0663607%2060.872918,36.096%20C63.3904262,22.3210492%2060.7512131,8.87029508%2056.7186885,3.84865574%20L56.7186885,3.84865574%20Z'%20fill='%23129B47'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M41.2031475,13.3676066%20L5.07514754,16.224%20C3.94885246,19.627541%203.6,21.6062951%203.32170492,24.439082%20L39.9527869,23.997377%20C40.0427541,20.8681967%2040.4668852,16.8180984%2041.2031475,13.3676066'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2440656,3.18662295%20L10.7472787,7.6957377%20C9.21206557,8.70662295%207.62203279,10.6709508%206.56209836,12.7268197%20L42.2090492,9.21232787%20C42.9272131,6.9762623%2043.8793443,4.79422951%2045.2440656,3.18662295'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M6.56209836,40.011541%20C7.62203279,42.0674098%209.21206557,44.032%2010.7472787,45.042623%20L45.2440656,49.5517377%20C43.8793443,47.9443934%2042.9272131,45.7620984%2042.2090492,43.5262951%20L6.56209836,40.011541'%20fill='%23FFFFFE'%3e%3c/path%3e%3cg%20transform='translate(3.15,%2028)'%3e%3cpath%20d='M36.8052459,0.675409836%20L0.174163934,0.233704918%20C0.452459016,3.0664918%200.801311475,5.0452459%201.92760656,8.44878689%20L38.0556066,11.3051803%20C37.3193443,7.85468852%2036.8952131,3.80459016%2036.8052459,0.675409836'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
+`, jt, Mt = t((() => {
+	jt = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='positive'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(1.33,%200)'%3e%3cg%20transform='translate(0,%2016.27)'%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.000109100102%200.246970954%2077.0827837%200.246970954%2077.0827837%2063.7145228%200.000109100102%2063.7145228'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M77.0137759,27.0426556%20C76.2423237,14.6741909%2069.9521992,5.42041494%2060.4876349,0.246970954%20C60.5414108,0.548381743%2060.273195,0.925145228%2059.9678008,0.791701245%20C53.7772614,-1.91634855%2043.2753527,6.84780083%2035.9365975,2.25825726%20C35.9917012,3.90539419%2035.6700415,11.940249%2024.3515353,12.4063071%20C24.0843154,12.4172614%2023.9372614,12.1443983%2024.1062241,11.9512033%20C25.619917,10.2247303%2027.1482158,5.85360996%2024.9507054,3.5233195%20C20.2446473,7.74041494%2017.5117012,9.32746888%208.48829876,7.23319502%20C2.71103734,13.2740249%20-0.562655602,21.5419087%200.08,31.8413278%20C1.39120332,52.86639%2021.0848133,64.8846473%2040.9165145,63.6471369%20C60.746888,62.4106224%2078.3253112,48.0677178%2077.0137759,27.0426556'%20fill='%23FA320A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M40.8717012,11.4648963%20C44.946722,10.49361%2056.6678838,11.3702905%2060.4232365,16.3518672%20C60.6486307,16.6506224%2060.3312863,17.2159336%2059.9678008,17.0572614%20C53.7772614,14.3492116%2043.2753527,23.113361%2035.9365975,18.5238174%20C35.9917012,20.1709544%2035.6700415,28.2058091%2024.3515353,28.6718672%20C24.0843154,28.6828216%2023.9372614,28.4099585%2024.1062241,28.2167635%20C25.619917,26.4902905%2027.1478838,22.1191701%2024.9507054,19.7888797%20C19.8243983,24.3827386%2017.0453112,25.8589212%205.91900415,22.8514523%20C5.55485477,22.753195%205.67900415,22.1679668%206.06639004,22.020249%20C8.16929461,21.2165975%2012.933444,17.6965975%2017.4406639,16.1450622%20C18.2987552,15.8499585%2019.1541909,15.6209129%2019.9890456,15.4878008%20C15.02639,15.0443154%2012.7893776,14.3541909%209.63286307,14.8302075%20C9.28697095,14.8823237%209.05195021,14.479668%209.26639004,14.2034855%20C13.5193361,8.7253112%2021.3540249,7.07087137%2026.1878838,9.98107884%20C23.2082988,6.28912863%2020.8743568,3.34473029%2020.8743568,3.34473029%20L26.4046473,0.203485477%20C26.4046473,0.203485477%2028.6894606,5.30821577%2030.3518672,9.02340249%20C34.4657261,2.94506224%2042.119834,2.38406639%2045.3536929,6.69676349%20C45.5455602,6.95302905%2045.3450622,7.31751037%2045.0247303,7.30987552%20C42.3926971,7.24580913%2040.9434025,9.63983402%2040.833527,11.4605809%20L40.8717012,11.4648963'%20fill='%2300912D'%3e%3c/path%3e%3c/g%3e%3c/svg%3e";
+})), Nt, Pt = t((() => {
+	Nt = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20type='negative'%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%201.23)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0%200.161950465%2079.7417075%200.161950465%2079.7417075%2077.522807%200%2077.522807'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M71.4638596,70.225614%20C56.3459649,71.0192982%2053.2568421,53.7203509%2047.325614,53.8435088%20C44.7982456,53.8964912%2042.8063158,56.5389474%2043.6810526,59.6185965%20C44.1621053,61.3115789%2045.4964912,63.794386%2046.337193,65.3350877%20C49.302807,70.7719298%2044.9185965,76.9245614%2039.7880702,77.4449123%20C31.2621053,78.3098246%2027.705614,73.3638596%2027.925614,68.3007018%20C28.1729825,62.6168421%2032.9922807,56.8091228%2028.0494737,54.3378947%20C22.8694737,51.7480702%2018.6585965,61.8754386%2013.7017544,64.1357895%20C9.2154386,66.1817544%202.9877193,64.5954386%200.773684211,59.6136842%20C-0.781403509,56.1129825%20-0.498596491,49.3722807%206.42526316,46.8003509%20C10.7501754,45.1940351%2020.3880702,48.9010526%2020.8824561,44.205614%20C21.4522807,38.7929825%2010.7575439,38.3364912%207.53754386,37.0385965%20C1.84,34.7424561%20-1.52280702,29.8291228%201.11192982,24.5582456%20C3.08877193,20.6045614%208.90526316,18.9957895%2013.3449123,20.7277193%20C18.6635088,22.8024561%2019.517193,28.3189474%2022.2421053,30.6129825%20C24.5894737,32.5901754%2027.8021053,32.8375439%2029.9031579,31.4782456%20C31.4526316,30.4754386%2031.9684211,28.2729825%2031.3838596,26.2610526%20C30.6084211,23.5901754%2028.5505263,21.9235088%2026.542807,20.2905263%20C22.9698246,17.3859649%2017.925614,14.8884211%2020.9768421,6.96035088%20C23.4778947,0.463157895%2030.8133333,0.229122807%2030.8133333,0.229122807%20C33.7277193,-0.0985964912%2036.3375439,0.781403509%2038.4642105,2.68140351%20C41.3073684,5.22140351%2041.8610526,8.61649123%2041.3852632,12.2385965%20C40.9505263,15.5449123%2039.7803509,18.4407018%2039.1701754,21.7164912%20C38.4621053,25.5196491%2040.4947368,29.3519298%2044.3603509,29.5010526%20C49.4449123,29.6975439%2050.9694737,25.7894737%2051.5915789,23.3122807%20C52.5024561,19.6877193%2053.6978947,16.322807%2057.0617544,14.2035088%20C61.8894737,11.1617544%2068.5954386,11.8284211%2071.7066667,17.674386%20C74.1677193,22.3%2073.3775439,28.6677193%2069.6024561,32.1449123%20C67.9087719,33.7045614%2065.8722807,34.254386%2063.6694737,34.2698246%20C60.5105263,34.2922807%2057.3529825,34.2147368%2054.4207018,35.6929825%20C52.4245614,36.6989474%2051.5547368,38.3382456%2051.5550877,40.5354386%20C51.5550877,42.6768421%2052.6698246,44.0754386%2054.4761404,44.985614%20C57.8782456,46.7003509%2061.6336842,47.0508772%2065.3087719,47.694386%20C70.6382456,48.6277193%2075.3242105,50.5049123%2078.3326316,55.4505263%20C78.3596491,55.4940351%2078.3859649,55.5378947%2078.4115789,55.5821053%20C81.8666667,61.4375439%2078.2533333,69.8687719%2071.4638596,70.225614'%20fill='%230AC855'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
+})), Ft, It = t((() => {
+	Ft = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(10.1,%200)'%3e%3cg%3e%3cmask%20id='mask-2'%20fill='white'%3e%3cpolygon%20points='0.0178438662%200.124907063%2059.6019307%200.124907063%2059.6019307%2079.9821561%200.0178438662%2079.9821561'%3e%3c/polygon%3e%3c/mask%3e%3cpath%20d='M2.53115242,19.0988848%20C2.76163569,23.9952416%2014.8892193,27.8762825%2029.8007435,27.7912268%20C42.8237918,27.7168773%2053.6874349,24.6411896%2056.3485502,20.6004461%20C55.7421561,19.9265428%2054.904684,19.4643866%2053.9613383,19.3391822%20C53.9714498,19.220223%2053.9779926,19.1003717%2053.9773978,18.9787361%20C53.9663941,17.0423792%2052.5460223,15.4477323%2050.695316,15.1503346%20C50.7440892,14.8999257%2050.7696654,14.6408922%2050.7681784,14.3759108%20C50.7559851,12.2194796%2048.9977695,10.481487%2046.8413383,10.4936803%20C46.7925651,10.4939777%2046.7449814,10.4999257%2046.6965056,10.5020074%20C46.8344981,10.0987361%2046.9118216,9.66780669%2046.9094424,9.21784387%20C46.8969517,7.06141264%2045.1390335,5.32342007%2042.9826022,5.33561338%20C42.4877323,5.33858736%2042.0169517,5.43702602%2041.5821561,5.60743494%20C40.9653532,4.44639405%2039.7811152,3.63717472%2038.4002974,3.54379182%20C38.1597026,1.60743494%2036.5055762,0.113605948%2034.506171,0.124843367%20C33.247881,0.13204461%2032.1350186,0.736356877%2031.4263197,1.66453532%20C30.7075093,0.882379182%2029.6773234,0.391672862%2028.5314498,0.398215613%20C26.3750186,0.410408922%2024.637026,2.16862454%2024.6492193,4.32475836%20C24.6515985,4.73665428%2024.718513,5.13249071%2024.8386617,5.50453532%20C23.9586617,5.66780669%2023.1848327,6.12520446%2022.6191822,6.77144981%20C22.1701115,5.09888476%2020.642974,3.86973978%2018.8297398,3.8798513%20C17.1357621,3.88966543%2015.7040892,4.97873606%2015.172342,6.48981413%20C13.7332342,7.07182156%2012.7202974,8.48356877%2012.7298141,10.1302602%20C12.7318959,10.4960595%2012.7878067,10.8481784%2012.8838662,11.1836431%20C12.398513,10.9713011%2011.8634944,10.852342%2011.2996283,10.8556134%20C9.5994052,10.8654275%208.16327138,11.9622305%207.63598513,13.4822305%20C7.13040892,13.2472862%206.56832714,13.1137546%205.973829,13.1173234%20C3.81739777,13.1295167%202.07910781,14.8874349%202.09153162,17.0438662%20C2.09546468,17.7549442%202.29263941,18.4187361%202.62810409,18.9909294%20C2.59390335,19.0254275%202.56386617,19.063197%202.53115242,19.0988848'%20fill='%23F9D320'%20mask='url(%23mask-2)'%3e%3c/path%3e%3cpath%20d='M50.9736803,68.1576208%20C49.8275093,69.89829%2047.6002974,71.7008178%2045.2692937,72.9026022%20L49.2541264,32.4853532%20C51.7894424,31.6707807%2054.2634944,30.5915242%2056.085948,29.0438662%20L50.9736803,68.1576208%20Z%20M41.3037918,74.5885502%20C37.4450558,75.8655762%2035.201487,76.2614126%2031.9895911,76.5766543%20L32.4901115,35.0432714%20C36.0383643,34.9415613%2040.6301859,34.4606691%2044.5427509,33.6255762%20L41.3037918,74.5885502%20Z%20M18.29829,74.5885502%20L15.0596283,33.6255762%20C18.9718959,34.4606691%2023.5637175,34.9415613%2027.1119703,35.0432714%20L27.6124907,76.5766543%20C24.4005948,76.2614126%2022.1573234,75.8655762%2018.29829,74.5885502%20Z%20M8.62869888,68.1576208%20L3.51613383,29.0438662%20C5.33858736,30.5915242%207.81263941,31.6707807%2010.3479554,32.4853532%20L14.3327881,72.9026022%20C12.0017844,71.7008178%209.77457249,69.89829%208.62869888,68.1576208%20Z%20M50.687881,13.6110037%20C50.7384387,13.8578439%2050.7666914,14.1130112%2050.7681784,14.3750186%20C50.7696654,14.64%2050.7440892,14.8990335%2050.6950186,15.1494424%20C52.5460223,15.4465428%2053.9663941,17.0411896%2053.9773978,18.9778439%20C53.9779926,19.0991822%2053.9714498,19.2193309%2053.9613383,19.3379926%20C54.904684,19.463197%2055.7421561,19.9253532%2056.3485502,20.5992565%20C53.6877323,24.6402974%2042.8237918,27.7159851%2029.8010409,27.790632%20C14.8895167,27.8759851%202.76193309,23.9952416%202.53115242,19.0985874%20C2.56386617,19.063197%202.59390335,19.0251301%202.62810409,18.9909294%20C2.39791822,18.5983643%202.23910781,18.1608922%202.15702602,17.6966543%20C0.729219331,19.0518959%20-0.13472119,20.1445353%200.0172490706,21.7356134%20C0.0318215613,21.9482528%206.3339777,67.0709294%206.3339777,67.0709294%20C7.06111524,74.2173978%2017.4388104,79.9292193%2029.8010409,80%20C42.1632714,79.9292193%2052.5412639,74.2173978%2053.2681041,67.0709294%20C53.2681041,67.0709294%2059.5702602,21.9482528%2059.5848327,21.7356134%20C59.8866914,18.5531599%2056.162974,15.6642379%2050.687881,13.6110037%20L50.687881,13.6110037%20Z'%20fill='%23DB382A'%20mask='url(%23mask-2)'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M15.0596283,33.6255762%20L18.29829,74.5885502%20C22.1573234,75.8655762%2024.4005948,76.2614126%2027.6124907,76.5766543%20L27.1119703,35.0432714%20C23.5637175,34.9415613%2018.9718959,34.4606691%2015.0596283,33.6255762'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M31.9895911,76.5766543%20C35.201487,76.2614126%2037.4447584,75.8655762%2041.3037918,74.5885502%20L44.5424535,33.6255762%20C40.6301859,34.4606691%2036.0383643,34.9415613%2032.4901115,35.0432714%20L31.9895911,76.5766543'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2692937,72.9026022%20C47.6002974,71.7008178%2049.8275093,69.89829%2050.9733829,68.1576208%20L56.085948,29.0438662%20C54.2634944,30.5915242%2051.7894424,31.6707807%2049.2541264,32.4853532%20L45.2692937,72.9026022'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M3.51613383,29.0438662%20L8.62840149,68.1576208%20C9.77457249,69.89829%2012.0017844,71.7008178%2014.3327881,72.9026022%20L10.3479554,32.4853532%20C7.81263941,31.6707807%205.33858736,30.5915242%203.51613383,29.0438662'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/svg%3e";
+})), Lt, Rt = t((() => {
+	Lt = "data:image/svg+xml,%3c?xml%20version='1.0'%20encoding='UTF-8'?%3e%3csvg%20viewBox='0%200%2080%2080'%20preserveAspectRatio='xMidYMid'%20version='1.1'%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%3e%3cg%20transform='translate(0,%2012.46)'%3e%3cg%3e%3cpath%20d='M45.4780328,39.6152131%20C45.9506885,38.4445902%2047.6259672,37.7314098%2048.8288525,37.8148197%20C50.114623,37.904%2051.4803934,39.2556066%2051.719082,40.584918%20C51.7634098,40.5366557%2051.8098361,40.4910164%2051.8570492,40.4461639%20C52.2699016,40.0516721%2052.7871475,39.7899016%2053.3531803,39.7177705%20C53.266623,39.3342951%2053.2459016,38.9238033%2053.3051803,38.5025574%20C53.5142295,37.0205902%2054.7034754,35.9092459%2056.0650492,35.9202623%20C56.9437377,35.9273443%2057.714623,36.376918%2058.216918,37.067541%20C58.2617705,37.0114098%2058.3113443,36.96%2058.3596066,36.907541%20C58.9340328,33.9152787%2059.2980984,30.5345574%2059.3809836,26.9468852%20C59.6655738,14.6103607%2056.5356066,4.53193443%2052.3902951,4.43645902%20C48.2447213,4.34072131%2044.653377,14.2638689%2044.3687869,26.6003934%20C44.3687869,26.6003934%2044.1492459,31.1000656%2045.4780328,39.6152131'%20id='Fill-1'%20fill='%23185A30'%3e%3c/path%3e%3cpath%20d='M73.5446557,53.1058361%20C73.7896393,52.696918%2073.9265574,52.2066885%2073.9171148,51.6857705%20C73.9965902,50.002623%2072.8411803,48.4768525%2071.2335738,48.6457705%20C71.28,48.4532459%2071.3104262,48.2531148%2071.3222295,48.0466885%20C71.4184918,46.3606557%2070.2557377,44.907541%2068.7249836,44.8013115%20C68.6914098,44.7992131%2068.6583607,44.7981639%2068.6250492,44.7971148%20C68.7842623,44.3787541%2068.8632131,43.9116066%2068.8351475,43.4166557%20C68.7559344,42.0139016%2067.7885902,40.832%2066.5300984,40.5993443%20C66.075541,40.5154098%2065.634623,40.5571148%2065.2309508,40.696918%20C64.8495738,39.757377%2064.0487869,39.060459%2063.074623,38.9133115%20C62.9975082,37.3878033%2061.8956066,36.1321967%2060.4768525,36.0338361%20C59.5847869,35.9719344%2058.7651148,36.3816393%2058.216918,37.067541%20C57.714623,36.376918%2056.9437377,35.9276066%2056.0650492,35.9204395%20C54.7034754,35.9092459%2053.5142295,37.0205902%2053.3051803,38.5028197%20C53.2459016,38.9238033%2053.266623,39.3342951%2053.3531803,39.7180328%20C52.7871475,39.7899016%2052.2699016,40.0519344%2051.8570492,40.4461639%20C51.8098361,40.4910164%2051.7634098,40.5366557%2051.719082,40.584918%20C51.4803934,39.2556066%2050.114623,37.9042623%2048.8288525,37.8148197%20C47.6259672,37.7314098%2045.928918,38.4621639%2045.4780328,39.6152131%20C45.6758033,41.6259672%2046.9327213,47.1071475%2051.4788197,52.0241311%20L51.5192131,52.0270164%20C51.9575082,52.4236066%2052.5298361,52.6420984%2053.1399344,52.5878033%20C53.5181639,52.5539672%2053.8664918,52.418623%2054.1665574,52.2098361%20L54.2397377,52.2148197%20C54.6397377,52.4925902%2055.1205246,52.6379016%2055.6285902,52.5927869%20C55.8226885,52.5754754%2056.0078689,52.5287869%2056.1838689,52.4621639%20C56.6192787,53.3623607%2057.5902951,53.9441311%2058.6740984,53.8486557%20C59.5134426,53.7746885%2060.2268852,53.3104262%2060.6462951,52.6570492%20L60.7821639,52.6664918%20C61.2010492,53.0817049%2061.7579016,53.323541%2062.3585574,53.3054426%20C62.855082,54.0566557%2063.767082,54.5188197%2064.7735082,54.4304262%20C65.1525246,54.3971148%2065.5063607,54.2874754%2065.8219016,54.1214426%20C66.3483279,54.7690492%2067.2123279,55.1540984%2068.1602623,55.0706885%20C69.0974426,54.9885902%2069.8890492,54.4689836%2070.3197377,53.7505574%20C70.7428197,54.0902295%2071.272918,54.2725246%2071.8358033,54.2224262%20C72.3819016,54.1736393%2072.8671475,53.9158033%2073.2317377,53.5257705%20L73.2925902,53.5299672%20C73.3754754,53.4098361%2073.4462951,53.2868197%2073.5121311,53.1627541%20C73.5137049,53.1603934%2073.5150164,53.1577705%2073.5163279,53.1554098%20C73.5252459,53.1388852%2073.5362623,53.122623%2073.5446557,53.1058361'%20fill='%23F9D320'%3e%3c/path%3e%3cpath%20d='M42.2090492,9.21232787%20L6.56209836,12.7268197%20C7.62203279,10.6709508%209.21206557,8.70662295%2010.7472787,7.6957377%20L45.2440656,3.18662295%20C43.8793443,4.79422951%2042.9272131,6.9762623%2042.2090492,9.21232787%20Z%20M45.2440656,49.5517377%20L10.7472787,45.042623%20C9.21206557,44.032%207.62203279,42.0674098%206.56209836,40.0118033%20L42.2090492,43.5262951%20C42.9272131,45.7620984%2043.8793443,47.9443934%2045.2440656,49.5517377%20Z%20M5.07514754,36.5143607%20C3.94885246,33.1108197%203.6,31.1323279%203.32170492,28.2992787%20L39.9527869,28.7409836%20C40.0427541,31.8701639%2040.4668852,35.9202623%2041.2031475,39.3707541%20L5.07514754,36.5143607%20Z%20M5.07514754,16.224%20L41.2031475,13.3676066%20C40.4668852,16.8180984%2040.0427541,20.8681967%2039.9527869,23.9976393%20L3.32170492,24.439082%20C3.6,21.6062951%203.94885246,19.627541%205.07514754,16.224%20Z%20M56.7186885,3.84865574%20C54.4333115,1.18767213%2052.7926557,-0.0616393443%2051.3872787,0.100721311%20C51.1252459,0.134032787%2011.4032787,5.67213115%2011.4032787,5.67213115%20C5.10006557,6.31318033%200.0624262295,15.4659672%200,26.3693115%20C0.0624262295,37.2723934%205.10006557,46.4251803%2011.4032787,47.0664918%20C11.4032787,47.0664918%2051.1997377,52.6247869%2051.3872787,52.6376393%20C51.7196066,52.635541%2052.0477377,52.5909508%2052.3711475,52.5080656%20C52.0563934,52.4144262%2051.7660328,52.2504918%2051.5192131,52.0270164%20L51.4788197,52.0241311%20C46.9327213,47.1074098%2045.6758033,41.6259672%2045.4780328,39.6152131%20C45.4785574,39.6136393%2045.4796066,39.6123279%2045.4801311,39.6107541%20C45.4796066,39.6123279%2045.4785574,39.6136393%2045.4780328,39.6152131%20C44.1492459,31.1000656%2044.3687869,26.6003934%2044.3687869,26.6003934%20C44.653377,14.2638689%2048.2447213,4.34072131%2052.3902951,4.43619672%20C56.5356066,4.53193443%2059.6655738,14.6103607%2059.3809836,26.9468852%20C59.2980984,30.5345574%2058.9340328,33.9152787%2058.3596066,36.907541%20C58.9497705,36.2562623%2059.741377,35.9819016%2060.4768525,36.0338361%20C60.6121967,36.043541%2060.7438689,36.0663607%2060.872918,36.096%20C63.3904262,22.3210492%2060.7512131,8.87029508%2056.7186885,3.84865574%20L56.7186885,3.84865574%20Z'%20fill='%23129B47'%3e%3c/path%3e%3c/g%3e%3cpath%20d='M41.2031475,13.3676066%20L5.07514754,16.224%20C3.94885246,19.627541%203.6,21.6062951%203.32170492,24.439082%20L39.9527869,23.997377%20C40.0427541,20.8681967%2040.4668852,16.8180984%2041.2031475,13.3676066'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M45.2440656,3.18662295%20L10.7472787,7.6957377%20C9.21206557,8.70662295%207.62203279,10.6709508%206.56209836,12.7268197%20L42.2090492,9.21232787%20C42.9272131,6.9762623%2043.8793443,4.79422951%2045.2440656,3.18662295'%20fill='%23FFFFFE'%3e%3c/path%3e%3cpath%20d='M6.56209836,40.011541%20C7.62203279,42.0674098%209.21206557,44.032%2010.7472787,45.042623%20L45.2440656,49.5517377%20C43.8793443,47.9443934%2042.9272131,45.7620984%2042.2090492,43.5262951%20L6.56209836,40.011541'%20fill='%23FFFFFE'%3e%3c/path%3e%3cg%20transform='translate(3.15,%2028)'%3e%3cpath%20d='M36.8052459,0.675409836%20L0.174163934,0.233704918%20C0.452459016,3.0664918%200.801311475,5.0452459%201.92760656,8.44878689%20L38.0556066,11.3051803%20C37.3193443,7.85468852%2036.8952131,3.80459016%2036.8052459,0.675409836'%20fill='%23FFFFFE'%3e%3c/path%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
 }));
 // src/enrichment/ratings.ts
-function Dt(e) {
+function zt(e) {
 	let t = e.enrichment ?? {}, n = t.reviewed;
 	return [
 		{
@@ -3061,15 +3537,15 @@ function Dt(e) {
 		}
 	].filter(({ value: e, max: t }) => typeof e == "number" && Number.isFinite(e) && e >= 0 && e <= t);
 }
-function Ot(e) {
-	let t = e ? Dt(e) : [];
+function Bt(e) {
+	let t = e ? zt(e) : [];
 	return t.length ? v`<div
     class="movie-ratings"
     slot="collection"
     aria-label="Viewer and critic ratings"
   >
     ${t.map(({ kind: e, label: t, value: n, max: r }) => {
-		let i = Math.round(n / r * 100), a = e === "critic" ? i >= 60 ? yt : xt : i >= 60 ? Ct : Tt;
+		let i = Math.round(n / r * 100), a = e === "critic" ? i >= 60 ? jt : Nt : i >= 60 ? Ft : Lt;
 		return v`<span
         class=${`score-chip score-${e}`}
         title=${`${t}: ${i}%`}
@@ -3112,33 +3588,33 @@ function Ot(e) {
 	})}
   </div>` : x;
 }
-var kt = t((() => {
-	bt(), St(), wt(), Et(), w();
+var Vt = t((() => {
+	Mt(), Pt(), It(), Rt(), C();
 }));
 // src/core/text.ts
-function z(e, t, n = `${t}s`) {
+function B(e, t, n = `${t}s`) {
 	return `${e} ${e === 1 ? t : n}`;
 }
-var B = t((() => {})), At, jt = t((() => {
-	At = "data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%20viewBox='0%200%20273.42%2035.52'%3e%3cdefs%3e%3cstyle%3e.cls-1{fill:url(%23linear-gradient);}%3c/style%3e%3clinearGradient%20id='linear-gradient'%20y1='17.76'%20x2='273.42'%20y2='17.76'%20gradientUnits='userSpaceOnUse'%3e%3cstop%20offset='0'%20stop-color='%2390cea1'/%3e%3cstop%20offset='0.56'%20stop-color='%233cbec9'/%3e%3cstop%20offset='1'%20stop-color='%2300b3e5'/%3e%3c/linearGradient%3e%3c/defs%3e%3ctitle%3eAsset%203%3c/title%3e%3cg%20id='Layer_2'%20data-name='Layer%202'%3e%3cg%20id='Layer_1-2'%20data-name='Layer%201'%3e%3cpath%20class='cls-1'%20d='M191.85,35.37h63.9A17.67,17.67,0,0,0,273.42,17.7h0A17.67,17.67,0,0,0,255.75,0h-63.9A17.67,17.67,0,0,0,174.18,17.7h0A17.67,17.67,0,0,0,191.85,35.37ZM10.1,35.42h7.8V6.92H28V0H0v6.9H10.1Zm28.1,0H46V8.25h.1L55.05,35.4h6L70.3,8.25h.1V35.4h7.8V0H66.45l-8.2,23.1h-.1L50,0H38.2ZM89.14.12h11.7a33.56,33.56,0,0,1,8.08,1,18.52,18.52,0,0,1,6.67,3.08,15.09,15.09,0,0,1,4.53,5.52,18.5,18.5,0,0,1,1.67,8.25,16.91,16.91,0,0,1-1.62,7.58,16.3,16.3,0,0,1-4.38,5.5,19.24,19.24,0,0,1-6.35,3.37,24.53,24.53,0,0,1-7.55,1.15H89.14Zm7.8,28.2h4a21.66,21.66,0,0,0,5-.55A10.58,10.58,0,0,0,110,26a8.73,8.73,0,0,0,2.68-3.35,11.9,11.9,0,0,0,1-5.08,9.87,9.87,0,0,0-1-4.52,9.17,9.17,0,0,0-2.63-3.18A11.61,11.61,0,0,0,106.22,8a17.06,17.06,0,0,0-4.68-.63h-4.6ZM133.09.12h13.2a32.87,32.87,0,0,1,4.63.33,12.66,12.66,0,0,1,4.17,1.3,7.94,7.94,0,0,1,3,2.72,8.34,8.34,0,0,1,1.15,4.65,7.48,7.48,0,0,1-1.67,5,9.13,9.13,0,0,1-4.43,2.82V17a10.28,10.28,0,0,1,3.18,1,8.51,8.51,0,0,1,2.45,1.85,7.79,7.79,0,0,1,1.57,2.62,9.16,9.16,0,0,1,.55,3.2,8.52,8.52,0,0,1-1.2,4.68,9.32,9.32,0,0,1-3.1,3A13.38,13.38,0,0,1,152.32,35a22.5,22.5,0,0,1-4.73.5h-14.5Zm7.8,14.15h5.65a7.65,7.65,0,0,0,1.78-.2,4.78,4.78,0,0,0,1.57-.65,3.43,3.43,0,0,0,1.13-1.2,3.63,3.63,0,0,0,.42-1.8A3.3,3.3,0,0,0,151,8.6a3.42,3.42,0,0,0-1.23-1.13A6.07,6.07,0,0,0,148,6.9a9.9,9.9,0,0,0-1.85-.18h-5.3Zm0,14.65h7a8.27,8.27,0,0,0,1.83-.2,4.67,4.67,0,0,0,1.67-.7,3.93,3.93,0,0,0,1.23-1.3,3.8,3.8,0,0,0,.47-1.95,3.16,3.16,0,0,0-.62-2,4,4,0,0,0-1.58-1.18,8.23,8.23,0,0,0-2-.55,15.12,15.12,0,0,0-2.05-.15h-5.9Z'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
+var V = t((() => {})), Ht, Ut = t((() => {
+	Ht = "data:image/svg+xml,%3csvg%20xmlns='http://www.w3.org/2000/svg'%20xmlns:xlink='http://www.w3.org/1999/xlink'%20viewBox='0%200%20273.42%2035.52'%3e%3cdefs%3e%3cstyle%3e.cls-1{fill:url(%23linear-gradient);}%3c/style%3e%3clinearGradient%20id='linear-gradient'%20y1='17.76'%20x2='273.42'%20y2='17.76'%20gradientUnits='userSpaceOnUse'%3e%3cstop%20offset='0'%20stop-color='%2390cea1'/%3e%3cstop%20offset='0.56'%20stop-color='%233cbec9'/%3e%3cstop%20offset='1'%20stop-color='%2300b3e5'/%3e%3c/linearGradient%3e%3c/defs%3e%3ctitle%3eAsset%203%3c/title%3e%3cg%20id='Layer_2'%20data-name='Layer%202'%3e%3cg%20id='Layer_1-2'%20data-name='Layer%201'%3e%3cpath%20class='cls-1'%20d='M191.85,35.37h63.9A17.67,17.67,0,0,0,273.42,17.7h0A17.67,17.67,0,0,0,255.75,0h-63.9A17.67,17.67,0,0,0,174.18,17.7h0A17.67,17.67,0,0,0,191.85,35.37ZM10.1,35.42h7.8V6.92H28V0H0v6.9H10.1Zm28.1,0H46V8.25h.1L55.05,35.4h6L70.3,8.25h.1V35.4h7.8V0H66.45l-8.2,23.1h-.1L50,0H38.2ZM89.14.12h11.7a33.56,33.56,0,0,1,8.08,1,18.52,18.52,0,0,1,6.67,3.08,15.09,15.09,0,0,1,4.53,5.52,18.5,18.5,0,0,1,1.67,8.25,16.91,16.91,0,0,1-1.62,7.58,16.3,16.3,0,0,1-4.38,5.5,19.24,19.24,0,0,1-6.35,3.37,24.53,24.53,0,0,1-7.55,1.15H89.14Zm7.8,28.2h4a21.66,21.66,0,0,0,5-.55A10.58,10.58,0,0,0,110,26a8.73,8.73,0,0,0,2.68-3.35,11.9,11.9,0,0,0,1-5.08,9.87,9.87,0,0,0-1-4.52,9.17,9.17,0,0,0-2.63-3.18A11.61,11.61,0,0,0,106.22,8a17.06,17.06,0,0,0-4.68-.63h-4.6ZM133.09.12h13.2a32.87,32.87,0,0,1,4.63.33,12.66,12.66,0,0,1,4.17,1.3,7.94,7.94,0,0,1,3,2.72,8.34,8.34,0,0,1,1.15,4.65,7.48,7.48,0,0,1-1.67,5,9.13,9.13,0,0,1-4.43,2.82V17a10.28,10.28,0,0,1,3.18,1,8.51,8.51,0,0,1,2.45,1.85,7.79,7.79,0,0,1,1.57,2.62,9.16,9.16,0,0,1,.55,3.2,8.52,8.52,0,0,1-1.2,4.68,9.32,9.32,0,0,1-3.1,3A13.38,13.38,0,0,1,152.32,35a22.5,22.5,0,0,1-4.73.5h-14.5Zm7.8,14.15h5.65a7.65,7.65,0,0,0,1.78-.2,4.78,4.78,0,0,0,1.57-.65,3.43,3.43,0,0,0,1.13-1.2,3.63,3.63,0,0,0,.42-1.8A3.3,3.3,0,0,0,151,8.6a3.42,3.42,0,0,0-1.23-1.13A6.07,6.07,0,0,0,148,6.9a9.9,9.9,0,0,0-1.85-.18h-5.3Zm0,14.65h7a8.27,8.27,0,0,0,1.83-.2,4.67,4.67,0,0,0,1.67-.7,3.93,3.93,0,0,0,1.23-1.3,3.8,3.8,0,0,0,.47-1.95,3.16,3.16,0,0,0-.62-2,4,4,0,0,0-1.58-1.18,8.23,8.23,0,0,0-2-.55,15.12,15.12,0,0,0-2.05-.15h-5.9Z'/%3e%3c/g%3e%3c/g%3e%3c/svg%3e";
 }));
 // src/enrichment/credits.ts
-function Mt() {
+function Wt() {
 	return v`<a
       href="https://www.themoviedb.org"
       target="_blank"
       rel="noopener noreferrer"
-      ><img src=${At} alt="TMDB" width="100"
+      ><img src=${Ht} alt="TMDB" width="100"
     /></a>
     <p class="muted">
       This product uses the TMDB API but is not endorsed or certified by TMDB.
     </p>`;
 }
-var Nt = t((() => {
-	w(), jt();
+var Gt = t((() => {
+	C(), Ut();
 }));
 // src/enrichment/details.ts
-function Pt(e, t, n = 8) {
+function Kt(e, t, n = 8) {
 	let r = [
 		["Full cast", e.actors.length > n ? e.actors : []],
 		["Writers", e.writers],
@@ -3158,187 +3634,14 @@ function Pt(e, t, n = 8) {
         </details>` : x}
   ${e.enrichment && Object.keys(e.enrichment).length ? v`<details class="metadata-scores">
           <summary>Ratings and metadata sources</summary>
-          ${Object.entries(e.enrichment).map(([e, t]) => v`<p class="muted">${e === "reviewed" ? "Reviewed metadata" : e === "tmdb" ? "TMDB" : "Kaleidescape store"}${t.critic_score == null ? x : v` · Rotten Tomatoes critics ${t.critic_score}%`}${t.audience_score == null ? x : v` · Rotten Tomatoes audience ${t.audience_score}%`}${t.audience_rating == null ? x : v` · TMDB audience ${t.audience_rating}/10 (${z(t.audience_votes ?? 0, "vote")})`}${t.distributor ? v` · Distributor: ${t.distributor}` : x}</p>`)}
-          ${e.enrichment.tmdb || e.enrichment.reviewed?.providers?.includes("tmdb") ? Mt() : x}
+          ${Object.entries(e.enrichment).map(([e, t]) => v`<p class="muted">${e === "reviewed" ? "Reviewed metadata" : e === "tmdb" ? "TMDB" : "Kaleidescape store"}${t.critic_score == null ? x : v` · Rotten Tomatoes critics ${t.critic_score}%`}${t.audience_score == null ? x : v` · Rotten Tomatoes audience ${t.audience_score}%`}${t.audience_rating == null ? x : v` · TMDB audience ${t.audience_rating}/10 (${B(t.audience_votes ?? 0, "vote")})`}${t.distributor ? v` · Distributor: ${t.distributor}` : x}</p>`)}
+          ${e.enrichment.tmdb || e.enrichment.reviewed?.providers?.includes("tmdb") ? Wt() : x}
         </details>` : x}`;
 }
-var Ft = t((() => {
-	w(), B(), Nt();
-})), It, Lt = t((() => {
-	It = class {
-		constructor(e = 134217728, t = 1e3) {
-			this.maxBytes = e, this.maxEntries = t, this.entries = /* @__PURE__ */ new Map(), this.readers = /* @__PURE__ */ new Map(), this.bytes = 0, this.closed = !1;
-		}
-		get(e) {
-			let t = this.entries.get(e);
-			return t && (this.entries.delete(e), this.entries.set(e, t)), t?.url;
-		}
-		put(e, t) {
-			if (this.closed || t.size > this.maxBytes) return;
-			let n = this.get(e);
-			if (n) return n;
-			for (; this.bytes + t.size > this.maxBytes || this.entries.size >= this.maxEntries;) {
-				let e = [...this.entries.keys()], t = e.find((e) => ![...this.readers.get(e) ?? []].some((e) => e.visible())) ?? e[0];
-				if (t === void 0) return;
-				this.drop(t);
-			}
-			let r = {
-				url: URL.createObjectURL(t),
-				size: t.size
-			};
-			return this.entries.set(e, r), this.bytes += r.size, r.url;
-		}
-		watch(e, t) {
-			if (this.closed) return () => {};
-			let n = this.readers.get(e) ?? /* @__PURE__ */ new Set();
-			return n.add(t), this.readers.set(e, n), () => {
-				n.delete(t), n.size || this.readers.delete(e);
-			};
-		}
-		drop(e) {
-			let t = this.entries.get(e);
-			if (t) {
-				this.entries.delete(e), this.bytes -= t.size, URL.revokeObjectURL(t.url);
-				for (let t of this.readers.get(e) ?? []) t.invalidate();
-			}
-		}
-		dispose() {
-			this.closed = !0;
-			for (let e of this.entries.keys()) this.drop(e);
-			this.readers.clear();
-		}
-	};
-})), V, Rt, zt = t((() => {
-	w(), Lt(), V = class {
-		constructor() {
-			this.cache = new It(), this.active = 0, this.waiting = [];
-		}
-		acquire(e) {
-			return new Promise((t, n) => {
-				let r = () => {
-					this.waiting = this.waiting.filter((e) => e !== i), n(new DOMException("Aborted", "AbortError"));
-				}, i = () => {
-					e.removeEventListener("abort", r), this.active++;
-					let n = !1;
-					t(() => {
-						n || (n = !0, this.active--, this.waiting.shift()?.());
-					});
-				};
-				if (e.aborted) return r();
-				this.active < 3 ? i() : (this.waiting.push(i), e.addEventListener("abort", r, { once: !0 }));
-			});
-		}
-	}, Rt = class extends C {
-		constructor(...e) {
-			super(...e), this.fit = "cover", this.title = "", this.visible = !1, this.generation = 0, this.visibility = () => {
-				document.hidden ? this.cancelLoad() : this.load();
-			};
-		}
-		static {
-			this.properties = {
-				client: { attribute: !1 },
-				scope: { attribute: !1 },
-				queue: { attribute: !1 },
-				artworkKey: { attribute: !1 },
-				fit: { type: String },
-				title: { type: String }
-			};
-		}
-		static {
-			this.styles = l`
-    :host {
-      display: grid;
-      width: 100%;
-      height: 100%;
-      place-items: center;
-      background: var(--secondary-background-color, #262626);
-      overflow: hidden;
-    }
-    img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    span {
-      padding: 8px;
-      color: var(--secondary-text-color, #888);
-      font: inherit;
-    }
-  `;
-		}
-		get cacheKey() {
-			return JSON.stringify([
-				this.scope?.entry_id,
-				this.scope?.dataset_id,
-				this.artworkKey
-			]);
-		}
-		connectedCallback() {
-			super.connectedCallback(), document.addEventListener("visibilitychange", this.visibility), this.observer = new IntersectionObserver((e) => {
-				this.visible = e.some((e) => e.isIntersecting), this.visible ? this.load() : this.cancelLoad();
-			}), this.observer.observe(this), this.requestUpdate("queue");
-		}
-		disconnectedCallback() {
-			super.disconnectedCallback(), document.removeEventListener("visibilitychange", this.visibility), this.observer?.disconnect(), this.visible = !1, this.clear(), this.requestUpdate();
-		}
-		willUpdate(e) {
-			[
-				"client",
-				"scope",
-				"artworkKey",
-				"queue"
-			].some((t) => e.has(t)) && (this.clear(), this.unwatch = this.queue?.cache.watch(this.cacheKey, {
-				invalidate: () => {
-					this.url = void 0, this.requestUpdate();
-				},
-				visible: () => this.visible && this.isConnected && !document.hidden
-			}), this.load());
-		}
-		cancelLoad() {
-			this.generation++, this.controller?.abort(), this.controller = void 0;
-		}
-		clear() {
-			this.cancelLoad(), this.unwatch?.(), this.unwatch = void 0, this.url = void 0;
-		}
-		async load() {
-			if (!this.visible || document.hidden || !this.isConnected || this.controller || !this.client || !this.scope?.library_enabled || !this.artworkKey || !this.queue) return;
-			let e = this.queue.cache.get(this.cacheKey);
-			if (e) {
-				this.url !== e && (this.url = e, this.requestUpdate());
-				return;
-			}
-			let t = this.generation, n = this.controller = new AbortController(), r, i;
-			try {
-				if (r = await this.queue.acquire(n.signal), n.signal.aborted) return;
-				let e = this.queue.cache.get(this.cacheKey);
-				if (e) {
-					this.url = e, this.requestUpdate();
-					return;
-				}
-				i = setTimeout(() => n.abort(), 5e3);
-				let a = await this.client.libraryArtwork(this.scope, this.artworkKey, n.signal);
-				if (t !== this.generation || n.signal.aborted || !this.isConnected || document.hidden) return;
-				this.url = this.queue.cache.put(this.cacheKey, a), this.requestUpdate();
-			} catch (e) {
-				t === this.generation && k(e) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
-					bubbles: !0,
-					composed: !0
-				}));
-			} finally {
-				clearTimeout(i), r?.(), t === this.generation && (this.controller = void 0);
-			}
-		}
-		render() {
-			return this.url ? v`<img
-          src=${this.url}
-          alt=${`Cover for ${this.title}`}
-          style=${`object-fit: ${this.fit}`}
-          @error=${() => this.queue?.cache.drop(this.cacheKey)}
-        />` : v`<span>No cached artwork</span>`;
-		}
-	}, customElements.get("kaleidescape-library-cover") || customElements.define("kaleidescape-library-cover", Rt);
-})), Bt, Vt = t((() => {
-	w(), F(), Bt = class extends C {
+var qt = t((() => {
+	C(), V(), Gt();
+})), Jt, Yt = t((() => {
+	C(), A(), Jt = class extends S {
 		constructor(...e) {
 			super(...e), this.plan = "", this.choice = "", this.visible = !1, this.url = "", this.failed = !1;
 		}
@@ -3402,7 +3705,7 @@ var Ft = t((() => {
 				let r = await this.client.titleScrapeImage(this.scope, this.plan, this.choice, e.signal);
 				!e.signal.aborted && this.isConnected && (this.url = URL.createObjectURL(r));
 			} catch (t) {
-				e.signal.aborted || (this.failed = !0, k(t) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
+				e.signal.aborted || (this.failed = !0, w(t) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
 					bubbles: !0,
 					composed: !0
 				})));
@@ -3415,10 +3718,10 @@ var Ft = t((() => {
           >${this.failed ? "Preview unavailable" : "Loading preview…"}</span
         >`;
 		}
-	}, customElements.get("kaleidescape-scrape-image") || customElements.define("kaleidescape-scrape-image", Bt);
+	}, customElements.get("kaleidescape-scrape-image") || customElements.define("kaleidescape-scrape-image", Jt);
 }));
 // src/enrichment/title-scrape.ts
-function Ht(e) {
+function Xt(e) {
 	if (e) try {
 		let t = new URL(e);
 		return t.protocol === "https:" && !t.username && !t.password && !t.port && !t.search && !t.hash ? t.href : void 0;
@@ -3426,13 +3729,13 @@ function Ht(e) {
 		return;
 	}
 }
-var Ut, Wt = t((() => {
-	w(), F(), E(), O(), zt(), Vt(), Ut = class extends C {
+var Zt, Qt = t((() => {
+	C(), A(), P(), I(), Yt(), Zt = class extends S {
 		constructor(...e) {
 			super(...e), this.versionId = "", this.blocked = !1, this.matchMode = "refresh", this.matchProvider = "", this.query = "", this.year = "", this.sourceExpected = {}, this.artworkExpected = {
 				poster: !0,
 				backdrop: !0
-			}, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.imageChoice = "", this.imagePage = 0, this.providerDrafts = {}, this.imageDraft = {}, this.resetDraft = /* @__PURE__ */ new Set(), this.busy = !1, this.error = "", this.hints = /* @__PURE__ */ new Set(), this.generation = 0, this.view = "sources", this.queue = new V();
+			}, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.imageChoice = "", this.imagePage = 0, this.providerDrafts = {}, this.imageDraft = {}, this.resetDraft = /* @__PURE__ */ new Set(), this.busy = !1, this.error = "", this.hints = /* @__PURE__ */ new Set(), this.generation = 0, this.view = "sources", this.queue = new j();
 		}
 		static {
 			this.properties = {
@@ -3444,8 +3747,8 @@ var Ut, Wt = t((() => {
 		}
 		static {
 			this.styles = [
-				T,
-				et,
+				N,
+				bt,
 				l`
       :host {
         display: inline-block;
@@ -4024,7 +4327,7 @@ var Ut, Wt = t((() => {
 			this.generation++, this.mainDialog()?.close(), this.choiceDialog()?.close(), this.options = this.review = void 0, this.candidatePage = void 0, this.query = this.year = this.matchProvider = this.imageChoice = "", this.sourceExpected = {}, this.artworkExpected = {
 				poster: !0,
 				backdrop: !0
-			}, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.providerDrafts = {}, this.imageDraft = {}, this.resetDraft.clear(), this.imageKind = void 0, this.imagePage = 0, this.pending = void 0, this.busy = !1, this.error = "", this.hints.clear(), this.view = "sources", this.queue.cache.dispose(), this.queue = new V(), this.lock();
+			}, this.fieldSources = {}, this.initialSources = {}, this.mappingTouched = !1, this.providerDrafts = {}, this.imageDraft = {}, this.resetDraft.clear(), this.imageKind = void 0, this.imagePage = 0, this.pending = void 0, this.busy = !1, this.error = "", this.hints.clear(), this.view = "sources", this.queue.cache.dispose(), this.queue = new j(), this.lock();
 		}
 		close() {
 			if (!(this.pending || this.busy)) {
@@ -4056,7 +4359,7 @@ var Ut, Wt = t((() => {
 			}
 		}
 		report(e) {
-			this.error = A(e), k(e) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
+			this.error = T(e), w(e) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
 				bubbles: !0,
 				composed: !0
 			}));
@@ -4098,7 +4401,7 @@ var Ut, Wt = t((() => {
 				if (this.matchMode === "refresh") {
 					let n = await this.client.titleScrapeRefreshChoice(this.scope, this.versionId, this.matchProvider, this.candidatePage.search_id, e, !0);
 					if (t !== this.generation) return;
-					if (n.outcome !== "staged") throw new M("refresh_required");
+					if (n.outcome !== "staged") throw new D("refresh_required");
 					this.providerDrafts = {
 						...this.providerDrafts,
 						[this.matchProvider]: n
@@ -4106,7 +4409,7 @@ var Ut, Wt = t((() => {
 				} else {
 					let n = await this.client.titleScrapePreview(this.scope, this.versionId, "tmdb", this.candidatePage.search_id, e);
 					if (t !== this.generation) return;
-					if ("search_id" in n) throw new M("refresh_required");
+					if ("search_id" in n) throw new D("refresh_required");
 					this.review = n, this.candidatePage = void 0, this.imageChoice = "", this.requestUpdate();
 				}
 			} catch (e) {
@@ -4172,7 +4475,7 @@ var Ut, Wt = t((() => {
 					"metadata_disabled",
 					"not_found",
 					"library_artwork"
-				].includes(k(t)) && (this.pending = void 0, this.lock()));
+				].includes(w(t)) && (this.pending = void 0, this.lock()));
 			} finally {
 				e === this.generation && (this.busy = !1, this.requestUpdate());
 			}
@@ -4316,7 +4619,7 @@ var Ut, Wt = t((() => {
 			})}
               <div class="source-name">
                 <strong>${e.label}</strong>
-                ${Ht(e.match_url) ? v`<a href=${Ht(e.match_url)} target="_blank" rel="noopener noreferrer" aria-label=${`View ${e.label} match`}>View match</a>` : x}
+                ${Xt(e.match_url) ? v`<a href=${Xt(e.match_url)} target="_blank" rel="noopener noreferrer" aria-label=${`View ${e.label} match`}>View match</a>` : x}
               </div>
               <span class="source-detail">
                 ${this.providerDrafts[e.id] ? this.providerDrafts[e.id].has_data ? "Downloaded - Ready to save" : "No data available - Ready to save" : e.has_data ? e.fetched_at ? `Downloaded - Updated ${new Date(e.fetched_at).toLocaleDateString()}` : "Downloaded - Update date unavailable" : e.checked_at ? `No data available - Last Checked ${new Date(e.checked_at).toLocaleDateString()}` : "Not yet scanned"}
@@ -4466,7 +4769,7 @@ var Ut, Wt = t((() => {
 			if (this.candidatePage) return v`<div>
         <div class="card-head">
           <h2 id="choice-title">Choose a movie match</h2>
-          ${I(() => this.closeChoice(), this.busy)}
+          ${L(() => this.closeChoice(), this.busy)}
         </div>
         <p>
           Current Library movie:
@@ -4503,7 +4806,7 @@ var Ut, Wt = t((() => {
         <h2 id="choice-title">
           Choose ${this.imageKind === "poster" ? "cover art" : "backdrop art"}
         </h2>
-        ${I(() => this.closeChoice(), this.busy)}
+        ${L(() => this.closeChoice(), this.busy)}
       </div>
       <p class="muted">
         Images from TMDB for
@@ -4563,12 +4866,12 @@ var Ut, Wt = t((() => {
     </div>`;
 		}
 		render() {
-			return this.scope?.permissions.edit ? v`${$e("Scrape title", "scrape", this.blocked || this.writePending, () => void this.open(), "scrape-button")}
+			return this.scope?.permissions.edit ? v`${yt("Scrape title", "scrape", this.blocked || this.writePending, () => void this.open(), "scrape-button")}
       <dialog
         data-admin-dialog
         class="inset-dialog"
         aria-labelledby="scrape-title"
-        @click=${L}
+        @click=${R}
         @cancel=${(e) => {
 				e.preventDefault(), this.close();
 			}}
@@ -4578,7 +4881,7 @@ var Ut, Wt = t((() => {
             <h2 id="scrape-title">Movie Metadata Manager</h2>
             <p>Search, scrape and reconcile metadata.</p>
           </div>
-          ${I(() => this.close(), this.busy || this.writePending)}
+          ${L(() => this.close(), this.busy || this.writePending)}
         </div>
         ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
         ${this.busy ? v`<p role="status">Updating movie metadata…</p>` : x}
@@ -4626,7 +4929,7 @@ var Ut, Wt = t((() => {
         data-admin-dialog
         class="choice-dialog"
         aria-labelledby="choice-title"
-        @click=${L}
+        @click=${R}
         @cancel=${(e) => {
 				e.preventDefault(), this.busy || this.closeChoice();
 			}}
@@ -4634,8 +4937,8 @@ var Ut, Wt = t((() => {
         ${this.choiceContent()}
       </dialog>` : x;
 		}
-	}, customElements.get("kaleidescape-title-scrape") || customElements.define("kaleidescape-title-scrape", Ut);
-})), H, Gt, Kt, qt = t((() => {
+	}, customElements.get("kaleidescape-title-scrape") || customElements.define("kaleidescape-title-scrape", Zt);
+})), H, $t, en, tn = t((() => {
 	H = {
 		ATTRIBUTE: 1,
 		CHILD: 2,
@@ -4643,10 +4946,10 @@ var Ut, Wt = t((() => {
 		BOOLEAN_ATTRIBUTE: 4,
 		EVENT: 5,
 		ELEMENT: 6
-	}, Gt = (e) => (...t) => ({
+	}, $t = (e) => (...t) => ({
 		_$litDirective$: e,
 		values: t
-	}), Kt = class {
+	}), en = class {
 		constructor(e) {}
 		get _$AU() {
 			return this._$AM._$AU;
@@ -4661,12 +4964,12 @@ var Ut, Wt = t((() => {
 			return this.render(...t);
 		}
 	};
-})), Jt, Yt, Xt, Zt, Qt, U, $t, en, tn, nn, rn = t((() => {
-	Je(), {I: Jt} = Ge, Yt = (e) => e, Xt = (e) => e.strings === void 0, Zt = () => document.createComment(""), Qt = (e, t, n) => {
+})), nn, rn, an, on, sn, U, cn, ln, un, dn, fn = t((() => {
+	Ye(), {I: nn} = Ke, rn = (e) => e, an = (e) => e.strings === void 0, on = () => document.createComment(""), sn = (e, t, n) => {
 		let r = e._$AA.parentNode, i = t === void 0 ? e._$AB : t._$AA;
 		if (n === void 0) {
-			let t = r.insertBefore(Zt(), i), a = r.insertBefore(Zt(), i);
-			n = new Jt(t, a, e, e.options);
+			let t = r.insertBefore(on(), i), a = r.insertBefore(on(), i);
+			n = new nn(t, a, e, e.options);
 		} else {
 			let t = n._$AB.nextSibling, a = n._$AM, o = a !== e;
 			if (o) {
@@ -4676,20 +4979,20 @@ var Ut, Wt = t((() => {
 			if (t !== i || o) {
 				let e = n._$AA;
 				for (; e !== t;) {
-					let t = Yt(e).nextSibling;
-					Yt(r).insertBefore(e, i), e = t;
+					let t = rn(e).nextSibling;
+					rn(r).insertBefore(e, i), e = t;
 				}
 			}
 		}
 		return n;
-	}, U = (e, t, n = e) => (e._$AI(t, n), e), $t = {}, en = (e, t = $t) => e._$AH = t, tn = (e) => e._$AH, nn = (e) => {
+	}, U = (e, t, n = e) => (e._$AI(t, n), e), cn = {}, ln = (e, t = cn) => e._$AH = t, un = (e) => e._$AH, dn = (e) => {
 		e._$AR(), e._$AA.remove();
 	};
-})), an, on = t((() => {
-	Je(), qt(), rn(), an = Gt(class extends Kt {
+})), pn, mn = t((() => {
+	Ye(), tn(), fn(), pn = $t(class extends en {
 		constructor(e) {
 			if (super(e), e.type !== H.PROPERTY && e.type !== H.ATTRIBUTE && e.type !== H.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
-			if (!Xt(e)) throw Error("`live` bindings can only contain a single expression");
+			if (!an(e)) throw Error("`live` bindings can only contain a single expression");
 		}
 		render(e) {
 			return e;
@@ -4702,13 +5005,13 @@ var Ut, Wt = t((() => {
 			} else if (e.type === H.BOOLEAN_ATTRIBUTE) {
 				if (!!t === n.hasAttribute(r)) return b;
 			} else if (e.type === H.ATTRIBUTE && n.getAttribute(r) === t + "") return b;
-			return en(e), t;
+			return ln(e), t;
 		}
 	});
-})), sn = t((() => {
-	on();
-})), cn, ln = t((() => {
-	w(), cn = l`
+})), hn = t((() => {
+	mn();
+})), gn, _n = t((() => {
+	C(), gn = l`
   .library-notifications {
     position: fixed;
     z-index: 100;
@@ -6123,8 +6426,8 @@ function G(e, t, n) {
     <span class="setting-description" id=${`${e}-hint`}>${n}</span></span
   >`;
 }
-var un, dn = t((() => {
-	w(), un = class extends C {
+var vn, yn = t((() => {
+	C(), vn = class extends S {
 		constructor(...e) {
 			super(...e), this.label = "", this.hint = "", this.open = !1, this.hovering = !1, this.focused = !1, this.pinned = !1, this.dismiss = () => {
 				clearTimeout(this.closing), this.listeners?.abort(), this.listeners = void 0, this.open = this.pinned = this.hovering = this.focused = !1, this.requestUpdate();
@@ -6269,9 +6572,9 @@ var un, dn = t((() => {
       ></span
     >`;
 		}
-	}, customElements.get("kaleidescape-settings-hint") || customElements.define("kaleidescape-settings-hint", un);
-})), fn, pn = t((() => {
-	fn = [
+	}, customElements.get("kaleidescape-settings-hint") || customElements.define("kaleidescape-settings-hint", vn);
+})), bn, xn = t((() => {
+	bn = [
 		[
 			"artwork_unavailable",
 			"Artwork unavailable",
@@ -6350,7 +6653,7 @@ var un, dn = t((() => {
 	];
 }));
 // src/ui/movie-preview.ts
-function mn(e, t, n) {
+function Sn(e, t, n) {
 	let r = n.left + 12, i = n.left + n.width - 12, a = n.top + 12, o = n.top + n.height - 12, s = [
 		{
 			side: "right",
@@ -6393,7 +6696,7 @@ function mn(e, t, n) {
 		bottom: c.bottom
 	};
 }
-function hn(e, t, n = "", r = null) {
+function Cn(e, t, n = "", r = null) {
 	let i = t?.duration_seconds ?? r;
 	return v`<strong>${e}</strong> ${n ? v`<p>${n}</p>` : v`<p>
               <strong>Rating:</strong> ${t?.rating || "—"} ·
@@ -6407,10 +6710,10 @@ function hn(e, t, n = "", r = null) {
             </p>
             <p><strong>Synopsis:</strong> ${t?.synopsis || "—"}</p>`}`;
 }
-function gn(e, t) {
+function wn(e, t) {
 	let n = window.visualViewport;
 	e.style.maxWidth = "", e.style.maxHeight = "";
-	let r = mn(t.getBoundingClientRect(), e.getBoundingClientRect(), {
+	let r = Sn(t.getBoundingClientRect(), e.getBoundingClientRect(), {
 		left: n?.offsetLeft ?? 0,
 		top: n?.offsetTop ?? 0,
 		width: n?.width ?? window.innerWidth,
@@ -6421,8 +6724,8 @@ function gn(e, t) {
 	let i = e.getBoundingClientRect();
 	e.style.left = `${r.side === "left" ? r.right - i.width : Math.min(r.left, r.right - i.width)}px`, e.style.top = `${r.side === "above" ? r.bottom - i.height : Math.min(r.top, r.bottom - i.height)}px`;
 }
-var _n, vn, yn = t((() => {
-	w(), _n = class {
+var Tn, En, Dn = t((() => {
+	C(), Tn = class {
 		constructor() {
 			this.generation = 0;
 		}
@@ -6444,7 +6747,7 @@ var _n, vn, yn = t((() => {
 				a = !0, s();
 			}, 500)) : c();
 		}
-	}, vn = l`
+	}, En = l`
   .movie-preview {
     position: fixed;
     z-index: 1200;
@@ -6465,8 +6768,8 @@ var _n, vn, yn = t((() => {
     margin: 6px 0 0;
   }
 `;
-})), bn, xn, Sn = t((() => {
-	w(), bn = l`
+})), On, kn, An = t((() => {
+	C(), On = l`
   .setting-label {
     display: flex;
     align-items: center;
@@ -6487,8 +6790,8 @@ var _n, vn, yn = t((() => {
     clip-path: inset(50%);
     white-space: nowrap;
   }
-`, xn = l`
-  ${bn}
+`, kn = l`
+  ${On}
   .spaced {
     margin-top: 22px;
   }
@@ -6719,9 +7022,9 @@ var _n, vn, yn = t((() => {
 }));
 // src/playback/remote.ts
 function K(e) {
-	return y`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${En[e]}</svg>`;
+	return y`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${Pn[e]}</svg>`;
 }
-function Cn(e, t, n, r, i) {
+function jn(e, t, n, r, i) {
 	let a = (n, r, a, o = "", s = !0, c = "") => v`<button
       type="button"
       class=${o}
@@ -6741,7 +7044,7 @@ function Cn(e, t, n, r, i) {
 	].filter(Boolean).length, s = (r.remote_transport ? 2 : 0) + +!!r.remote_intermission;
 	return v`
     <div class="remote-power">
-      ${a("power_on", "Power on", D("power"))}
+      ${a("power_on", "Power on", F("power"))}
       ${r.remote_screensaver ? a("screensaver", "Screensaver", K("screensaver"), "", !1) : x}
       ${a("power_off", "Standby", K("standby"))}
     </div>
@@ -6753,7 +7056,7 @@ function Cn(e, t, n, r, i) {
             ${r.remote_covers ? a("movies", "Covers", K("covers")) : x}
             ${r.remote_movies ? a("movie_list", "List", K("movies")) : x}
             ${r.remote_collections ? a("movie_collections", "Collections", K("collections")) : x}
-            ${r.remote_search ? a("search", "Search", D("search")) : x}
+            ${r.remote_search ? a("search", "Search", F("search")) : x}
             ${r.remote_settings ? a("status_and_settings", "Settings", K("settings")) : x}
           </div>` : x}
     <div class="remote-main">
@@ -6801,8 +7104,8 @@ function Cn(e, t, n, r, i) {
             </div>` : x}
   `;
 }
-var wn, Tn, En, Dn, On = t((() => {
-	w(), O(), wn = [
+var Mn, Nn, Pn, Fn, In = t((() => {
+	C(), I(), Mn = [
 		["remote_covers", "Covers"],
 		["remote_movies", "List"],
 		["remote_collections", "Collections"],
@@ -6812,7 +7115,7 @@ var wn, Tn, En, Dn, On = t((() => {
 		["remote_transport", "Transport Controls"],
 		["remote_intermission", "Intermission"],
 		["remote_collection_shortcuts", "Collection Shortcuts"]
-	], Tn = Object.fromEntries(wn.map(([e]) => [e, !0])), En = {
+	], Nn = Object.fromEntries(Mn.map(([e]) => [e, !0])), Pn = {
 		pausedCollection: y`<circle cx="12" cy="12" r="9"/><path d="M9 8v8m6-8v8"/>`,
 		watchSoon: y`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`,
 		newCollection: y`<path d="m12 2 2.2 5.2L20 9l-4.5 3.8.3 5.8L12 15.4 7.2 18.6l.3-5.8L3 9l5.8-1.8z"/>`,
@@ -6837,7 +7140,7 @@ var wn, Tn, En, Dn, On = t((() => {
 		next: y`<path fill="currentColor" stroke="none" d="M18 4h2v16h-2zM4 4l12 8-12 8z"/>`,
 		replay: y`<path d="M4 11a8 8 0 1 1 2.3 6M4 5v6h6"/>`,
 		stop: y`<rect x="5" y="5" width="14" height="14" rx="1" fill="currentColor" stroke="none"/>`
-	}, Dn = l`
+	}, Fn = l`
   .remote-dialog {
     width: min(440px, calc(100% - 24px));
     --dialog-gutter: 16px;
@@ -7156,15 +7459,15 @@ var wn, Tn, En, Dn, On = t((() => {
     }
   }
 `;
-})), kn, An = t((() => {
-	kn = "data:image/png;base64,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";
-})), jn, Mn, Nn = t((() => {
-	w(), F(), E(), dn(), Sn(), O(), On(), R(), An(), jn = {
+})), Ln, Rn = t((() => {
+	Ln = "data:image/png;base64,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";
+})), zn, Bn, Vn = t((() => {
+	C(), A(), P(), yn(), An(), I(), In(), z(), Rn(), zn = {
 		rejected: "The player rejected the command. Nothing was retried.",
 		not_sent: "Settings or access changed before sending. The command was not sent."
-	}, Mn = class extends C {
+	}, Bn = class extends S {
 		constructor(...e) {
-			super(...e), this.mode = "remote", this.versionId = "", this.playerId = "", this.inlineRemote = !1, this.hideRefresh = !1, this.hideRemote = !1, this.liveTyping = !1, this.remoteVisibility = { ...Tn }, this.value = "", this.configured = !0, this.settingsDisabled = !1, this.generation = 0, this.key = "", this.waking = !1, this.wakeDeadline = 0, this.started = "", this.lastOperation = "", this.selectedPlayer = "", this.dialog = "players", this.acknowledge = "", this.busy = !1, this.revalidatingVersion = !1, this.error = "", this.notice = "", this.locked = !1, this.searchDraft = "", this.searchDirty = !1, this.sendingSearch = !1, this.finishingSearch = !1, this.remoteAvailable = !1;
+			super(...e), this.mode = "remote", this.versionId = "", this.playerId = "", this.inlineRemote = !1, this.hideRefresh = !1, this.hideRemote = !1, this.liveTyping = !1, this.remoteVisibility = { ...Nn }, this.value = "", this.configured = !0, this.settingsDisabled = !1, this.generation = 0, this.key = "", this.waking = !1, this.wakeDeadline = 0, this.started = "", this.lastOperation = "", this.selectedPlayer = "", this.dialog = "players", this.acknowledge = "", this.busy = !1, this.revalidatingVersion = !1, this.error = "", this.notice = "", this.locked = !1, this.searchDraft = "", this.searchDirty = !1, this.sendingSearch = !1, this.finishingSearch = !1, this.remoteAvailable = !1;
 		}
 		static {
 			this.properties = {
@@ -7185,9 +7488,9 @@ var wn, Tn, En, Dn, On = t((() => {
 		}
 		static {
 			this.styles = [
-				T,
-				bn,
-				Dn,
+				N,
+				On,
+				Fn,
 				l`
       [hidden] {
         display: none !important;
@@ -7336,7 +7639,7 @@ var wn, Tn, En, Dn, On = t((() => {
 					entry: r.entry || ""
 				}) : (this.searchInput = void 0, this.searchDraft = "", this.searchDirty = !1, clearTimeout(this.searchTimer)), this.requestUpdate(), i && (await this.updateComplete, e === this.generation && this.dialog === "remote" && this.searchInput && this.renderRoot.querySelector("#player-search")?.focus({ preventScroll: !0 }));
 			} catch (e) {
-				k(e) === "unauthorized" && (this.stopInputPolling(), this.fail(e));
+				w(e) === "unauthorized" && (this.stopInputPolling(), this.fail(e));
 			} finally {
 				this.inputRead = void 0;
 			}
@@ -7399,7 +7702,7 @@ var wn, Tn, En, Dn, On = t((() => {
 			super.disconnectedCallback(), this.generation++, this.stopWaking(), this.stopInputPolling(), this.revalidatingVersion = !1, this.pending = this.info = void 0;
 		}
 		fail(e) {
-			let t = k(e), n = {
+			let t = w(e), n = {
 				control_disabled: "Playback controls are disabled. Ask an administrator to enable them.",
 				control_player: "No player is configured. Ask an administrator to discover and select one.",
 				control_not_ready: "The player is not ready. Power it on and wait for readiness before playing.",
@@ -7411,7 +7714,7 @@ var wn, Tn, En, Dn, On = t((() => {
 				control_uncertain: "Player controls are paused. Ask an administrator to review the player.",
 				control_limit: "Control receipt storage is full. Administrator maintenance is required."
 			};
-			this.error = n[t] ?? A(e), t === "unauthorized" && (this.generation++, this.info = this.pending = this.status = void 0, this.selectedPlayer = "", this.dispatchEvent(new CustomEvent("access-denied", {
+			this.error = n[t] ?? T(e), t === "unauthorized" && (this.generation++, this.info = this.pending = this.status = void 0, this.selectedPlayer = "", this.dispatchEvent(new CustomEvent("access-denied", {
 				bubbles: !0,
 				composed: !0
 			})));
@@ -7484,7 +7787,7 @@ var wn, Tn, En, Dn, On = t((() => {
 			if (!this.pending) return;
 			let e = this.generation, t = await this.client.controlExecute(this.pending);
 			if (e !== this.generation) return;
-			this.lastOutcome = t.outcome, this.notice = jn[t.outcome] ?? "", this.pending = void 0;
+			this.lastOutcome = t.outcome, this.notice = zn[t.outcome] ?? "", this.pending = void 0;
 			let n = this.lastOperation;
 			if (["state_observed", "acknowledged"].includes(t.outcome) && (n === "power_on" ? (this.waking = !0, this.wakeDeadline = Date.now() + 12e4, this.wakeTimer = setTimeout(() => void this.pollWake(), 1e3)) : [
 				"launch",
@@ -7629,7 +7932,7 @@ var wn, Tn, En, Dn, On = t((() => {
                     title=${`${this.status?.ready ? "Play on" : "Power on"} ${n?.name || "the selected player"}`}
                     @click=${() => this.status && this.status.readiness !== "starting" ? this.prepare(this.status.ready ? "launch" : "power_on") : this.refresh()}
                   >
-                    ${D(this.status?.ready && !this.waking ? "play" : "power")}
+                    ${F(this.status?.ready && !this.waking ? "play" : "power")}
                     ${this.waking ? v`<span class="spinner" aria-hidden="true">◌</span> Starting player…` : !this.status || this.status.readiness === "starting" ? "Check player" : this.status.ready ? "Play" : "Power On"}</button
                   ><button
                     type="button"
@@ -7644,22 +7947,22 @@ var wn, Tn, En, Dn, On = t((() => {
               ` : e?.enabled ? v`
                   ${this.waking ? v`<span role="status">◌ Starting player…</span>` : x}
                 ` : v`<p class="muted">Playback controls are disabled.</p>`}
-      ${this.mode === "remote" && this.inlineRemote && e?.enabled ? Cn(!!i, !!this.status?.ready, this.status?.state.mode !== 0, this.remoteVisibility, (e) => void this.prepare(e)) : x}
+      ${this.mode === "remote" && this.inlineRemote && e?.enabled ? jn(!!i, !!this.status?.ready, this.status?.state.mode !== 0, this.remoteVisibility, (e) => void this.prepare(e)) : x}
       ${this.dialog !== "remote" || this.acknowledge ? this.feedback() : x}
       ${r && !(e?.can_manage && this.scope.permissions.edit) ? v`<p class="warning">Player controls are paused. Ask an administrator to review the player.</p>` : x}
       ${e?.can_manage && this.scope.permissions.edit ? e.pending.map((t) => v`<p class="warning">Player controls are paused for ${e.players.find((e) => e.id === t.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(t.request_id)}>I inspected the player…</button></p>`) : x}
       <dialog
         ?data-admin-dialog=${!!this.acknowledge}
         class=${this.dialog === "remote" && !this.acknowledge ? "database-dialog remote-dialog" : "database-dialog"}
-        @click=${L}
+        @click=${R}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2>
-            ${this.dialog === "remote" && !this.acknowledge ? v`<img class="remote-header-icon" src=${kn} alt="" />` : x}
+            ${this.dialog === "remote" && !this.acknowledge ? v`<img class="remote-header-icon" src=${Ln} alt="" />` : x}
             ${this.acknowledge ? "Restore player controls" : this.dialog === "remote" ? `${n?.name || "Kaleidescape player"} Remote` : "Choose Player"}
           </h2>
-          ${I((e) => this.close(e))}
+          ${L((e) => this.close(e))}
         </div>
         ${this.acknowledge ? v`<p>
                 Confirm you inspected the physical player. This permits new
@@ -7704,7 +8007,7 @@ var wn, Tn, En, Dn, On = t((() => {
                         <p class="muted">
                           ${this.liveTyping ? "Text is sent as you type." : "Send text before selecting Done."}
                         </p>
-                      </section>` : x}${Cn(!!i, !!this.status?.ready, this.status?.state.mode !== 0, this.remoteVisibility, (e) => void this.prepare(e))}${this.feedback()}` : v`
+                      </section>` : x}${jn(!!i, !!this.status?.ready, this.status?.state.mode !== 0, this.remoteVisibility, (e) => void this.prepare(e))}${this.feedback()}` : v`
                   <p class="muted">
                     Choose where to play. This does not change the household
                     default player or Journal tracking.
@@ -7731,50 +8034,50 @@ var wn, Tn, En, Dn, On = t((() => {
       </dialog>
     </section>`;
 		}
-	}, customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", Mn);
+	}, customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", Bn);
 }));
 // src/ui/profile-controller.ts
-function Pn(e, t) {
-	e.addController(new In(e, t));
+function Hn(e, t) {
+	e.addController(new Wn(e, t));
 }
-var Fn, In, Ln = t((() => {
-	rt(), Fn = [
+var Un, Wn, Gn = t((() => {
+	tt(), Un = [
 		"close",
 		"cancel",
 		"control-lock",
 		"edit-lock",
 		"scrape-lock",
 		"collection-lock"
-	], In = class {
+	], Wn = class {
 		constructor(e, t) {
-			this.host = e, this.change = t, this.profile = nt(), this.schedule = () => {
-				this.frame === void 0 && nt() !== this.profile && (this.frame = requestAnimationFrame(() => {
+			this.host = e, this.change = t, this.profile = et(), this.schedule = () => {
+				this.frame === void 0 && et() !== this.profile && (this.frame = requestAnimationFrame(() => {
 					this.frame = void 0;
-					let e = nt();
+					let e = et();
 					this.host.isConnected && e !== this.profile && this.change() && (this.profile = e);
 				}));
 			};
 		}
 		hostConnected() {
 			window.addEventListener("resize", this.schedule);
-			for (let e of Fn) this.host.renderRoot.addEventListener(e, this.schedule, !0);
+			for (let e of Un) this.host.renderRoot.addEventListener(e, this.schedule, !0);
 		}
 		hostUpdated() {
 			this.schedule();
 		}
 		hostDisconnected() {
 			window.removeEventListener("resize", this.schedule);
-			for (let e of Fn) this.host.renderRoot.removeEventListener(e, this.schedule, !0);
+			for (let e of Un) this.host.renderRoot.removeEventListener(e, this.schedule, !0);
 			this.frame !== void 0 && cancelAnimationFrame(this.frame), this.frame = void 0;
 		}
 	};
-})), q, Rn = t((() => {
-	rt(), q = class {
+})), q, Kn = t((() => {
+	tt(), q = class {
 		get unsettled() {
 			return this.inflight > 0 || Object.keys(this.failed).length > 0;
 		}
 		constructor(e, t, n, r, i = "library") {
-			this.client = e, this.scope = t, this.shared = n, this.error = r, this.area = i, this.values = {}, this.revision = 0, this.profile = nt(), this.active = !0, this.inflight = 0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
+			this.client = e, this.scope = t, this.shared = n, this.error = r, this.area = i, this.values = {}, this.revision = 0, this.profile = et(), this.active = !0, this.inflight = 0, this.sequence = 0, this.versions = /* @__PURE__ */ new Map(), this.failed = {};
 		}
 		async load() {
 			let e = await this.client.uiPreferences(this.scope, this.shared, this.area, this.profile);
@@ -7809,7 +8112,7 @@ var Fn, In, Ln = t((() => {
 	};
 }));
 // src/library/badges.ts
-function zn(e) {
+function qn(e) {
 	return e.movie_statuses ?? ([
 		"unwatched",
 		"watched",
@@ -7825,8 +8128,8 @@ function J(e, t = "modern") {
 		none: "No status"
 	}[e] ?? "Unknown";
 }
-function Bn(e, t = "modern") {
-	let n = e.is_watch_soon ?? e.collections.some((e) => e.toLowerCase().replace(/[\s_-]+/g, "") === "watchsoon"), r = zn(e);
+function Jn(e, t = "modern") {
+	let n = e.is_watch_soon ?? e.collections.some((e) => e.toLowerCase().replace(/[\s_-]+/g, "") === "watchsoon"), r = qn(e);
 	return [
 		...r.includes("in_progress") ? [{
 			key: "progress",
@@ -7860,7 +8163,7 @@ function Bn(e, t = "modern") {
 		}] : []
 	];
 }
-function Vn(e) {
+function Yn(e) {
 	let t = (e.formats ?? [e.edition ?? ""]).map((e) => e.toLowerCase()), n = (e) => t.some((t) => e.test(t)), r = [];
 	return n(/\b8k\b/) && r.push({
 		key: "eight-k",
@@ -7897,8 +8200,8 @@ function Vn(e) {
 		label: "DTS:X"
 	}), r;
 }
-function Hn(e) {
-	let t = Vn(e);
+function Xn(e) {
+	let t = Yn(e);
 	return [
 		"eight-k",
 		"cinematic",
@@ -7908,17 +8211,17 @@ function Hn(e) {
 		"sd"
 	].map((e) => t.find((t) => t.key === e)).find(Boolean);
 }
-function Un(e) {
+function Zn(e) {
 	return e === "atmos" || e === "dtsx";
 }
 function Y(e, t = !1, n, r = !1, i = {
 	video: !0,
 	audio: !0
 }) {
-	let a = t ? Hn(e) : void 0;
-	return (t ? [...a ? [a] : [], ...Vn(e).filter((e) => Un(e.key))] : Vn(e)).filter((e) => Un(e.key) ? i.audio : i.video).map((e) => {
+	let a = t ? Xn(e) : void 0;
+	return (t ? [...a ? [a] : [], ...Yn(e).filter((e) => Zn(e.key))] : Yn(e)).filter((e) => Zn(e.key) ? i.audio : i.video).map((e) => {
 		let t = e.key === "cinematic" || e.key === "hd-cinematic" ? v`<b>${e.key === "cinematic" ? "4K" : "HD"}</b
-              ><span class="cinematic-label">Cinematic</span>` : e.key === "vision" || e.key === "atmos" ? v`${Zn}<span>${e.label}</span>` : e.key === "hdr10" ? v`${er}<b>HDR10</b>` : e.label;
+              ><span class="cinematic-label">Cinematic</span>` : e.key === "vision" || e.key === "atmos" ? v`${ar}<span>${e.label}</span>` : e.key === "hdr10" ? v`${cr}<b>HDR10</b>` : e.label;
 		return n ? v`<button
             type="button"
             class=${`format-badge format-${e.key}`}
@@ -7934,8 +8237,8 @@ function Y(e, t = !1, n, r = !1, i = {
           >`;
 	});
 }
-function Wn(e, t = !1, n = [], r = "modern", i = "icons") {
-	let a = Bn(e, r), o = t ? [
+function Qn(e, t = !1, n = [], r = "modern", i = "icons") {
+	let a = Jn(e, r), o = t ? [
 		"progress",
 		"watched",
 		"watch-soon",
@@ -7959,15 +8262,15 @@ function Wn(e, t = !1, n = [], r = "modern", i = "icons") {
 	return (t ? a.filter((e) => e === o || e.key === "favorite") : a).filter((e) => !n.includes(e.key)).map((e) => {
 		let r = t && e === o && e.key !== "recent" && !n.includes("recent") && a.some((e) => e.key === "recent");
 		return v`${r ? v`<span class="cover-recent-edge" role="img" aria-label="Recently Added" title="Recently Added"></span>` : x}<span
-          class=${t ? `cover-flag flag-${e.key}` : `status-badge collection-badge collection-${qn(e.label)}${e.key === "recent" ? " status-recent" : ""}${i === "text" ? " status-text" : ""}`}
+          class=${t ? `cover-flag flag-${e.key}` : `status-badge collection-badge collection-${tr(e.label)}${e.key === "recent" ? " status-recent" : ""}${i === "text" ? " status-text" : ""}`}
           title=${e.label}
           aria-label=${e.label}
           role="img"
-          >${t ? v`<span class="badge-symbol" aria-hidden="true">${e.key === "watch-soon" ? Qn : e.key === "recent" ? $n : e.symbol}</span>` : v`${i === "icons" ? Jn(e.label) : x}<span>${e.label}</span>`}</span
+          >${t ? v`<span class="badge-symbol" aria-hidden="true">${e.key === "watch-soon" ? or : e.key === "recent" ? sr : e.symbol}</span>` : v`${i === "icons" ? nr(e.label) : x}<span>${e.label}</span>`}</span
         >`;
 	});
 }
-function Gn(e, t, n = !1) {
+function $n(e, t, n = !1) {
 	if (!e?.trim()) return x;
 	let r = e.trim(), i = {
 		G: "general",
@@ -7992,11 +8295,11 @@ function Gn(e, t, n = !1) {
     >${r}</span
   >`;
 }
-function Kn(e) {
+function er(e) {
 	let t = e.toLowerCase().replace(/[\s_-]+/g, "");
 	return t === "played" ? "Watched" : t === "watchsoon" ? "Watch Soon" : e;
 }
-function qn(e) {
+function tr(e) {
 	let t = e.toLowerCase();
 	return t.replace(/[\s_-]+/g, "") === "watchsoon" ? "watch-soon" : {
 		all: "all",
@@ -8011,8 +8314,8 @@ function qn(e) {
 		"in progress": "progress"
 	}[t] ?? "all";
 }
-function Jn(e) {
-	let t = qn(e), n = {
+function nr(e) {
+	let t = tr(e), n = {
 		all: y`<path d="m2 7 10-5 10 5-10 5zM2 12l10 5 10-5M2 17l10 5 10-5"/>`,
 		new: y`<path d="m12 1 3 2 4 1 1 4 3 4-3 3-1 4-4 1-3 3-3-3-4-1-1-4-3-3 3-4 1-4 4-1z"/><text x="12" y="14.5" text-anchor="middle" fill="currentColor" stroke="none" font-size="6" font-weight="800">NEW</text>`,
 		unwatched: y`<circle cx="12" cy="12" r="10"/><path fill="currentColor" stroke="none" d="m9 6 9 6-9 6z"/>`,
@@ -8023,22 +8326,22 @@ function Jn(e) {
 	};
 	return y`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${n[t]}</svg>`;
 }
-function Yn(e, t, n = !1, r) {
-	let i = v`${Jn(e)}<span
-      >${Kn(e)}</span
-    >`, a = `collection-badge collection-${qn(e)}${e.toLowerCase() === "recently added" ? " status-recent" : ""}`;
+function rr(e, t, n = !1, r) {
+	let i = v`${nr(e)}<span
+      >${er(e)}</span
+    >`, a = `collection-badge collection-${tr(e)}${e.toLowerCase() === "recently added" ? " status-recent" : ""}`;
 	return t ? v`<button
         type="button"
         class=${a}
-        aria-label=${r ?? `Filter by collection: ${Kn(e)}`}
+        aria-label=${r ?? `Filter by collection: ${er(e)}`}
         ?disabled=${n}
         @click=${t}
       >
         ${i}
       </button>` : v`<span class=${a}>${i}</span>`;
 }
-var Xn, Zn, Qn, $n, er, tr = t((() => {
-	w(), Xn = [
+var ir, ar, or, sr, cr, lr = t((() => {
+	C(), ir = [
 		"8K",
 		"4K Cinematic",
 		"4K",
@@ -8050,33 +8353,33 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
 		"Dolby Vision",
 		"Dolby Atmos",
 		"DTS:X"
-	], Zn = y`<svg class="dolby-symbol" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
+	], ar = y`<svg class="dolby-symbol" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
   <path fill="currentColor" d="M1 1h3.1c4.1 0 7 2.9 7 7s-2.9 7-7 7H1V1Zm22 0h-3.1c-4.1 0-7 2.9-7 7s2.9 7 7 7H23V1Z" />
-</svg>`, Qn = y`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+</svg>`, or = y`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
   <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
   <path d="M12 6v6h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-</svg>`, $n = y`<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+</svg>`, sr = y`<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
   <path fill="currentColor" d="M13 3c.6 0 1 .4 1.2 1l1.4 5.2a5.8 5.8 0 0 0 4.1 4.1l5.2 1.4c.6.2 1 .6 1 1.2s-.4 1-1 1.2l-5.2 1.4a5.8 5.8 0 0 0-4.1 4.1l-1.4 5.2c-.2.6-.6 1-1.2 1s-1-.4-1.2-1l-1.4-5.2a5.8 5.8 0 0 0-4.1-4.1L1 17.1c-.6-.2-1-.6-1-1.2s.4-1 1-1.2l5.2-1.4a5.8 5.8 0 0 0 4.1-4.1L11.8 4c.2-.6.6-1 1.2-1Z" />
   <path fill="currentColor" d="M26 1c.5 0 .8.3.9.7l.6 2.1a2.7 2.7 0 0 0 1.9 1.9l2.1.6c.3.1.5.4.5.8s-.2.7-.5.8l-2.1.6a2.7 2.7 0 0 0-1.9 1.9l-.6 2.1c-.1.4-.4.7-.9.7s-.8-.3-.9-.7l-.6-2.1a2.7 2.7 0 0 0-1.9-1.9l-2.1-.6c-.3-.1-.5-.4-.5-.8s.2-.7.5-.8l2.1-.6a2.7 2.7 0 0 0 1.9-1.9l.6-2.1c.1-.4.4-.7.9-.7Z" />
   <path fill="currentColor" d="M5 23c.5 0 .8.3.9.7l.5 1.7a2.3 2.3 0 0 0 1.6 1.6l1.7.5c.4.1.6.4.6.8s-.2.7-.6.8l-1.7.5a2.3 2.3 0 0 0-1.6 1.6l-.5 1.7c-.1.4-.4.6-.9.6s-.8-.2-.9-.6l-.5-1.7A2.3 2.3 0 0 0 2 29.6l-1.7-.5c-.4-.1-.6-.4-.6-.8s.2-.7.6-.8L2 27a2.3 2.3 0 0 0 1.6-1.6l.5-1.7c.1-.4.4-.7.9-.7Z" />
-</svg>`, er = y`<svg class="hdr-symbol" viewBox="0 0 27 16" aria-hidden="true" focusable="false">
+</svg>`, cr = y`<svg class="hdr-symbol" viewBox="0 0 27 16" aria-hidden="true" focusable="false">
   <path fill="#e94637" d="M1 4 7 3v10l-6-1z" />
   <path fill="#f28c28" d="M6 3 12 2v12l-6-1z" />
   <path fill="#edc13b" d="M11 2 17 1v14l-6-1z" />
   <path fill="#72ad69" d="M16 1 22 0v16l-6-1z" />
   <path fill="#298a98" d="M21 1 26 0v16l-5-1z" />
 </svg>`;
-})), X, nr, rr, ir, ar = t((() => {
-	w(), F(), E(), O(), R(), tr(), X = (e) => e.toLowerCase().replace(/[\s_-]+/g, ""), nr = (e) => ({
+})), X, ur, dr, fr, pr = t((() => {
+	C(), A(), P(), I(), z(), lr(), X = (e) => e.toLowerCase().replace(/[\s_-]+/g, ""), ur = (e) => ({
 		new: "Unwatched",
 		played: "Watched",
 		paused: "In Progress",
 		watchsoon: "Watch Soon"
-	})[X(e)] ?? e, rr = (e) => [
+	})[X(e)] ?? e, dr = (e) => [
 		"queued",
 		"working",
 		"syncing"
-	].includes(e.status), ir = class extends C {
+	].includes(e.status), fr = class extends S {
 		constructor(...e) {
 			super(...e), this.revision = 0, this.enabled = !1, this.blocked = !1, this.choices = [], this.jobs = [], this.generation = 0, this.selected = "", this.busy = !1, this.refreshing = !1, this.refreshNotice = "", this.error = "";
 		}
@@ -8094,8 +8397,8 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
 		}
 		static {
 			this.styles = [
-				T,
-				et,
+				N,
+				bt,
 				l`
       .collection-button {
         border-radius: 999px;
@@ -8212,7 +8515,7 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
 			this.busy || this.pending && !window.confirm("This request may already be queued. Close and inspect the collection status before trying again?") ? e?.preventDefault() : (this.clear(), this.requestUpdate());
 		}
 		fail(e) {
-			this.error = A(e), ["unauthorized", "library_disabled"].includes(k(e)) && (this.clear(), this.dispatchEvent(new CustomEvent(k(e) === "unauthorized" ? "access-denied" : "library-disabled", {
+			this.error = T(e), ["unauthorized", "library_disabled"].includes(w(e)) && (this.clear(), this.dispatchEvent(new CustomEvent(w(e) === "unauthorized" ? "access-denied" : "library-disabled", {
 				bubbles: !0,
 				composed: !0
 			})));
@@ -8236,18 +8539,18 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
 		}
 		isQueued(e) {
 			let t = X(e);
-			return this.jobs.some((e) => rr(e) && e.title_id === this.version?.id && (X(e.collection) === t || ["new", "played"].includes(X(e.collection)) && ["new", "played"].includes(t)));
+			return this.jobs.some((e) => dr(e) && e.title_id === this.version?.id && (X(e.collection) === t || ["new", "played"].includes(X(e.collection)) && ["new", "played"].includes(t)));
 		}
 		get actionLabel() {
 			return this.actionFor(this.selected);
 		}
 		actionFor(e) {
 			let t = X(e), n = this.isMember(e);
-			return t === "new" ? n ? "Move to Watched" : "Move to Unwatched" : t === "played" ? n ? "Move to Unwatched" : "Move to Watched" : `${n ? "Remove from" : "Add to"} ${nr(e)}`;
+			return t === "new" ? n ? "Move to Watched" : "Move to Unwatched" : t === "played" ? n ? "Move to Unwatched" : "Move to Watched" : `${n ? "Remove from" : "Add to"} ${ur(e)}`;
 		}
 		rowDisabled(e) {
 			let t = X(e), n = this.isMember(e);
-			return this.busy || this.refreshing || !!this.pending || this.isQueued(e) || this.jobs.filter(rr).length >= 10 || t === "paused" && !n || n && ![
+			return this.busy || this.refreshing || !!this.pending || this.isQueued(e) || this.jobs.filter(dr).length >= 10 || t === "paused" && !n || n && ![
 				"favorites",
 				"watchsoon",
 				"new",
@@ -8260,7 +8563,7 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
 			return this.isQueued(e) ? "Change queued or being verified" : t === "paused" ? n ? "Can be removed; playback adds it again" : "Start playback to add In Progress" : ["new", "played"].includes(t) ? n ? "Currently in this status · moving changes both" : "Watched and Unwatched cannot overlap" : n && !["favorites", "watchsoon"].includes(t) ? "Custom collection removal is not yet supported" : n ? "Currently in this collection" : "Not in this collection";
 		}
 		get disabled() {
-			return !this.selected || this.busy || this.refreshing || this.queued || this.jobs.filter(rr).length >= 10 || this.selectedKey === "paused" && !this.member || this.member && ![
+			return !this.selected || this.busy || this.refreshing || this.queued || this.jobs.filter(dr).length >= 10 || this.selectedKey === "paused" && !this.member || this.member && ![
 				"favorites",
 				"watchsoon",
 				"new",
@@ -8294,7 +8597,7 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
 					"conflict",
 					"collection_uncertain",
 					"collection_disabled"
-				].includes(k(t)) && (this.pending = void 0), this.fail(t));
+				].includes(w(t)) && (this.pending = void 0), this.fail(t));
 			} finally {
 				e === this.generation && (this.busy = !1, this.requestUpdate());
 			}
@@ -8321,19 +8624,19 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
 			}
 		}
 		render() {
-			return !this.scope?.permissions.edit || !this.version || !this.enabled ? x : v`${$e("Collection", "collection", this.blocked || this.busy, () => this.open(), "collection-button")}
+			return !this.scope?.permissions.edit || !this.version || !this.enabled ? x : v`${yt("Collection", "collection", this.blocked || this.busy, () => this.open(), "collection-button")}
       <dialog
         data-admin-dialog
         class="database-dialog"
-        @click=${L}
+        @click=${R}
         @cancel=${this.close}
         aria-labelledby="collection-add-title"
       >
         <div class="card-head">
           <h2 id="collection-add-title">Manage collections</h2>
           <div class="actions">
-            ${$e("Refresh collections", "refresh", this.busy || this.refreshing || !!this.pending || this.jobs.some(rr), () => this.refresh(), "refresh-collections")}
-            ${I((e) => this.close(e), this.busy)}
+            ${yt("Refresh collections", "refresh", this.busy || this.refreshing || !!this.pending || this.jobs.some(dr), () => this.refresh(), "refresh-collections")}
+            ${L((e) => this.close(e), this.busy)}
           </div>
         </div>
         <div class="collection-kicker">Selected version</div>
@@ -8361,15 +8664,15 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
 					let t = n.indexOf(X(e));
 					return t < 0 ? n.length : t;
 				};
-				return r(e) - r(t) || nr(e).localeCompare(nr(t));
+				return r(e) - r(t) || ur(e).localeCompare(ur(t));
 			}).map((e) => v`<div
                   class=${`collection-row${this.isMember(e) ? " member" : ""}${this.isQueued(e) ? " pending" : ""}`}
                 >
                   <span class="collection-icon" aria-hidden="true"
-                    >${Jn(nr(e))}</span
+                    >${nr(ur(e))}</span
                   >
                   <span class="collection-copy"
-                    ><strong>${nr(e)}</strong
+                    ><strong>${ur(e)}</strong
                     ><small>${this.rowHint(e)}</small></span
                   >
                   <button
@@ -8383,7 +8686,7 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
                   </button>
                 </div>`)}
         </div>
-        ${this.jobs.filter(rr).length >= 10 ? v`<p class="warning">The queue holds up to 10 changes. Wait for an item to finish.</p>` : x}
+        ${this.jobs.filter(dr).length >= 10 ? v`<p class="warning">The queue holds up to 10 changes. Wait for an item to finish.</p>` : x}
         ${this.choices.length ? x : v`<p>No cached collection names are available. Run a Library sync first.</p>`}
         ${this.pending ? v`<div class="dialog-footer">
                 <button
@@ -8397,13 +8700,13 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
               </div>` : x}
       </dialog>`;
 		}
-	}, customElements.get("kaleidescape-library-collection-add") || customElements.define("kaleidescape-library-collection-add", ir);
-})), or, sr, cr = t((() => {
-	Je(), qt(), rn(), or = (e, t, n) => {
+	}, customElements.get("kaleidescape-library-collection-add") || customElements.define("kaleidescape-library-collection-add", fr);
+})), mr, hr, gr = t((() => {
+	Ye(), tn(), fn(), mr = (e, t, n) => {
 		let r = /* @__PURE__ */ new Map();
 		for (let i = t; i <= n; i++) r.set(e[i], i);
 		return r;
-	}, sr = Gt(class extends Kt {
+	}, hr = $t(class extends en {
 		constructor(e) {
 			if (super(e), e.type !== H.CHILD) throw Error("repeat() can only be used in text expressions");
 		}
@@ -8421,40 +8724,40 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
 			return this.dt(e, t, n).values;
 		}
 		update(e, [t, n, r]) {
-			let i = tn(e), { values: a, keys: o } = this.dt(t, n, r);
+			let i = un(e), { values: a, keys: o } = this.dt(t, n, r);
 			if (!Array.isArray(i)) return this.ut = o, a;
 			let s = this.ut ??= [], c = [], l, u, d = 0, f = i.length - 1, p = 0, m = a.length - 1;
 			for (; d <= f && p <= m;) if (i[d] === null) d++;
 			else if (i[f] === null) f--;
 			else if (s[d] === o[p]) c[p] = U(i[d], a[p]), d++, p++;
 			else if (s[f] === o[m]) c[m] = U(i[f], a[m]), f--, m--;
-			else if (s[d] === o[m]) c[m] = U(i[d], a[m]), Qt(e, c[m + 1], i[d]), d++, m--;
-			else if (s[f] === o[p]) c[p] = U(i[f], a[p]), Qt(e, i[d], i[f]), f--, p++;
-			else if (l === void 0 && (l = or(o, p, m), u = or(s, d, f)), l.has(s[d])) {
+			else if (s[d] === o[m]) c[m] = U(i[d], a[m]), sn(e, c[m + 1], i[d]), d++, m--;
+			else if (s[f] === o[p]) c[p] = U(i[f], a[p]), sn(e, i[d], i[f]), f--, p++;
+			else if (l === void 0 && (l = mr(o, p, m), u = mr(s, d, f)), l.has(s[d])) {
 				if (l.has(s[f])) {
 					let t = u.get(o[p]), n = t === void 0 ? null : i[t];
 					if (n === null) {
-						let t = Qt(e, i[d]);
+						let t = sn(e, i[d]);
 						U(t, a[p]), c[p] = t;
-					} else c[p] = U(n, a[p]), Qt(e, i[d], n), i[t] = null;
+					} else c[p] = U(n, a[p]), sn(e, i[d], n), i[t] = null;
 					p++;
-				} else nn(i[f]), f--;
-			} else nn(i[d]), d++;
+				} else dn(i[f]), f--;
+			} else dn(i[d]), d++;
 			for (; p <= m;) {
-				let t = Qt(e, c[m + 1]);
+				let t = sn(e, c[m + 1]);
 				U(t, a[p]), c[p++] = t;
 			}
 			for (; d <= f;) {
 				let e = i[d++];
-				e !== null && nn(e);
+				e !== null && dn(e);
 			}
-			return this.ut = o, en(e, c), b;
+			return this.ut = o, ln(e, c), b;
 		}
 	});
-})), lr = t((() => {
-	cr();
-})), ur, dr = t((() => {
-	w(), yn(), ur = l`
+})), _r = t((() => {
+	gr();
+})), vr, yr = t((() => {
+	C(), Dn(), vr = l`
   :host {
     display: block;
     min-width: 0;
@@ -8595,7 +8898,7 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
     outline: 2px solid var(--accent);
     box-shadow: 0 2px 8px #000c;
   }
-  ${vn}
+  ${En}
   @media (prefers-reduced-motion: reduce) {
     .poster {
       transition: none;
@@ -8834,32 +9137,32 @@ var Xn, Zn, Qn, $n, er, tr = t((() => {
 `;
 }));
 // src/ui/movie-dialog-mode.ts
-function fr() {
-	return hr;
+function br() {
+	return Cr;
 }
-function pr(e) {
-	if (hr !== e) {
-		hr = e;
-		for (let e of gr) e();
+function xr(e) {
+	if (Cr !== e) {
+		Cr = e;
+		for (let e of wr) e();
 	}
 }
-function mr(e) {
-	return gr.add(e), () => gr.delete(e);
+function Sr(e) {
+	return wr.add(e), () => wr.delete(e);
 }
-var hr, gr, _r = t((() => {
-	hr = !0, gr = /* @__PURE__ */ new Set();
-})), vr = /* @__PURE__ */ n({
-	JournalCalendar: () => Sr,
-	calendarDays: () => xr,
-	calendarMonth: () => yr,
+var Cr, wr, Tr = t((() => {
+	Cr = !0, wr = /* @__PURE__ */ new Set();
+})), Er = /* @__PURE__ */ n({
+	JournalCalendar: () => Ar,
+	calendarDays: () => kr,
+	calendarMonth: () => Dr,
 	dayKey: () => Z,
-	monthBounds: () => br,
-	previewPosition: () => mn
+	monthBounds: () => Or,
+	previewPosition: () => Sn
 });
 function Z(e) {
 	return `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, "0")}-${String(e.getDate()).padStart(2, "0")}`;
 }
-function yr(e = location.search, t = /* @__PURE__ */ new Date()) {
+function Dr(e = location.search, t = /* @__PURE__ */ new Date()) {
 	let n = new URLSearchParams(e).get("companion_month") ?? "";
 	if (/^\d{4}-(0[1-9]|1[0-2])$/.test(n)) {
 		let [e, t] = n.split("-").map(Number);
@@ -8867,10 +9170,10 @@ function yr(e = location.search, t = /* @__PURE__ */ new Date()) {
 	}
 	return new Date(t.getFullYear(), t.getMonth(), 1);
 }
-function br(e) {
+function Or(e) {
 	return [new Date(e.getFullYear(), e.getMonth(), 1).toISOString(), new Date(e.getFullYear(), e.getMonth() + 1, 1).toISOString()];
 }
-function xr(e) {
+function kr(e) {
 	let t = Z(new Date(e.started_at)), n = e.ended_at ?? e.completed_at, r = e.status === "completed" && n && new Date(n) > new Date(e.started_at) ? Z(new Date(n)) : t, i = e.partial_minimum_seconds ?? 600, a = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ new Map();
 	for (let t of e.sessions ?? []) {
 		if (t.watched_seconds < i) continue;
@@ -8884,10 +9187,10 @@ function xr(e) {
 		phase: e.status === "completed" && n === r ? n === t && !o.get(n) ? "single" : "completion" : n === t && !o.get(n) ? "start" : "continuation"
 	}));
 }
-var Sr, Cr = t((() => {
-	w(), lr(), F(), zt(), tr(), ln(), E(), dr(), yn(), R(), ci(), _r(), Sr = class extends C {
+var Ar, jr = t((() => {
+	C(), _r(), A(), M(), lr(), _n(), P(), yr(), Dn(), z(), gi(), Tr(), Ar = class extends S {
 		constructor(...e) {
-			super(...e), this.query = "", this.status = "", this.fuzzy = !0, this.daySize = 180, this.fitScreen = !1, this.hoverPreview = !1, this.disabled = !1, this.editable = !1, this.rememberUrl = !0, this.detailsOnly = !1, this.preserveDetailOnClose = !1, this.libraryRequest = 0, this.fittedSize = 180, this.month = yr(), this.items = [], this.loading = !1, this.error = "", this.generation = 0, this.signature = "", this.privacy = "", this.queue = new V(), this.selectedArtwork = null, this.movie = null, this.detailRequest = 0, this.detailLoading = !1, this.detailError = "", this.previewError = "", this.previewGate = new _n(), this.previewHovered = !1, this.previewFocused = !1, this.previewPopupHovered = !1, this.previewBlocked = !1, this.previewCache = /* @__PURE__ */ new Map(), this.activeTouches = /* @__PURE__ */ new Set(), this.swipeDragging = !1, this.swipeAnimating = !1, this.swipeMotion = 0, this.suppressSwipeClick = !1, this.previewKeydown = (e) => {
+			super(...e), this.query = "", this.status = "", this.fuzzy = !0, this.daySize = 180, this.fitScreen = !1, this.hoverPreview = !1, this.disabled = !1, this.editable = !1, this.rememberUrl = !0, this.detailsOnly = !1, this.preserveDetailOnClose = !1, this.libraryRequest = 0, this.fittedSize = 180, this.month = Dr(), this.items = [], this.loading = !1, this.error = "", this.generation = 0, this.signature = "", this.privacy = "", this.queue = new j(), this.selectedArtwork = null, this.movie = null, this.detailRequest = 0, this.detailLoading = !1, this.detailError = "", this.previewError = "", this.previewGate = new Tn(), this.previewHovered = !1, this.previewFocused = !1, this.previewPopupHovered = !1, this.previewBlocked = !1, this.previewCache = /* @__PURE__ */ new Map(), this.activeTouches = /* @__PURE__ */ new Set(), this.swipeDragging = !1, this.swipeAnimating = !1, this.swipeMotion = 0, this.suppressSwipeClick = !1, this.previewKeydown = (e) => {
 				e.key === "Tab" && !this.previewBlocked && (this.previewPointerAnchor = void 0), e.key === "Escape" && this.pendingHoverAnchor && (this.cancelPendingHover(), this.previewHovered = !1), e.key === "Escape" && this.previewRow && (e.stopPropagation(), this.closePreview());
 			}, this.scheduleLayout = () => {
 				this.fitScreen && this.isConnected && this.layoutFrame === void 0 && (this.layoutFrame = requestAnimationFrame(() => {
@@ -8897,7 +9200,7 @@ var Sr, Cr = t((() => {
 				}));
 			}, this.positionPreview = () => {
 				let e = this.renderRoot.querySelector(".movie-preview");
-				e && this.previewAnchor && this.previewRow && gn(e, this.previewAnchor);
+				e && this.previewAnchor && this.previewRow && wn(e, this.previewAnchor);
 			};
 		}
 		static {
@@ -8919,16 +9222,16 @@ var Sr, Cr = t((() => {
 		}
 		static {
 			this.styles = [
-				T,
-				cn,
-				ur
+				N,
+				gn,
+				vr
 			];
 		}
 		connectedCallback() {
-			super.connectedCallback(), window.addEventListener("keydown", this.previewKeydown), window.addEventListener("scroll", this.positionPreview, !0), window.addEventListener("resize", this.positionPreview), window.visualViewport?.addEventListener("scroll", this.positionPreview), window.visualViewport?.addEventListener("resize", this.positionPreview), this.unwatchMovieDialog = mr(() => {
+			super.connectedCallback(), window.addEventListener("keydown", this.previewKeydown), window.addEventListener("scroll", this.positionPreview, !0), window.addEventListener("resize", this.positionPreview), window.visualViewport?.addEventListener("scroll", this.positionPreview), window.visualViewport?.addEventListener("resize", this.positionPreview), this.unwatchMovieDialog = Sr(() => {
 				if (this.requestUpdate(), !this.detailsOnly && this.selected) {
-					if (fr() && this.renderRoot.querySelector(".calendar-dialog")?.open) this.openLibraryTitle(!0);
-					else if (!fr() && this.linkedTitleId) {
+					if (br() && this.renderRoot.querySelector(".calendar-dialog")?.open) this.openLibraryTitle(!0);
+					else if (!br() && this.linkedTitleId) {
 						let e = this.selected;
 						this.linkedTitleId = void 0, this.openViewing(e);
 					}
@@ -8958,20 +9261,20 @@ var Sr, Cr = t((() => {
 			super.disconnectedCallback(), window.removeEventListener("keydown", this.previewKeydown), window.removeEventListener("scroll", this.positionPreview, !0), window.removeEventListener("resize", this.positionPreview), window.visualViewport?.removeEventListener("scroll", this.positionPreview), window.visualViewport?.removeEventListener("resize", this.positionPreview), this.unwatchMovieDialog?.(), this.unwatchMovieDialog = void 0, window.removeEventListener("resize", this.scheduleLayout), window.visualViewport?.removeEventListener("resize", this.scheduleLayout), this.resizeObserver?.disconnect(), this.resizeObserver = void 0, this.layoutFrame !== void 0 && cancelAnimationFrame(this.layoutFrame), this.layoutFrame = void 0, this.clear(), this.activeTouches.clear(), this.swipeStart = void 0, clearTimeout(this.swipeClickTimer), this.suppressSwipeClick = !1, this.signature = this.privacy = "", this.boundClient = void 0;
 		}
 		clear() {
-			this.generation++, this.cancelSwipeAnimation(), this.closeDayPicker(), this.activeTouches.clear(), this.swipeStart = void 0, this.closePreview(), this.previewPointerAnchor = void 0, this.previewCache.clear(), this.closeDetails(), this.items = [], this.error = "", this.loading = !1, this.queue.cache.dispose(), this.queue = new V();
+			this.generation++, this.cancelSwipeAnimation(), this.closeDayPicker(), this.activeTouches.clear(), this.swipeStart = void 0, this.closePreview(), this.previewPointerAnchor = void 0, this.previewCache.clear(), this.closeDetails(), this.items = [], this.error = "", this.loading = !1, this.queue.cache.dispose(), this.queue = new j();
 		}
 		fail(e) {
-			k(e) === "unauthorized" && (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
+			w(e) === "unauthorized" && (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
 				bubbles: !0,
 				composed: !0
-			}))), this.error = A(e), this.requestUpdate();
+			}))), this.error = T(e), this.requestUpdate();
 		}
 		async load() {
 			if (!this.client || !this.scope) return;
 			let e = ++this.generation;
 			this.closeDayPicker(), this.closePreview(), this.previewCache.clear(), this.closeDetails(), this.items = [], this.totals = void 0, this.loading = !0, this.error = "", this.notifyStatus(), this.requestUpdate();
 			try {
-				let [t, n] = br(this.month), r = await this.client.calendarMonth(this.scope, t, n, this.query, this.status, this.fuzzy, this.libraryTitleId);
+				let [t, n] = Or(this.month), r = await this.client.calendarMonth(this.scope, t, n, this.query, this.status, this.fuzzy, this.libraryTitleId);
 				e === this.generation && (this.items = r.items, this.totals = r.summary);
 			} catch (t) {
 				e === this.generation && this.fail(t);
@@ -9147,7 +9450,7 @@ var Sr, Cr = t((() => {
 				this.isConnected && t.isConnected && this.hoverPreview && this.pendingHoverAnchor === t && (this.pendingHoverAnchor = void 0, this.previewRow = e, this.previewAnchor = t, this.previewMovie = n, this.previewError = r, r || this.previewCache.set(e.id, n), this.requestUpdate(), this.updateComplete.then(() => this.positionPreview()));
 			};
 			this.previewGate.start(async () => this.previewCache.has(e.id) ? this.previewCache.get(e.id) : (await r.calendarDetails(i, e.id)).movie, (e) => a(e), (e) => {
-				k(e) === "unauthorized" ? this.fail(e) : a(null, "Movie details are unavailable.");
+				w(e) === "unauthorized" ? this.fail(e) : a(null, "Movie details are unavailable.");
 			}, n);
 		}
 		renderPreview() {
@@ -9163,7 +9466,7 @@ var Sr, Cr = t((() => {
 				this.previewPopupHovered = !1, this.closePreviewWhenIdle();
 			}}
     >
-      ${hn(e.title, this.previewMovie ?? null, this.previewError, e.duration_seconds)}
+      ${Cn(e.title, this.previewMovie ?? null, this.previewError, e.duration_seconds)}
     </div>`;
 		}
 		async openViewing(e, t = null) {
@@ -9171,27 +9474,27 @@ var Sr, Cr = t((() => {
 			this.previewBlocked = !0, this.closeDayPicker(), this.closePreview();
 			let n = this.generation, r = ++this.detailRequest;
 			if (this.selected = e, this.selectedArtwork = t, this.movie = null, this.detailLoading = !0, this.detailError = "", this.requestUpdate(), await this.updateComplete, n === this.generation && r === this.detailRequest && this.isConnected) {
-				if (fr() && !this.detailsOnly && this.scope.library_enabled) try {
+				if (br() && !this.detailsOnly && this.scope.library_enabled) try {
 					let t = await this.client.viewingLibrary(this.scope, e.id);
 					if (n !== this.generation || r !== this.detailRequest || !this.isConnected) return;
-					if (t.library && fr()) {
+					if (t.library && br()) {
 						this.linkedTitleId = t.library.title_id, this.detailLoading = !1, this.requestUpdate();
 						return;
 					}
 				} catch (e) {
 					if (n !== this.generation || r !== this.detailRequest) return;
-					if (k(e) === "unauthorized") {
+					if (w(e) === "unauthorized") {
 						this.fail(e);
 						return;
 					}
-					this.detailError = A(e);
+					this.detailError = T(e);
 				}
 				this.renderRoot.querySelector(".calendar-dialog")?.showModal();
 				try {
 					let i = await this.client.calendarDetails(this.scope, e.id);
 					n === this.generation && r === this.detailRequest && (this.selected = i.viewing, this.movie = i.movie, this.selectedArtwork = i.movie?.artwork_key ?? t);
 				} catch (e) {
-					n === this.generation && r === this.detailRequest && (k(e) === "unauthorized" ? this.fail(e) : this.detailError = A(e));
+					n === this.generation && r === this.detailRequest && (w(e) === "unauthorized" ? this.fail(e) : this.detailError = T(e));
 				} finally {
 					n === this.generation && r === this.detailRequest && (this.detailLoading = !1, this.requestUpdate());
 				}
@@ -9202,7 +9505,7 @@ var Sr, Cr = t((() => {
 			let t = this.generation, n = ++this.libraryRequest;
 			try {
 				let r = await this.client.viewingLibrary(this.scope, this.selected.id);
-				if (t !== this.generation || n !== this.libraryRequest || !this.isConnected || e && !fr()) return;
+				if (t !== this.generation || n !== this.libraryRequest || !this.isConnected || e && !br()) return;
 				if (r.library) {
 					if (e) {
 						let e = this.renderRoot.querySelector(".calendar-dialog");
@@ -9212,7 +9515,7 @@ var Sr, Cr = t((() => {
 				} else this.detailError = "No linked Library entry is available.", this.requestUpdate();
 			} catch (e) {
 				if (t !== this.generation || n !== this.libraryRequest) return;
-				k(e) === "unauthorized" ? this.fail(e) : (this.detailError = A(e), this.requestUpdate());
+				w(e) === "unauthorized" ? this.fail(e) : (this.detailError = T(e), this.requestUpdate());
 			}
 		}
 		browse(e, t) {
@@ -9248,7 +9551,7 @@ var Sr, Cr = t((() => {
 			return v`<dialog
         class="database-dialog calendar-dialog"
         aria-labelledby="calendar-movie-title"
-        @click=${L}
+        @click=${R}
         @close=${(e) => {
 				if (!e.target.open) {
 					if (this.preserveDetailOnClose) {
@@ -9263,7 +9566,7 @@ var Sr, Cr = t((() => {
           <h2 id="calendar-movie-title">
             ${e && t && !this.detailsOnly ? v`<button type="button" class="link detail-link" @click=${() => void this.openLibraryTitle()}>${e.title}</button>` : e?.title ?? "Viewing details"}
           </h2>
-          ${I(() => {
+          ${L(() => {
 				this.closeDetails(), this.requestUpdate();
 			})}
         </div>
@@ -9280,7 +9583,7 @@ var Sr, Cr = t((() => {
                   ${this.detailLoading ? v`<p role="status">Loading movie details…</p>` : x}
                   ${this.detailError ? v`<p class="error" role="alert">${this.detailError} <button @click=${() => this.openViewing(e, this.selectedArtwork)}>Retry details</button></p>` : x}
                   ${t ? v`<div class="detail-badges">
-                            ${Y(t, !1, this.detailsOnly ? void 0 : (e) => this.browse("format", e))}${Gn(t.rating ?? "", this.detailsOnly ? void 0 : (e) => this.browse("rating", e))}
+                            ${Y(t, !1, this.detailsOnly ? void 0 : (e) => this.browse("format", e))}${$n(t.rating ?? "", this.detailsOnly ? void 0 : (e) => this.browse("rating", e))}
                           </div>
                           ${t.year ? v`<p><strong>Year:</strong> ${this.detailLink("year", String(t.year))}</p>` : x}
                           ${[
@@ -9334,7 +9637,7 @@ var Sr, Cr = t((() => {
 		render() {
 			if (this.detailsOnly) return this.renderDetails();
 			let e = this.month.getFullYear(), t = this.month.getMonth(), n = new Date(e, t, 1), r = new Date(e, t + 1, 0).getDate(), i = Math.ceil((n.getDay() + r) / 7) * 7, a = Array.from({ length: i }, (r, i) => new Date(e, t, i - n.getDay() + 1)), o = /* @__PURE__ */ new Map();
-			for (let e of this.items) for (let { day: t, phase: n } of xr(e)) o.set(t, [...o.get(t) ?? [], {
+			for (let e of this.items) for (let { day: t, phase: n } of kr(e)) o.set(t, [...o.get(t) ?? [], {
 				row: e,
 				phase: n
 			}]);
@@ -9421,7 +9724,7 @@ var Sr, Cr = t((() => {
                       class="cover-stack"
                       style=${`--spread:${1 + (r.length - 1) * .15}`}
                     >
-                      ${sr(r, ({ row: e }) => e.id, ({ row: t, phase: n }, i) => v`<button
+                      ${hr(r, ({ row: e }) => e.id, ({ row: t, phase: n }, i) => v`<button
                             class=${`poster poster-${n}`}
                             style=${`--index:${i};--layer:${i + 1}`}
                             aria-label=${`${t.title} · ${n === "start" ? "Started; incomplete on this day" : n === "continuation" ? "Continued; incomplete on this day" : n === "completion" ? "Completed; started on another day" : "Completed"}`}
@@ -9468,10 +9771,10 @@ var Sr, Cr = t((() => {
       </div>
       ${this.renderPreview()} ${this.renderDetails()} ${this.renderDayPicker()}`;
 		}
-	}, customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", Sr);
+	}, customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", Ar);
 }));
 // src/library/library-journal.ts
-function wr(e) {
+function Mr(e) {
 	return `${e.toLocaleDateString("en-US", {
 		month: "2-digit",
 		day: "2-digit",
@@ -9481,7 +9784,7 @@ function wr(e) {
 		minute: "2-digit"
 	})}`;
 }
-function Tr(e) {
+function Nr(e) {
 	let t = new Date(e.started_at), n = e.ended_at ?? e.completed_at, r = n ? new Date(n) : null;
 	return e.status === "completed" && r !== null && r > t && t.toDateString() !== r.toDateString() ? [{
 		label: "Started",
@@ -9497,11 +9800,11 @@ function Tr(e) {
 		datetime: e.started_at
 	}];
 }
-function Er(e) {
-	return Tr(e).map(({ label: e, date: t }) => `${e}: ${wr(t)}`).join(" · ");
+function Pr(e) {
+	return Nr(e).map(({ label: e, date: t }) => `${e}: ${Mr(t)}`).join(" · ");
 }
-var Dr, Or = t((() => {
-	w(), F(), E(), Dr = class extends C {
+var Fr, Ir = t((() => {
+	C(), A(), P(), Fr = class extends S {
 		constructor(...e) {
 			super(...e), this.titleId = "", this.editable = !1, this.unified = !1, this.bound = "", this.generation = 0, this.items = [], this.cursor = null, this.loading = !1, this.error = "", this.dialogReady = !1, this.detailRequest = 0, this.editChooser = !1;
 		}
@@ -9515,7 +9818,7 @@ var Dr, Or = t((() => {
 			};
 		}
 		static {
-			this.styles = [T, l`
+			this.styles = [N, l`
       :host {
         display: flow-root;
         font-size: 10.5px;
@@ -9621,17 +9924,17 @@ var Dr, Or = t((() => {
 				} while (i && this.renderRoot.querySelector("details")?.open);
 			} catch (e) {
 				if (!a()) return;
-				k(e) === "unauthorized" || k(e) === "library_disabled" ? (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
+				w(e) === "unauthorized" || w(e) === "library_disabled" ? (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
 					bubbles: !0,
 					composed: !0
-				}))) : k(e) === "refresh_required" ? (this.items = [], this.cursor = null, this.error = "Viewing history changed. Refresh to see the latest entries.") : this.error = A(e);
+				}))) : w(e) === "refresh_required" ? (this.items = [], this.cursor = null, this.error = "Viewing history changed. Refresh to see the latest entries.") : this.error = T(e);
 			} finally {
 				a() && (this.loading = !1, this.requestUpdate());
 			}
 		}
 		async openViewing(e) {
 			let t = this.generation, n = ++this.detailRequest;
-			if (await Promise.resolve().then(() => (Cr(), vr)), t !== this.generation || n !== this.detailRequest || !this.isConnected || (this.dialogReady = !0, this.requestUpdate(), await this.updateComplete, t !== this.generation || n !== this.detailRequest || !this.isConnected)) return;
+			if (await Promise.resolve().then(() => (jr(), Er)), t !== this.generation || n !== this.detailRequest || !this.isConnected || (this.dialogReady = !0, this.requestUpdate(), await this.updateComplete, t !== this.generation || n !== this.detailRequest || !this.isConnected)) return;
 			let r = this.renderRoot.querySelector("kaleidescape-journal-calendar");
 			r && (await r.updateComplete, t === this.generation && n === this.detailRequest && r.openViewing(e));
 		}
@@ -9651,7 +9954,7 @@ var Dr, Or = t((() => {
                       ${t ? v`<hr class="viewing-separator" />` : x}
                       <div class="viewing">
                         <div class="viewing-dates">
-                          ${Tr(e).map(({ label: e, date: t, datetime: n }) => v`<time datetime=${n}>${e}: ${wr(t)}</time>`)}
+                          ${Nr(e).map(({ label: e, date: t, datetime: n }) => v`<time datetime=${n}>${e}: ${Mr(t)}</time>`)}
                         </div>
                         ${this.unified ? x : v`<button
                                 type="button"
@@ -9676,7 +9979,7 @@ var Dr, Or = t((() => {
               <h2>Edit journal entry</h2>
               <p>Choose a viewing to edit.</p>
               <ul>
-                ${this.items.map((e) => v`<li><button type="button" class="link" @click=${() => this.edit(e)}>${Er(e)}</button></li>`)}
+                ${this.items.map((e) => v`<li><button type="button" class="link" @click=${() => this.edit(e)}>${Pr(e)}</button></li>`)}
               </ul>
               <button
                 type="button"
@@ -9690,10 +9993,10 @@ var Dr, Or = t((() => {
       ${this.dialogReady ? v`<kaleidescape-journal-calendar .client=${this.client} .scope=${this.scope} .detailsOnly=${!0}></kaleidescape-journal-calendar>` : x}
     `;
 		}
-	}, customElements.get("kaleidescape-library-journal") || customElements.define("kaleidescape-library-journal", Dr);
+	}, customElements.get("kaleidescape-library-journal") || customElements.define("kaleidescape-library-journal", Fr);
 }));
 // src/library/text-diff.ts
-function kr(e, t) {
+function Lr(e, t) {
 	let n = (e) => e.match(/\s+|[\p{L}\p{N}_]+|[^\s\p{L}\p{N}_]/gu) ?? [], r = n(e), i = n(t), a = [], o = [], s = (e, t, n) => {
 		let r = e.at(-1);
 		r && r.changed === n ? r.text += t : e.push({
@@ -9721,8 +10024,8 @@ function kr(e, t) {
 		current: o
 	};
 }
-var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
-	w(), F(), E(), O(), R(), B(), tr(), Ar(), jr = [
+var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
+	C(), A(), P(), I(), z(), V(), lr(), Rr(), zr = [
 		["title", "Display title"],
 		["sort_title", "Sort title (blank uses display title)"],
 		["year", "Year"],
@@ -9734,18 +10037,18 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
 		["producers", "Producers"],
 		["studios", "Studios"],
 		["genres", "Genres"]
-	], Mr = [
+	], Br = [
 		["purchased_on", "Purchase date"],
 		["purchase_price", "Purchase price"],
 		["retail_price", "Retail price"]
-	], Nr = /* @__PURE__ */ new Set([
+	], Vr = /* @__PURE__ */ new Set([
 		"actors",
 		"directors",
 		"writers",
 		"producers",
 		"studios",
 		"genres"
-	]), Pr = class extends C {
+	]), Hr = class extends S {
 		constructor(...e) {
 			super(...e), this.versionId = "", this.blocked = !1, this.purchaseOnly = !1, this.dateOnly = !1, this.optionsOnly = !1, this.draft = {}, this.busy = !1, this.opened = !1, this.restoring = !1, this.reviewingEdits = !1, this.restoredFields = /* @__PURE__ */ new Map(), this.formatMode = "auto", this.formatBadges = [], this.error = "", this.generation = 0;
 		}
@@ -9762,8 +10065,8 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
 		}
 		static {
 			this.styles = [
-				T,
-				et,
+				N,
+				bt,
 				l`
       :host {
         display: inline-block;
@@ -9884,7 +10187,7 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
 			return this.busy || this.pending ? !1 : !this.opened || !this.review || !this.restoring && !Object.keys(this.patch()).length || window.confirm("Discard your unsaved Library changes?");
 		}
 		report(e) {
-			this.error = A(e), k(e) === "unauthorized" && (this.reset(), this.dispatchEvent(new CustomEvent("access-denied", {
+			this.error = T(e), w(e) === "unauthorized" && (this.reset(), this.dispatchEvent(new CustomEvent("access-denied", {
 				bubbles: !0,
 				composed: !0
 			})));
@@ -9900,7 +10203,7 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
 					this.error = "Purchase records changed. Close and reopen the movie details to edit the receipt.";
 					return;
 				}
-				this.review = t, this.formatMode = t.format_mode ?? "auto", this.formatBadges = Xn.filter((e) => t.format_badges?.includes(e)), this.draft = Object.fromEntries(Object.entries(t.values).map(([e, t]) => [e, Array.isArray(t) ? t.join("\n") : String(t ?? "")]));
+				this.review = t, this.formatMode = t.format_mode ?? "auto", this.formatBadges = ir.filter((e) => t.format_badges?.includes(e)), this.draft = Object.fromEntries(Object.entries(t.values).map(([e, t]) => [e, Array.isArray(t) ? t.join("\n") : String(t ?? "")]));
 			} catch (t) {
 				e === this.generation && this.report(t);
 			} finally {
@@ -9908,19 +10211,19 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
 			}
 		}
 		fields() {
-			return this.purchaseOnly ? this.optionsOnly ? [] : this.dateOnly ? Mr.filter(([e]) => e === "purchased_on") : Mr : jr;
+			return this.purchaseOnly ? this.optionsOnly ? [] : this.dateOnly ? Br.filter(([e]) => e === "purchased_on") : Br : zr;
 		}
 		patch() {
 			let e = {};
 			for (let [t] of this.fields()) {
 				if (this.restoredFields.has(t)) continue;
-				let n = this.draft[t] ?? "", r = Nr.has(t) ? n.split("\n").map((e) => e.trim()).filter(Boolean) : t === "year" ? n.trim() ? Number(n) : null : [
+				let n = this.draft[t] ?? "", r = Vr.has(t) ? n.split("\n").map((e) => e.trim()).filter(Boolean) : t === "year" ? n.trim() ? Number(n) : null : [
 					"sort_title",
 					"purchased_on",
 					"purchase_price",
 					"retail_price"
 				].includes(t) ? n.trim() || null : n;
-				JSON.stringify(r) !== JSON.stringify(this.review.values[t] ?? (Nr.has(t) ? [] : [
+				JSON.stringify(r) !== JSON.stringify(this.review.values[t] ?? (Vr.has(t) ? [] : [
 					"sort_title",
 					"year",
 					"purchased_on",
@@ -9931,7 +10234,7 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
 			this.restoredFields.size && (e.restore_fields = [...this.restoredFields.keys()]);
 			let t = this.draft.purchase_information_unavailable === "true";
 			if (this.purchaseOnly && t !== !!this.review.values.purchase_information_unavailable && (e.purchase_information_unavailable = t), !this.purchaseOnly && this.review) {
-				let t = Xn.filter((e) => this.review?.format_badges?.includes(e));
+				let t = ir.filter((e) => this.review?.format_badges?.includes(e));
 				(this.formatMode !== (this.review.format_mode ?? "auto") || JSON.stringify(this.formatBadges) !== JSON.stringify(t)) && (e.format_override = this.formatMode === "custom" ? {
 					mode: "custom",
 					badges: this.formatBadges
@@ -9957,7 +10260,7 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
 					"not_found",
 					"backup_in_progress",
 					"busy"
-				].includes(k(t)) && (this.pending = void 0), this.report(t);
+				].includes(w(t)) && (this.pending = void 0), this.report(t);
 			} finally {
 				e === this.generation && (this.busy = !1, this.lock(), this.requestUpdate());
 			}
@@ -9965,7 +10268,7 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
 		editedFields() {
 			if (!this.review || this.purchaseOnly) return [];
 			let e = new Set(this.review.edited_fields ?? []), t = this.patch();
-			return jr.filter(([n]) => e.has(n) || n in t);
+			return zr.filter(([n]) => e.has(n) || n in t);
 		}
 		restoreField(e) {
 			if (!(!this.review || this.busy || this.pending)) {
@@ -9993,7 +10296,7 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
         <span>Original scanned</span><span>Current</span>
       </div>
       ${e.length ? e.map(([e, t]) => {
-				let n = this.review?.original_values?.[e], r = kr(Array.isArray(n) ? n.join("\n") : String(n ?? ""), this.draft[e] ?? "");
+				let n = this.review?.original_values?.[e], r = Lr(Array.isArray(n) ? n.join("\n") : String(n ?? ""), this.draft[e] ?? "");
 				return v`<section class="diff-field">
                 <h3>
                   ${t} <span aria-hidden="true">·</span>
@@ -10019,12 +10322,12 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
 			}) : v`<p class="muted">No edited fields.</p>`}`;
 		}
 		render() {
-			return this.scope?.permissions.edit ? v`${this.purchaseOnly ? v`<button type="button" class="link purchase-edit-link" ?disabled=${this.blocked || this.busy || !!this.pending} @click=${this.open}>edit</button>` : $e("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
+			return this.scope?.permissions.edit ? v`${this.purchaseOnly ? v`<button type="button" class="link purchase-edit-link" ?disabled=${this.blocked || this.busy || !!this.pending} @click=${this.open}>edit</button>` : yt("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
       <dialog
         data-admin-dialog
         class="inset-dialog"
         aria-labelledby="library-edit-title"
-        @click=${L}
+        @click=${R}
         @cancel=${(e) => {
 				e.preventDefault(), this.close();
 			}}
@@ -10033,7 +10336,7 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
           <h2 id="library-edit-title">
             ${this.purchaseOnly ? "Edit purchase details" : "Edit Library details"}
           </h2>
-          ${I(() => this.close())}
+          ${L(() => this.close())}
         </div>
         ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
         ${this.busy ? v`<p role="status">${this.pending ? "Saving changes…" : "Loading details…"}</p>` : x}
@@ -10077,11 +10380,11 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
                           The restore summary is unavailable. Reload details
                           before restoring.
                         </p>`}` : this.review ? v`<p class="muted">
-                      ${this.purchaseOnly ? "Saved purchase details appear for the whole movie group." : v`Display details apply to ${z(this.review.version_count, "version")}; format badges apply only to the selected version. Changes survive scans. Source IDs, runtime, purchases and viewing records are protected. Enter one name per line for credits and genres.`}
+                      ${this.purchaseOnly ? "Saved purchase details appear for the whole movie group." : v`Display details apply to ${B(this.review.version_count, "version")}; format badges apply only to the selected version. Changes survive scans. Source IDs, runtime, purchases and viewing records are protected. Enter one name per line for credits and genres.`}
                     </p>
                     <div class="edit-fields">
                       ${this.fields().map(([e, t]) => v`<label
-                            >${t}${this.editedFields().some(([t]) => t === e) ? v` <span class="edited-note">(edited)</span>` : x}${Nr.has(e) || e === "synopsis" ? v`<textarea
+                            >${t}${this.editedFields().some(([t]) => t === e) ? v` <span class="edited-note">(edited)</span>` : x}${Vr.has(e) || e === "synopsis" ? v`<textarea
                                     name=${e}
                                     .value=${this.draft[e] ?? ""}
                                     ?disabled=${!!this.pending || this.busy}
@@ -10107,7 +10410,7 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
                                 listing.
                               </p>
                               <div class="format-options">
-                                ${Xn.map((e) => v`<label>
+                                ${ir.map((e) => v`<label>
                                       <input
                                         type="checkbox"
                                         name="format_badge"
@@ -10116,7 +10419,7 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
                                         ?disabled=${!!this.pending || this.busy}
                                         @change=${(t) => {
 				let n = t.target.checked;
-				this.formatBadges = Xn.filter((t) => t === e ? n : this.formatBadges.includes(t)), this.formatMode = "custom", this.requestUpdate();
+				this.formatBadges = ir.filter((t) => t === e ? n : this.formatBadges.includes(t)), this.formatMode = "custom", this.requestUpdate();
 			}}
                                       />
                                       ${Y({ formats: [e] })}
@@ -10131,7 +10434,7 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
                                   type="button"
                                   ?disabled=${!!this.pending || this.busy}
                                   @click=${() => {
-				this.formatMode = "original", this.formatBadges = Xn.filter((e) => this.review?.scanned_format_badges?.includes(e)), this.requestUpdate();
+				this.formatMode = "original", this.formatBadges = ir.filter((e) => this.review?.scanned_format_badges?.includes(e)), this.requestUpdate();
 			}}
                                 >
                                   Restore server formats
@@ -10140,7 +10443,7 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
                                   type="button"
                                   ?disabled=${!!this.pending || this.busy}
                                   @click=${() => {
-				this.formatMode = "auto", this.formatBadges = Xn.filter((e) => this.review?.automatic_format_badges?.includes(e)), this.requestUpdate();
+				this.formatMode = "auto", this.formatBadges = ir.filter((e) => this.review?.automatic_format_badges?.includes(e)), this.requestUpdate();
 			}}
                                 >
                                   Use automatic matches
@@ -10210,16 +10513,16 @@ var Ar = t((() => {})), jr, Mr, Nr, Pr, Fr = t((() => {
         </div>
       </dialog>` : x;
 		}
-	}, customElements.get("kaleidescape-title-edit") || customElements.define("kaleidescape-title-edit", Pr);
+	}, customElements.get("kaleidescape-title-edit") || customElements.define("kaleidescape-title-edit", Hr);
 }));
 // src/library/purchase-details.ts
-function Ir(e, t, n = 0) {
-	return Lr(e, t, n).values;
+function Wr(e, t, n = 0) {
+	return Gr(e, t, n).values;
 }
-function Lr(e, t, n = 0) {
+function Gr(e, t, n = 0) {
 	let r = e[n], i = /* @__PURE__ */ new Set(), a = /* @__PURE__ */ new Set();
 	return {
-		values: Object.fromEntries(zr.map((n) => {
+		values: Object.fromEntries(qr.map((n) => {
 			if (r?.[n] != null) return [n, r[n]];
 			let o = [...new Set(e.map((e) => e[n]).filter((e) => e != null))];
 			if (o.length > 1) return a.add(n), [n, null];
@@ -10231,7 +10534,7 @@ function Lr(e, t, n = 0) {
 		conflicts: a
 	};
 }
-function Rr(e) {
+function Kr(e) {
 	if (!(!e || e.includes("\\") || [...e].some((e) => e.charCodeAt(0) <= 32)) && (/^https?:\/\//i.test(e) || /^\/?movie-store\//.test(e))) try {
 		let t = new URL(e, "https://www.kaleidescape.com/");
 		return !["www.kaleidescape.com", "store.kaleidescape.com"].includes(t.hostname) || !["http:", "https:"].includes(t.protocol) || t.username || t.password || t.port || !t.pathname.startsWith("/movie-store/") ? void 0 : (t.protocol = "https:", t.href);
@@ -10239,23 +10542,23 @@ function Rr(e) {
 		return;
 	}
 }
-var zr, Br = t((() => {
-	zr = [
+var qr, Jr = t((() => {
+	qr = [
 		"purchased_on",
 		"purchase_price",
 		"retail_price",
 		"order_id",
 		"href"
 	];
-})), Vr, Hr, Ur = t((() => {
-	w(), F(), R(), E(), Br(), Vr = {
+})), Yr, Xr, Zr = t((() => {
+	C(), A(), z(), P(), Jr(), Yr = {
 		title: "Receipt title",
 		purchased_on: "Purchase date",
 		purchase_price: "Purchase price",
 		retail_price: "Retail price",
 		order_id: "Order ID",
 		href: "Store link"
-	}, Hr = class extends C {
+	}, Xr = class extends S {
 		constructor(...e) {
 			super(...e), this.titleId = "", this.index = 0, this.draft = {}, this.unavailable = !1, this.busy = !1, this.error = "", this.stale = !1, this.generation = 0;
 		}
@@ -10267,7 +10570,7 @@ var zr, Br = t((() => {
 			};
 		}
 		static {
-			this.styles = [T, l`
+			this.styles = [N, l`
       dialog {
         width: min(640px, calc(100% - 24px));
       }
@@ -10288,7 +10591,7 @@ var zr, Br = t((() => {
 		}
 		initial(e = this.index) {
 			return this.review ? {
-				...Ir(this.review.records, this.review.manual, e),
+				...Wr(this.review.records, this.review.manual, e),
 				...this.review.records[e] ? { title: this.review.records[e].title } : {}
 			} : {};
 		}
@@ -10319,7 +10622,7 @@ var zr, Br = t((() => {
 			}));
 		}
 		report(e) {
-			this.error = A(e), k(e) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
+			this.error = T(e), w(e) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
 				bubbles: !0,
 				composed: !0
 			}));
@@ -10372,25 +10675,25 @@ var zr, Br = t((() => {
 					"unauthorized",
 					"busy",
 					"backup_in_progress"
-				].includes(k(e)) && (this.pending = void 0, this.stale = [
+				].includes(w(e)) && (this.pending = void 0, this.stale = [
 					"conflict",
 					"refresh_required",
 					"not_found"
-				].includes(k(e))), this.report(e);
+				].includes(w(e))), this.report(e);
 			} finally {
 				t === this.generation && (this.busy = !1, this.notifyBusy(), this.requestUpdate());
 			}
 		}
 		render() {
-			let e = this.review?.records[this.index] ? ["title", ...zr] : [...zr], t = this.review ? Lr(this.review.records, this.review.manual, this.index) : void 0;
+			let e = this.review?.records[this.index] ? ["title", ...qr] : [...qr], t = this.review ? Gr(this.review.records, this.review.manual, this.index) : void 0;
 			return v`<dialog
       aria-labelledby="purchase-edit-title"
       @cancel=${this.close}
-      @click=${L}
+      @click=${R}
     >
       <div class="card-head">
         <h2 id="purchase-edit-title">Edit purchase details</h2>
-        ${I((e) => this.close(e), this.busy || !!this.pending)}
+        ${L((e) => this.close(e), this.busy || !!this.pending)}
       </div>
       ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
       ${this.busy ? v`<p role="status">${this.pending ? "Saving purchase details…" : "Loading purchase details…"}</p>` : x}
@@ -10423,7 +10726,7 @@ var zr, Br = t((() => {
                               </p>` : x}
                       <div class="purchase-fields">
                         ${e.map((e) => v`<label
-                              >${Vr[e]}<input
+                              >${Yr[e]}<input
                                 name=${e}
                                 type=${e === "purchased_on" ? "date" : "text"}
                                 .value=${this.draft[e] ?? ""}
@@ -10457,67 +10760,67 @@ var zr, Br = t((() => {
       </div>
     </dialog>`;
 		}
-	}, customElements.get("kaleidescape-group-purchase-edit") || customElements.define("kaleidescape-group-purchase-edit", Hr);
+	}, customElements.get("kaleidescape-group-purchase-edit") || customElements.define("kaleidescape-group-purchase-edit", Xr);
 }));
 // src/library/url-filters.ts
-function Wr() {
+function Qr() {
 	return {
 		query: "",
 		missing_metadata_artwork: !1,
 		missing_purchase_information: !1,
 		recently_added: !1,
 		system_filters: [],
-		...Object.fromEntries(Jr.map((e) => [e, []]))
+		...Object.fromEntries(ni.map((e) => [e, []]))
 	};
 }
-function Gr(e = new URL(location.href)) {
+function $r(e = new URL(location.href)) {
 	return /^\/kaleidescape-companion\/?$/.test(e.pathname) && e.searchParams.get("companion_page") === "library";
 }
-function Kr(e = new URL(location.href), t = !1) {
-	if (!Gr(e)) return null;
+function ei(e = new URL(location.href), t = !1) {
+	if (!$r(e)) return null;
 	let n = e.searchParams;
 	if (![
 		"filters",
 		"query",
 		"system_filters",
-		...Jr,
-		...Yr
+		...ni,
+		...ri
 	].some((e) => n.has(`library_${e}`))) return null;
 	let r = n.get("library_query") ?? "", i = {
 		query: r.length <= 500 && !r.includes("\0") ? r : "",
 		missing_metadata_artwork: t && n.get("library_missing_metadata_artwork") === "1",
 		missing_purchase_information: t && n.get("library_missing_purchase_information") === "1",
 		recently_added: !1,
-		system_filters: t ? [...new Set(n.getAll("library_system_filters").filter((e) => fn.some(([t]) => t === e)))] : []
+		system_filters: t ? [...new Set(n.getAll("library_system_filters").filter((e) => bn.some(([t]) => t === e)))] : []
 	};
-	for (let e of Jr) {
+	for (let e of ni) {
 		let t = n.getAll(`library_${e}`);
-		i[e] = t.length <= 100 ? [...new Set(t.filter((t) => t.length > 0 && t.length <= 500 && !t.includes("\0") && (e !== "status" || Xr.has(t))))] : [];
+		i[e] = t.length <= 100 ? [...new Set(t.filter((t) => t.length > 0 && t.length <= 500 && !t.includes("\0") && (e !== "status" || ii.has(t))))] : [];
 	}
 	return i;
 }
-function qr(e) {
+function ti(e) {
 	let t = new URL(location.href);
-	if (!Gr(t)) return;
+	if (!$r(t)) return;
 	let n = t.searchParams;
 	for (let e of [
 		"filters",
 		"query",
 		"system_filters",
-		...Jr,
-		...Yr
+		...ni,
+		...ri
 	]) n.delete(`library_${e}`);
 	n.set("library_filters", "1"), typeof e.query == "string" && e.query && n.set("library_query", e.query);
-	for (let t of Jr) {
+	for (let t of ni) {
 		let r = e[t];
 		if (Array.isArray(r)) for (let e of r) n.append(`library_${t}`, e);
 	}
 	if (Array.isArray(e.system_filters)) for (let t of e.system_filters) n.append("library_system_filters", t);
-	for (let t of Yr) e[t] === !0 && n.set(`library_${t}`, "1");
+	for (let t of ri) e[t] === !0 && n.set(`library_${t}`, "1");
 	history.replaceState(history.state, "", t);
 }
-var Jr, Yr, Xr, Zr = t((() => {
-	pn(), Jr = [
+var ni, ri, ii, ai = t((() => {
+	xn(), ni = [
 		"collection",
 		"actor",
 		"director",
@@ -10526,7 +10829,7 @@ var Jr, Yr, Xr, Zr = t((() => {
 		"year",
 		"format",
 		"status"
-	], Yr = ["missing_metadata_artwork", "missing_purchase_information"], Xr = /* @__PURE__ */ new Set([
+	], ri = ["missing_metadata_artwork", "missing_purchase_information"], ii = /* @__PURE__ */ new Set([
 		"watched",
 		"unwatched",
 		"in_progress",
@@ -10536,11 +10839,11 @@ var Jr, Yr, Xr, Zr = t((() => {
 	]);
 }));
 // src/library/library.ts
-function Qr(e) {
-	let t = Array.isArray(e.collection) ? e.collection : [], n = t.map(ii).filter((e) => !!e), r = Array.isArray(e.status) ? e.status : [];
+function oi(e) {
+	let t = Array.isArray(e.collection) ? e.collection : [], n = t.map(fi).filter((e) => !!e), r = Array.isArray(e.status) ? e.status : [];
 	return {
 		...e,
-		collection: t.filter((e) => !ai(e)),
+		collection: t.filter((e) => !pi(e)),
 		status: [.../* @__PURE__ */ new Set([...r, ...n])],
 		genre: Array.isArray(e.genre) ? [...new Set(e.genre.map((e) => [
 			"sci-fi",
@@ -10549,8 +10852,8 @@ function Qr(e) {
 		].includes(e.trim().toLowerCase()) ? "Science Fiction" : e))] : []
 	};
 }
-var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
-	kt(), Ft(), Wt(), B(), w(), sn(), F(), E(), ln(), R(), O(), dn(), pn(), yn(), Nn(), zt(), Ln(), Rn(), tr(), ar(), Or(), Fr(), Ur(), Br(), Zr(), $r = [
+var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
+	Vt(), qt(), Qt(), V(), C(), hn(), A(), P(), _n(), z(), I(), yn(), xn(), Dn(), Vn(), M(), Gn(), Kn(), lr(), pr(), Ir(), Ur(), Zr(), Jr(), ai(), si = [
 		[
 			"collection",
 			"Collection",
@@ -10586,7 +10889,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 			"Viewing format",
 			"format"
 		]
-	], ei = [
+	], ci = [
 		["name", "Title"],
 		["year", "Year"],
 		["collection", "Collection"],
@@ -10594,25 +10897,25 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 		["watched", "Status"],
 		["added", "Added on"],
 		["random", "Random"]
-	], ti = [
+	], li = [
 		["show_titles", "Show titles on covers"],
 		["show_format", "Show video format badges"],
 		["show_audio_format", "Show audio format badges"],
 		["show_badges", "Show library badges"],
 		["show_rating", "Show rating badges"],
 		["show_library_cost", "Show total library cost in footer"]
-	], ni = [
+	], ui = [
 		"watched",
 		"unwatched",
 		"in_progress",
 		"favorite",
 		"watch_soon",
 		"recently_added"
-	], ri = (e, t) => ({
+	], di = (e, t) => ({
 		favorite: "Favorites",
 		watch_soon: "Watch Soon",
 		recently_added: "Recently Added"
-	})[e] ?? J(e, t), ii = (e) => {
+	})[e] ?? J(e, t), fi = (e) => {
 		let t = e.toLowerCase().trim();
 		return t.replace(/[\s_-]+/g, "") === "watchsoon" ? "watch_soon" : {
 			new: "unwatched",
@@ -10620,13 +10923,13 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 			paused: "in_progress",
 			favorites: "favorite"
 		}[t];
-	}, ai = (e) => e.toLowerCase().trim() === "all" || !!ii(e), oi = (e) => [
+	}, pi = (e) => e.toLowerCase().trim() === "all" || !!fi(e), mi = (e) => [
 		"new",
 		"played",
 		"paused"
-	].includes(e.trim().toLowerCase()), si = class extends C {
+	].includes(e.trim().toLowerCase()), hi = class extends S {
 		constructor() {
-			super(), this.dialogOnly = !1, this.advanced = !1, this.bound = "", this.generation = 0, this.listRequest = 0, this.statusRequest = 0, this.purchaseLoading = !1, this.purchaseReload = !1, this.purchaseError = "", this.versionRequest = 0, this.versionsLoading = !1, this.versionsError = "", this.widths = [
+			super(), this.dialogOnly = !1, this.advanced = !1, this.cachedUnverified = !1, this.coverCacheMode = "balanced", this.clearingCovers = !1, this.coverCacheMessage = "", this.bound = "", this.generation = 0, this.listRequest = 0, this.statusRequest = 0, this.purchaseLoading = !1, this.purchaseReload = !1, this.purchaseError = "", this.versionRequest = 0, this.versionsLoading = !1, this.versionsError = "", this.widths = [
 				360,
 				90,
 				260,
@@ -10637,28 +10940,28 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				query: "",
 				sort: "name",
 				descending: !1
-			}, this.applied = { ...this.filters }, this.loading = !1, this.requesting = !1, this.error = "", this.notice = "", this.noticeSeverity = "info", this.dismissedPending = /* @__PURE__ */ new Set(), this.dismissedLibraryErrors = /* @__PURE__ */ new Set(), this.collectionToast = "", this.collectionToastSeverity = "progress", this.observedCollectionJobs = /* @__PURE__ */ new Set(), this.notifiedCollectionJobs = /* @__PURE__ */ new Set(), this.covers = new V(), this.fuzzySearch = !0, this.mode = "list", this.coverSize = 150, this.movieStatusLabels = "modern", this.libraryBadgeStyle = "icons", this.display = {
+			}, this.applied = { ...this.filters }, this.loading = !1, this.requesting = !1, this.error = "", this.notice = "", this.noticeSeverity = "info", this.dismissedPending = /* @__PURE__ */ new Set(), this.dismissedLibraryErrors = /* @__PURE__ */ new Set(), this.collectionToast = "", this.collectionToastSeverity = "progress", this.observedCollectionJobs = /* @__PURE__ */ new Set(), this.notifiedCollectionJobs = /* @__PURE__ */ new Set(), this.covers = new j(), this.fuzzySearch = !0, this.mode = "list", this.coverSize = 150, this.movieStatusLabels = "modern", this.libraryBadgeStyle = "icons", this.display = {
 				show_titles: !0,
 				show_format: !0,
 				show_audio_format: !0,
 				show_badges: !0,
 				show_rating: !1,
 				show_library_cost: !1
-			}, this.entriesPerPage = 100, this.preferencesReady = !1, this.preferenceError = "", this.coverColumns = 1, this.gridWidth = 0, this.requestLimit = 50, this.requestedOffset = 0, this.previewGate = new _n(), this.previewCache = /* @__PURE__ */ new Map(), this.previewError = "", this.previewHovered = !1, this.previewFocused = !1, this.popupHovered = !1, this.positionPreview = () => {
+			}, this.entriesPerPage = 100, this.preferencesReady = !1, this.preferenceError = "", this.coverColumns = 1, this.gridWidth = 0, this.requestLimit = 50, this.requestedOffset = 0, this.previewGate = new Tn(), this.previewCache = /* @__PURE__ */ new Map(), this.previewError = "", this.previewHovered = !1, this.previewFocused = !1, this.popupHovered = !1, this.positionPreview = () => {
 				let e = this.renderRoot.querySelector(".movie-preview");
-				e && this.previewAnchor && this.previewItem && gn(e, this.previewAnchor);
+				e && this.previewAnchor && this.previewItem && wn(e, this.previewAnchor);
 			}, this.previewKeydown = (e) => {
 				e.key === "Tab" && (this.previewPointerAnchor = void 0), e.key === "Escape" && (this.previewItem || this.pendingPreviewAnchor) && (this.previewItem && e.stopPropagation(), this.closePreview());
 			}, this.draft = {}, this.facetChoices = {}, this.visibility = () => {
-				clearTimeout(this.timer), document.hidden ? (this.closePreview(), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0) : (this.refreshStatus(), this.scheduleLayoutPage());
+				clearTimeout(this.timer), document.hidden ? (this.stopCoverPrefetch(), this.closePreview(), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0) : (this.refreshStatus(), this.scheduleLayoutPage(), this.startCoverPrefetch());
 			}, this.locationChanged = () => {
-				if (this.dashboard || this.dialogOnly || !this.preferencesReady || !Gr()) return;
-				let e = Qr(this.readViewFilters() ?? Wr()), t = {
+				if (this.dashboard || this.dialogOnly || !this.preferencesReady || !$r()) return;
+				let e = oi(this.readViewFilters() ?? Qr()), t = {
 					...this.applied,
 					...e
 				};
 				JSON.stringify(t) === JSON.stringify(this.applied) ? this.clearHiddenMaintenanceFilter(e) : this.confirmNavigation() && (this.clearHiddenMaintenanceFilter(e), clearTimeout(this.searchTimer), this.applied = t, this.filters = structuredClone(this.applied), this.draft = structuredClone(this.applied), this.selected && this.closeDialog("title-dialog"), this.load());
-			}, Pn(this, () => !this.preferencesReady || this.preferences?.unsettled || this.loading || this.detailsLocked || this.resize || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.initializePreferences(), this.refreshStatus(), !0));
+			}, Hn(this, () => !this.preferencesReady || this.preferences?.unsettled || this.loading || this.detailsLocked || this.resize || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.initializePreferences(), this.refreshStatus(), !0));
 		}
 		static {
 			this.properties = {
@@ -10668,14 +10971,17 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				openCriterion: { attribute: !1 },
 				dashboard: { attribute: !1 },
 				dialogOnly: { type: Boolean },
-				advanced: { type: Boolean }
+				advanced: { type: Boolean },
+				coverQueue: { attribute: !1 },
+				pageCache: { attribute: !1 },
+				cacheUser: { attribute: !1 }
 			};
 		}
 		static {
 			this.styles = [
-				T,
-				cn,
-				vn
+				N,
+				gn,
+				En
 			];
 		}
 		get detailsLocked() {
@@ -10697,7 +11003,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				this.isConnected && t.isConnected && !this.loading && !this.selected && this.pendingPreviewAnchor === t && (this.pendingPreviewAnchor = void 0, this.previewItem = e, this.previewAnchor = t, this.previewMovie = n, this.previewError = r, r || (this.previewCache.size >= 100 && !this.previewCache.has(e.id) && this.previewCache.delete(this.previewCache.keys().next().value), this.previewCache.set(e.id, n)), this.requestUpdate(), this.updateComplete.then(() => this.positionPreview()));
 			};
 			this.previewGate.start(async () => this.previewCache.has(e.id) ? this.previewCache.get(e.id) : (await r.libraryVersions(i, e.id)).items[0] ?? null, (e) => a(e), (e) => {
-				["unauthorized", "library_disabled"].includes(k(e)) ? this.fail(e) : a(null, "Movie details are unavailable.");
+				["unauthorized", "library_disabled"].includes(w(e)) ? this.fail(e) : a(null, "Movie details are unavailable.");
 			}, n);
 		}
 		renderPreview() {
@@ -10712,18 +11018,18 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				this.popupHovered = !1, this.closePreviewWhenIdle();
 			}}
     >
-      ${hn(this.previewItem.title, this.previewMovie ?? null, this.previewError, this.previewItem.duration_seconds)}
+      ${Cn(this.previewItem.title, this.previewMovie ?? null, this.previewError, this.previewItem.duration_seconds)}
     </div>` : x;
 		}
 		readViewFilters() {
-			return Kr(void 0, this.advanced && !!this.scope?.permissions.edit);
+			return ei(void 0, this.advanced && !!this.scope?.permissions.edit);
 		}
 		clearHiddenMaintenanceFilter(e) {
 			!(this.advanced && this.scope?.permissions.edit) && [
 				"library_missing_metadata_artwork",
 				"library_missing_purchase_information",
 				"library_system_filters"
-			].some((e) => new URL(location.href).searchParams.has(e)) && qr(e);
+			].some((e) => new URL(location.href).searchParams.has(e)) && ti(e);
 		}
 		connectedCallback() {
 			super.connectedCallback(), window.addEventListener("keydown", this.previewKeydown), window.addEventListener("scroll", this.positionPreview, !0), window.addEventListener("resize", this.positionPreview), window.visualViewport?.addEventListener("scroll", this.positionPreview), window.visualViewport?.addEventListener("resize", this.positionPreview), document.addEventListener("visibilitychange", this.visibility), window.addEventListener("location-changed", this.locationChanged), window.addEventListener("popstate", this.locationChanged), this.requestUpdate("client"), this.requestUpdate("scope");
@@ -10740,15 +11046,15 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 						this.preferencesReady = !0;
 						let e = this.generation;
 						this.preferences = new q(this.client, this.scope, !1, (t) => {
-							e === this.generation && t && k(t) === "unauthorized" && this.fail(t);
+							e === this.generation && t && w(t) === "unauthorized" && this.fail(t);
 						}), this.preferences.load().then((t) => {
 							e === this.generation && (this.movieStatusLabels = t.movie_status_labels === "kaleidescape" ? "kaleidescape" : "modern", this.requestUpdate());
 						}).catch((t) => {
-							e === this.generation && k(t) === "unauthorized" && this.fail(t);
+							e === this.generation && w(t) === "unauthorized" && this.fail(t);
 						}), this.openTitleId && this.openLinkedTitle(this.openTitleId);
-					} else this.initializePreferences(), this.refreshStatus();
+					} else this.initialStatus = this.refreshStatus(), this.initializePreferences();
 				}
-			} else if (e.has("dashboard") && this.preferencesReady) this.initializePreferences();
+			} else if ((e.has("coverQueue") || e.has("cacheUser")) && this.preferencesReady && this.configureCoverCache(), e.has("dashboard") && this.preferencesReady) this.initializePreferences();
 			else if (this.preferencesReady) {
 				if (e.has("advanced") && !this.advanced && (this.applied.missing_metadata_artwork || this.applied.missing_purchase_information || this.applied.system_filters?.length) && (this.applied = {
 					...this.applied,
@@ -10776,7 +11082,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 			if (!this.client || !this.scope) return;
 			let e = this.generation;
 			this.preferences = new q(this.client, this.scope, !1, (t) => {
-				e === this.generation && (t && k(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? A(t) : "", this.requestUpdate()));
+				e === this.generation && (t && w(t) === "unauthorized" ? this.fail(t) : (this.preferenceError = t ? T(t) : "", this.requestUpdate()));
 			});
 			try {
 				let t = await this.preferences.load();
@@ -10789,17 +11095,17 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 					query: "",
 					sort: "name",
 					descending: !1,
-					...Object.fromEntries([...$r.map(([e]) => e), "status"].map((e) => [e, []])),
+					...Object.fromEntries([...si.map(([e]) => e), "status"].map((e) => [e, []])),
 					missing_metadata_artwork: !1,
 					missing_purchase_information: !1,
 					recently_added: !1
 				} : t;
-				this.dashboard && (this.preferences?.dispose(), this.preferences = void 0, this.coverColumns = this.dashboard.columns), this.fuzzySearch = this.scope.ui_defaults?.fuzzy_search !== !1, this.mode = n.view, this.entriesPerPage = n.page_size, this.coverSize = n.cover_size, this.movieStatusLabels = n.movie_status_labels === "kaleidescape" ? "kaleidescape" : "modern", this.libraryBadgeStyle = n.library_badge_style === "text" ? "text" : "icons", this.castLimit = Number.isInteger(n.cast_limit) ? n.cast_limit : 8, this.display = Object.fromEntries(ti.map(([e]) => [e, e === "show_audio_format" && typeof n[e] != "boolean" ? n.show_format : n[e]])), this.scope?.permissions.edit && this.display.show_library_cost && this.loadPurchaseTotals(), this.widths = [...n.widths], this.applied = Object.fromEntries([
+				this.dashboard && (this.preferences?.dispose(), this.preferences = void 0, this.coverColumns = this.dashboard.columns), this.fuzzySearch = this.scope.ui_defaults?.fuzzy_search !== !1, this.mode = n.view, this.entriesPerPage = n.page_size, this.coverSize = n.cover_size, this.coverCacheMode = n.cover_cache === "session" || n.cover_cache === "persistent" ? n.cover_cache : "balanced", this.configureCoverCache(), this.movieStatusLabels = n.movie_status_labels === "kaleidescape" ? "kaleidescape" : "modern", this.libraryBadgeStyle = n.library_badge_style === "text" ? "text" : "icons", this.castLimit = Number.isInteger(n.cast_limit) ? n.cast_limit : 8, this.display = Object.fromEntries(li.map(([e]) => [e, e === "show_audio_format" && typeof n[e] != "boolean" ? n.show_format : n[e]])), this.scope?.permissions.edit && this.display.show_library_cost && this.loadPurchaseTotals(), this.widths = [...n.widths], this.applied = Object.fromEntries([
 					"query",
 					"sort",
 					"random_seed",
 					"descending",
-					...$r.map(([e]) => e),
+					...si.map(([e]) => e),
 					"status",
 					"missing_metadata_artwork",
 					"missing_purchase_information",
@@ -10808,24 +11114,60 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				let r = this.dashboard ? null : this.readViewFilters();
 				this.applied = {
 					...this.applied,
-					...Qr(r ?? Wr())
+					...oi(r ?? Qr())
 				}, this.scope?.permissions.edit || (this.applied.missing_purchase_information = !1), r && this.clearHiddenMaintenanceFilter(r), this.filters = structuredClone(this.applied), this.preferencesReady = !0, this.openCriterion ? this.fromDetails(this.openCriterion.key, this.openCriterion.value) : await this.load(), this.openTitleId && e === this.generation && this.openLinkedTitle(this.openTitleId);
 			} catch (t) {
 				e === this.generation && this.fail(t);
 			}
 		}
+		stopCoverPrefetch() {
+			clearTimeout(this.coverPrefetchTimer), this.coverPrefetchTimer = void 0, this.coverPrefetch?.abort(), this.coverPrefetch = void 0;
+		}
+		startCoverPrefetch() {
+			if (this.stopCoverPrefetch(), !this.client || !this.scope?.library_enabled || !this.page || this.mode !== "covers" || document.hidden || !this.isConnected) return;
+			let e = this.client, t = this.scope, n = this.coverQueue ?? this.covers, r = this.page.items.map((e) => e.artwork_key).filter((e) => !!e), i = this.coverPrefetch = new AbortController();
+			this.coverPrefetchTimer = setTimeout(() => {
+				n.prefetch(e, t, r, i.signal, () => this.fail(new D("unauthorized")));
+			}, 250);
+		}
+		coverNamespace() {
+			return this.cacheUser && this.scope ? JSON.stringify([
+				this.cacheUser,
+				this.scope.entry_id,
+				this.scope.dataset_id
+			]) : void 0;
+		}
+		configureCoverCache() {
+			let e = (this.coverQueue ?? this.covers).cache;
+			e.setUnlimited(this.coverCacheMode === "session");
+			let t = this.coverCacheMode === "persistent" ? this.coverNamespace() : void 0;
+			e.setPersistent(t), this.pageCache?.setPersistent(t);
+		}
+		async clearCoverCache() {
+			if (!this.clearingCovers) {
+				this.clearingCovers = !0, this.stopCoverPrefetch(), this.coverCacheMessage = "", this.requestUpdate();
+				try {
+					if ((await Promise.allSettled([(this.coverQueue ?? this.covers).cache.clear(this.coverNamespace()), this.pageCache?.clear(this.coverNamespace()) ?? Promise.resolve()])).some((e) => e.status === "rejected")) throw Error("Cache clear failed");
+					this.coverCacheMessage = "Library and cover caches cleared. Covers reload as needed.";
+				} catch {
+					this.coverCacheMessage = "Memory cleared, but saved Library data could not be cleared from this browser.";
+				} finally {
+					this.clearingCovers = !1, this.startCoverPrefetch(), this.requestUpdate();
+				}
+			}
+		}
 		saveFilters() {
-			!this.dashboard && !this.dialogOnly && qr(this.applied);
+			!this.dashboard && !this.dialogOnly && ti(this.applied);
 		}
 		finishColumnResize() {
 			this.resize && (this.resize = void 0, this.preferences?.set({ widths: [...this.widths] }));
 		}
 		clear() {
-			this.closePreview(), this.previewPointerAnchor = void 0, this.previewCache.clear(), clearTimeout(this.collectionToastTimer), this.collectionToast = "", this.observedCollectionJobs.clear(), this.notifiedCollectionJobs.clear(), this.purchaseTotals = void 0, this.purchaseLoading = !1, this.purchaseReload = !1, this.purchaseError = "", this.purchaseManagerOpen && this.repairLock(!1), this.purchaseManagerOpen = !1, this.purchaseRepairBusy = !1;
+			this.stopCoverPrefetch(), this.closePreview(), this.initialStatus = void 0, this.cachedUnverified = !1, this.previewPointerAnchor = void 0, this.previewCache.clear(), clearTimeout(this.collectionToastTimer), this.collectionToast = "", this.observedCollectionJobs.clear(), this.notifiedCollectionJobs.clear(), this.purchaseTotals = void 0, this.purchaseLoading = !1, this.purchaseReload = !1, this.purchaseError = "", this.purchaseManagerOpen && this.repairLock(!1), this.purchaseManagerOpen = !1, this.purchaseRepairBusy = !1;
 			let e = this.renderRoot.querySelector(".purchase-details");
 			e && (e.open = !1), clearTimeout(this.searchTimer), this.preferences?.dispose(), this.preferences = void 0, this.preferencesReady = !1, this.preferenceError = "", this.generation++, this.listRequest++, clearTimeout(this.timer), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0, this.gridObserver?.disconnect(), this.gridObserver = void 0, this.grid = void 0, this.gridWidth = 0, this.coverColumns = 1, this.entriesPerPage = this.requestLimit = 100, this.requestedOffset = 0;
 			for (let e of this.renderRoot.querySelectorAll("dialog")) e.close();
-			this.covers.cache.dispose(), this.covers = new V(), this.fuzzySearch = !0, this.movieStatusLabels = "modern", this.libraryBadgeStyle = "icons", this.castLimit = 8, this.display = {
+			this.covers.cache.dispose(), this.covers = new j(), this.fuzzySearch = !0, this.movieStatusLabels = "modern", this.libraryBadgeStyle = "icons", this.castLimit = 8, this.display = {
 				show_titles: !0,
 				show_format: !0,
 				show_audio_format: !0,
@@ -10877,7 +11219,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 			}, 100), this.requestUpdate()));
 		}
 		async setMode(e) {
-			this.mode !== e && (this.mode = e, this.preferences?.set({ view: e }), this.requestUpdate(), await this.updateComplete, this.scheduleLayoutPage());
+			this.mode !== e && (this.mode = e, this.startCoverPrefetch(), this.preferences?.set({ view: e }), this.requestUpdate(), await this.updateComplete, this.scheduleLayoutPage());
 		}
 		changePageSize(e) {
 			let t = e.target.value, n = t === "all" ? "all" : Number(t);
@@ -10888,11 +11230,11 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 			].includes(n)) && (this.entriesPerPage = n, this.preferences?.set({ page_size: n }), this.requestUpdate(), this.scheduleLayoutPage());
 		}
 		fail(e) {
-			let t = k(e);
+			let t = w(e);
 			(t === "unauthorized" || t === "library_disabled") && (this.clear(), this.dispatchEvent(new CustomEvent(t === "unauthorized" ? "access-denied" : "library-disabled", {
 				bubbles: !0,
 				composed: !0
-			}))), this.error = A(e), this.dialogOnly && !this.selected && this.dispatchEvent(new CustomEvent("title-dialog-error", {
+			}))), this.error = T(e), this.dialogOnly && !this.selected && this.dispatchEvent(new CustomEvent("title-dialog-error", {
 				detail: this.error,
 				bubbles: !0,
 				composed: !0
@@ -10900,11 +11242,33 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 		}
 		async load(e = 0, t = !1) {
 			if (this.detailsLocked || (this.closePreview(), !this.client || !this.scope?.library_enabled)) return;
-			this.saveFilters(), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0;
-			let n = this.generation, r = ++this.listRequest, i = this.pageSize;
-			this.requestLimit = i, this.requestedOffset = e, this.loading = !0, this.error = "", this.requestUpdate();
+			this.stopCoverPrefetch(), this.saveFilters(), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0;
+			let n = this.generation, r = ++this.listRequest, i = this.pageSize, a = (e) => JSON.stringify([
+				this.scope.entry_id,
+				this.scope.dataset_id,
+				this.scope.permissions.edit,
+				e,
+				this.fuzzySearch,
+				this.mode,
+				this.entriesPerPage,
+				i
+			]), o = a(this.applied), s = e === 0 && !this.dashboard && !this.dialogOnly;
+			this.cachedUnverified &&= (this.page = void 0, !1);
+			let c = s && !this.page ? this.pageCache?.get(o) : void 0;
+			c && (this.page = c, this.cachedUnverified = !0), this.requestLimit = i, this.requestedOffset = e, this.loading = !0, this.error = "", this.requestUpdate();
 			try {
-				let a = this.entriesPerPage === "all" ? await this.client.libraryAll(this.scope, {
+				if (!c && s && !this.page && this.pageCache) {
+					if (c = await this.pageCache.restore(o), n !== this.generation || r !== this.listRequest || i !== this.pageSize) return;
+					c && (this.page = c, this.cachedUnverified = !0, this.requestUpdate());
+				}
+				if (c) {
+					if (await this.initialStatus, n !== this.generation || r !== this.listRequest || i !== this.pageSize) return;
+					if (this.info && this.info.revision === c.revision && typeof c.cache_revision == "number" && this.info.cache_revision === c.cache_revision && typeof c.cache_context == "string" && JSON.stringify(this.info.cache_context) === JSON.stringify(c.cache_context) && this.info.preferences_key === c.preferences_key && (this.applied.sort !== "random" || typeof c.random_seed == "string" && c.random_seed === this.applied.random_seed && c.random_seed === this.info.random_seed)) {
+						this.cachedUnverified = !1, this.startCoverPrefetch();
+						return;
+					}
+				}
+				let l = this.entriesPerPage === "all" ? await this.client.libraryAll(this.scope, {
 					...this.applied,
 					fuzzy: this.fuzzySearch
 				}, () => n === this.generation && r === this.listRequest) : await this.client.libraryList(this.scope, {
@@ -10919,11 +11283,18 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 					} : {}
 				});
 				if (n !== this.generation || r !== this.listRequest || i !== this.pageSize) return;
-				if (e && !a.items.length && a.total) {
+				if (e && !l.items.length && l.total) {
 					this.load(0, t);
 					return;
 				}
-				this.page && (this.page.revision !== a.revision || this.page.preferences_key !== a.preferences_key) && this.previewCache.clear(), this.page = a, a.random_seed !== void 0 && this.applied.sort === "random" && (this.applied.random_seed = a.random_seed, this.filters.random_seed = a.random_seed), this.selected && (this.selected = a.items.find((e) => e.id === this.selected?.id) ?? (t ? this.selected : void 0), this.selected ? this.versions && (this.versions.revision !== a.revision || this.versions.preferences_key !== a.preferences_key) && this.loadVersions() : this.closeDialog("title-dialog"));
+				if (this.page && (this.page.revision !== l.revision || this.page.preferences_key !== l.preferences_key) && this.previewCache.clear(), this.page = l, this.cachedUnverified = !1, s && typeof l.cache_revision == "number" && typeof l.cache_context == "string" && (this.applied.sort !== "random" || typeof l.random_seed == "string")) {
+					let e = this.applied.sort === "random" ? {
+						...this.applied,
+						random_seed: l.random_seed ?? ""
+					} : this.applied;
+					this.pageCache?.put(a(e), l);
+				}
+				this.startCoverPrefetch(), l.random_seed !== void 0 && this.applied.sort === "random" && (this.applied.random_seed = l.random_seed, this.filters.random_seed = l.random_seed), this.selected && (this.selected = l.items.find((e) => e.id === this.selected?.id) ?? (t ? this.selected : void 0), this.selected ? this.versions && (this.versions.revision !== l.revision || this.versions.preferences_key !== l.preferences_key) && this.loadVersions() : this.closeDialog("title-dialog"));
 			} catch (e) {
 				n === this.generation && r === this.listRequest && this.fail(e);
 			} finally {
@@ -10951,12 +11322,15 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 					collection_count: n.collection_count,
 					name_count: n.name_count,
 					revision: n.revision,
+					cache_revision: n.cache_revision,
+					cache_context: n.cache_context,
+					random_seed: n.random_seed,
 					preferences_key: n.preferences_key,
 					last_synced_at: n.last_synced_at,
 					collections_synced_at: n.collections_synced_at
-				}, this.display.show_library_cost && this.loadPurchaseTotals(), this.page && (this.page.revision !== n.revision || this.page.preferences_key !== n.preferences_key) && !this.loading && (this.selected ? this.detailsLocked || this.versions?.revision === n.revision && this.versions?.preferences_key === n.preferences_key || this.loadVersions() : this.load(this.page.offset, !0));
+				}, this.display.show_library_cost && this.loadPurchaseTotals(), this.page && this.applied.sort === "random" && typeof n.random_seed == "string" && this.page.random_seed !== n.random_seed && !this.loading && !this.preferences?.unsettled && !this.detailsLocked ? (this.applied.random_seed = n.random_seed, this.filters.random_seed = n.random_seed, this.load(0, !0)) : this.page && (this.page.revision !== n.revision || this.page.preferences_key !== n.preferences_key || typeof this.page.cache_revision == "number" && typeof n.cache_revision == "number" && this.page.cache_revision !== n.cache_revision || typeof this.page.cache_context == "string" && typeof n.cache_context == "string" && this.page.cache_context !== n.cache_context) && !this.loading && (this.selected ? this.detailsLocked || this.versions?.revision === n.revision && this.versions?.preferences_key === n.preferences_key || this.loadVersions() : this.load(this.page.offset, !0));
 			} catch (r) {
-				n = k(r) === "unauthorized", e === this.generation && t === this.statusRequest && this.fail(r);
+				n = w(r) === "unauthorized", e === this.generation && t === this.statusRequest && this.fail(r);
 			} finally {
 				e === this.generation && t === this.statusRequest && this.isConnected && !n && !document.hidden && (this.timer = setTimeout(() => void this.refreshStatus(), (this.info?.collection_jobs ?? []).some((e) => [
 					"queued",
@@ -11002,7 +11376,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 			}
 		}
 		select(e) {
-			this.closePreview(), this.clearVersions(), this.selected = e, this.openDialog("title-dialog"), this.loadVersions();
+			this.cachedUnverified || (this.closePreview(), this.clearVersions(), this.selected = e, this.openDialog("title-dialog"), this.loadVersions());
 		}
 		clearVersions() {
 			this.controlLocked = this.collectionLocked = this.scrapeLocked = this.artworkLocked = this.editLocked = !1, this.versionRequest++, this.versions = void 0, this.activeVersion = void 0, this.versionsError = "", this.versionsLoading = !1;
@@ -11019,7 +11393,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 					title: this.activeVersion.title
 				});
 			} catch (r) {
-				t === this.generation && n === this.versionRequest && (["unauthorized", "library_disabled"].includes(k(r)) ? this.fail(r) : k(r) === "refresh_required" && e ? this.loadVersions() : this.versionsError = A(r));
+				t === this.generation && n === this.versionRequest && (["unauthorized", "library_disabled"].includes(w(r)) ? this.fail(r) : w(r) === "refresh_required" && e ? this.loadVersions() : this.versionsError = T(r));
 			} finally {
 				t === this.generation && n === this.versionRequest && (this.versionsLoading = !1, this.requestUpdate());
 			}
@@ -11066,7 +11440,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 			if (e === "random") {
 				let e;
 				try {
-					e = it().replaceAll("-", "");
+					e = nt().replaceAll("-", "");
 				} catch (e) {
 					this.fail(e);
 					return;
@@ -11089,7 +11463,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 		}
 		applyFilterChanges() {
 			let e = { ...this.applied };
-			for (let t of [...$r.map(([e]) => e), "status"]) e[t] = this.draft[t] ?? [];
+			for (let t of [...si.map(([e]) => e), "status"]) e[t] = this.draft[t] ?? [];
 			e.system_filters = this.advanced && this.scope?.permissions.edit ? this.draft.system_filters ?? [] : [], e.missing_metadata_artwork = !!(this.advanced && this.scope?.permissions.edit && this.draft.missing_metadata_artwork), e.missing_purchase_information = !!(this.scope?.permissions.edit && this.draft.missing_purchase_information), e.recently_added = !1, this.applied = e, this.load();
 		}
 		clearFilters() {
@@ -11104,10 +11478,10 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 			if (this.detailsLocked || this.checkingCollection) return;
 			let n = e === "collection" && t.toLowerCase().trim() === "all";
 			if (e === "collection") {
-				let n = ii(t);
+				let n = fi(t);
 				n && (e = "status", t = n);
 			}
-			(e !== "status" || ni.includes(t)) && (this.dialogOnly ? (this.dispatchEvent(new CustomEvent("browse-library", {
+			(e !== "status" || ui.includes(t)) && (this.dialogOnly ? (this.dispatchEvent(new CustomEvent("browse-library", {
 				detail: {
 					key: e,
 					value: t
@@ -11142,7 +11516,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 			}, this.load();
 		}
 		choices(e, t) {
-			let n = e === "status" ? [...ni] : this.page?.facets[t] ?? [], r = [.../* @__PURE__ */ new Set([
+			let n = e === "status" ? [...ui] : this.page?.facets[t] ?? [], r = [.../* @__PURE__ */ new Set([
 				...this.facetChoices[t] ?? [],
 				...n,
 				...this.draft[e] ?? []
@@ -11161,13 +11535,13 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				};
 				r.sort((t, n) => (e[t.toUpperCase()] ?? 3) - (e[n.toUpperCase()] ?? 3) || t.localeCompare(n));
 			}
-			return r.filter((t) => (e !== "collection" || !ai(t)) && (e !== "status" || ni.includes(t)));
+			return r.filter((t) => (e !== "collection" || !pi(t)) && (e !== "status" || ui.includes(t)));
 		}
 		cover(e, t = e.artwork_key) {
 			return v`<kaleidescape-library-cover
       .client=${this.client}
       .scope=${this.scope}
-      .queue=${this.covers}
+      .queue=${this.coverQueue ?? this.covers}
       .artworkKey=${t}
       .title=${e.title}
     ></kaleidescape-library-cover>`;
@@ -11187,7 +11561,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				if (n !== this.generation) return;
 				this.notice = r.status === "confirmed" ? "Collection membership confirmed on the device." : r.status === "abandoned" ? "Request acknowledged. Acknowledging did not send a device change." : "The requested membership is not confirmed. Inspect the device before acknowledging this request.", this.noticeSeverity = r.status === "confirmed" ? "success" : r.status === "abandoned" ? "info" : "warning", this.collectionRecoveryNotice = this.notice, this.load(), this.refreshStatus();
 			} catch (e) {
-				n === this.generation && (this.collectionRecoveryNotice = A(e), this.fail(e));
+				n === this.generation && (this.collectionRecoveryNotice = T(e), this.fail(e));
 			} finally {
 				n === this.generation && (this.checkingCollection = !1, this.requestUpdate());
 			}
@@ -11214,7 +11588,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				t === this.generation && (this.purchaseTotals = e);
 			} catch (e) {
 				if (t !== this.generation) return;
-				this.purchaseTotals = void 0, this.purchaseError = A(e), ["unauthorized", "library_disabled"].includes(k(e)) && this.fail(e);
+				this.purchaseTotals = void 0, this.purchaseError = T(e), ["unauthorized", "library_disabled"].includes(w(e)) && this.fail(e);
 			} finally {
 				t === this.generation && (this.purchaseLoading = !1, this.purchaseReload && (this.purchaseReload = !1, this.loadPurchaseTotals(!0)), this.requestUpdate());
 			}
@@ -11227,11 +11601,11 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
       id="library-options"
       class="database-dialog library-options"
       aria-labelledby="library-options-title"
-      @click=${L}
+      @click=${R}
     >
       <div class="card-head">
         <h2 id="library-options-title">Library options</h2>
-        ${I(() => this.closeDialog("library-options"))}
+        ${L(() => this.closeDialog("library-options"))}
       </div>
       <p class="muted">
         Changes save automatically for your HA user’s
@@ -11244,7 +11618,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
             .value=${String(this.applied.sort)}
             @change=${(e) => this.sort(e.target.value)}
           >
-            ${ei.map(([e, t]) => v`<option value=${e} ?selected=${e === this.applied.sort}>${t}</option>`)}
+            ${ci.map(([e, t]) => v`<option value=${e} ?selected=${e === this.applied.sort}>${t}</option>`)}
           </select></label
         >
         <fieldset class="view-options">
@@ -11312,6 +11686,36 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 			].map((e) => v`<option value=${e} ?selected=${e === this.entriesPerPage}>${e === "all" ? "All" : e}</option>`)}
           </select></label
         >
+        <label
+          >Library and cover cache<select
+            name="cover_cache"
+            .value=${this.coverCacheMode}
+            @change=${(e) => {
+				let t = e.target.value;
+				(t === "balanced" || t === "session" || t === "persistent") && (this.coverCacheMode = t, this.configureCoverCache(), this.preferences?.set({ cover_cache: t }), this.requestUpdate());
+			}}
+          >
+            <option value="balanced">Balanced</option>
+            <option value="session">Keep for panel session</option>
+            <option value="persistent" ?disabled=${!this.cacheUser}>
+              Keep across restarts
+            </option>
+          </select></label
+        >
+        <small
+          >Balanced limits memory. Session retains all loaded covers in memory
+          until the panel closes. Across restarts also saves Library results and
+          covers in this browser; browser storage can be cleared or evicted. The
+          server artwork cache has a separate limit.</small
+        >
+        <button
+          type="button"
+          ?disabled=${this.clearingCovers}
+          @click=${this.clearCoverCache}
+        >
+          Clear Library and cover cache
+        </button>
+        ${this.coverCacheMessage ? v`<small role="status">${this.coverCacheMessage}</small>` : x}
         ${this.mode === "covers" ? v`<label
                 >Cover-art size<input
                   type="range"
@@ -11325,7 +11729,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				this.coverSize = Number(e.target.value), this.fitGrid(this.gridWidth), this.requestUpdate();
 			}}
               /></label>` : x}
-        ${ti.filter(([e]) => e !== "show_library_cost" || this.scope?.permissions.edit).map(([e, t]) => v`<label class="check"
+        ${li.filter(([e]) => e !== "show_library_cost" || this.scope?.permissions.edit).map(([e, t]) => v`<label class="check"
               ><input
                 type="checkbox"
                 name=${e}
@@ -11382,7 +11786,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                       />${t}</label
                     >${W(t, "This filter came from an older link. Clear it to use the System Filters above.")}
                   </div>` : x)}
-            ${fn.map(([e, t, n]) => v`<div class="system-filter-option">
+            ${bn.map(([e, t, n]) => v`<div class="system-filter-option">
                   <label class="check"
                     ><input
                       type="checkbox"
@@ -11407,20 +11811,20 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				"status",
 				"Movie status",
 				"status"
-			], ...$r.filter(([e]) => e !== "actor" && e !== "director")].filter(([e, , t]) => e !== "collection" || this.choices(e, t).some((e) => !ai(e)) || (this.draft[e] ?? []).some((e) => !ai(e)));
+			], ...si.filter(([e]) => e !== "actor" && e !== "director")].filter(([e, , t]) => e !== "collection" || this.choices(e, t).some((e) => !pi(e)) || (this.draft[e] ?? []).some((e) => !pi(e)));
 			return e.splice(5, 0, [
 				"system",
 				"System Filters",
 				"system"
 			]), v`<dialog
       id="filter-dialog"
-      @click=${L}
+      @click=${R}
       class="database-dialog library-dialog"
       aria-labelledby="filters-title"
     >
       <div class="card-head">
         <h2 id="filters-title">Library filters</h2>
-        ${I(() => this.closeDialog("filter-dialog"))}
+        ${L(() => this.closeDialog("filter-dialog"))}
       </div>
       <p class="filter-intro">
         Select any options within a category. Movies must match every category
@@ -11470,7 +11874,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 						[e]: n.target.checked ? [...r, t] : r.filter((e) => e !== t)
 					}, this.applyFilterChanges();
 				}}
-                          />${e === "status" ? Yn(ri(t, this.movieStatusLabels)) : e === "rating" ? Gn(t) : e === "collection" ? Yn(t) : e === "format" && Vn({ formats: [t] }).length === 1 ? Y({ formats: [t] }) : t}</label
+                          />${e === "status" ? rr(di(t, this.movieStatusLabels)) : e === "rating" ? $n(t) : e === "collection" ? rr(t) : e === "format" && Yn({ formats: [t] }).length === 1 ? Y({ formats: [t] }) : t}</label
                         >`) : v`<p class="muted">No matching options</p>`}
             </div>
           </fieldset>`;
@@ -11556,7 +11960,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
       class="pending-collection-badge"
       role="status"
       aria-label=${`Collection change in progress: ${n}`}
-      >${Jn(n)}<span>${n}</span
+      >${nr(n)}<span>${n}</span
       ><span class="collection-spinner" aria-hidden="true"></span
     ></span>`;
 		}
@@ -11646,7 +12050,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
         </button>
       </summary>
       ${e.unavailable ? v`<p>Purchase information unavailable.</p>` : (e.records.length || e.manual.length ? [e.records[0]] : []).map((t, n) => {
-				let r = Ir(e.records, e.manual, n), i = Rr(r.href);
+				let r = Wr(e.records, e.manual, n), i = Kr(r.href);
 				return v`<p>
                 ${r.purchased_on ? this.date(r.purchased_on) : "Date not imported"}${t ? v` · ${t.title}` : x}<br />
                 Paid: ${r.purchase_price ?? "Unknown"} · Retail:
@@ -11667,7 +12071,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
         @cancel=${(e) => {
 				e.preventDefault(), this.closeDialog("title-dialog");
 			}}
-        @click=${L}
+        @click=${R}
         class=${`database-dialog library-dialog movie-dialog inset-dialog${o ? " has-backdrop" : ""}`}
         aria-labelledby="library-title"
         @close=${() => {
@@ -11679,7 +12083,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
       >
         ${e ? v`
                 <div class="movie-close">
-                  ${I(() => this.closeDialog("title-dialog"))}
+                  ${L(() => this.closeDialog("title-dialog"))}
                 </div>
                 <div class="movie-intro">
                   ${o && t ? v`<div class="movie-hero" aria-hidden="true">${this.cover(t, o)}</div>` : x}
@@ -11696,20 +12100,20 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                   </p>
                   <div class="detail-badges movie-heading-badges">
                     ${Y(n ? e : t ?? e, !1, (e) => this.fromDetails("format", e), i)}
-                    ${a.map((e) => Gn(e, (e) => this.fromDetails("rating", e), i))}
-                    ${zn(e).map((e) => v`<button
-                          class=${`movie-status collection-badge collection-${qn(J(e, this.movieStatusLabels))}`}
+                    ${a.map((e) => $n(e, (e) => this.fromDetails("rating", e), i))}
+                    ${qn(e).map((e) => v`<button
+                          class=${`movie-status collection-badge collection-${tr(J(e, this.movieStatusLabels))}`}
                           ?disabled=${i}
                           @click=${() => this.fromDetails("status", e)}
                         >
-                          ${Jn(J(e, this.movieStatusLabels))}
+                          ${nr(J(e, this.movieStatusLabels))}
                           <span
                             >${J(e, this.movieStatusLabels)}</span
                           >
                         </button>`)}
-                    ${e.is_recently_added ? Yn("Recently Added", () => this.fromDetails("status", "recently_added"), i, "Filter by movie status: Recently Added") : x}
-                    ${e.is_favorite ? Yn("Favorites", () => this.fromDetails("status", "favorite"), i) : x}
-                    ${e.collections.filter((e) => !oi(e) && ii(e) !== "favorite").map((e) => Yn(e, () => this.fromDetails("collection", e), i, e.toLowerCase().trim() === "all" ? "Show all movies" : void 0))}
+                    ${e.is_recently_added ? rr("Recently Added", () => this.fromDetails("status", "recently_added"), i, "Filter by movie status: Recently Added") : x}
+                    ${e.is_favorite ? rr("Favorites", () => this.fromDetails("status", "favorite"), i) : x}
+                    ${e.collections.filter((e) => !mi(e) && fi(e) !== "favorite").map((e) => rr(e, () => this.fromDetails("collection", e), i, e.toLowerCase().trim() === "all" ? "Show all movies" : void 0))}
                   </div>
                   ${t ? v`<kaleidescape-device-controls
                           .client=${this.client}
@@ -11732,7 +12136,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				this.editLocked = !1, this.versions = void 0, await this.load(this.page?.offset ?? 0, !0), await this.loadVersions(), this.refreshStatus();
 			}}
                                   ></kaleidescape-title-edit>
-                                  ${this.renderScrapeAction(t)}` : x}${Ot(t)}</kaleidescape-device-controls
+                                  ${this.renderScrapeAction(t)}` : x}${Bt(t)}</kaleidescape-device-controls
                         >` : x}
                   ${this.versionsLoading ? v`<p role="status">Loading individual versions…</p>` : x}
                   ${this.versionsError ? v`<p class="error" role="alert">
@@ -11817,17 +12221,17 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				],
 				[
 					"Collections",
-					t.collections.filter((e) => !oi(e)),
+					t.collections.filter((e) => !mi(e)),
 					"collection"
 				]
 			].map(([e, t, n]) => t.length ? v`<div>
                                     <dt>${e}</dt>
                                     <dd>
-                                      ${t.map((t, r, i) => v`<span class="credit-name">${this.detailLink(n, t, (e === "Collections" ? Kn(t) : t) + (r < i.length - 1 ? "," : ""))}</span>${r < i.length - 1 ? " " : ""}`)}
+                                      ${t.map((t, r, i) => v`<span class="credit-name">${this.detailLink(n, t, (e === "Collections" ? er(t) : t) + (r < i.length - 1 ? "," : ""))}</span>${r < i.length - 1 ? " " : ""}`)}
                                     </dd>
                                   </div>` : x)}
                           </dl>
-                          ${Pt(t, (e, t) => this.detailLink("query", e, t), this.castLimit)}
+                          ${Kt(t, (e, t) => this.detailLink("query", e, t), this.castLimit)}
                           ${x}
                         </div>
                       </div>` : x}
@@ -11844,7 +12248,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				this.purchaseRepairBusy = e.detail;
 			}}
               @purchase-complete=${() => void this.refreshPurchaseDetails()}
-              @access-denied=${() => this.fail(new M("unauthorized"))}
+              @access-denied=${() => this.fail(new D("unauthorized"))}
             ></kaleidescape-group-purchase-edit>` : x}`;
 		}
 		render() {
@@ -11853,14 +12257,15 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
           ${this.error || "Loading Library preferences…"}
         </p>
         ${this.error ? v`<button @click=${this.initializePreferences}>Retry Library</button>` : x}`;
-			let e = this.page?.limit ?? this.requestLimit, t = this.loading || !!this.layoutTimer, n = this.page?.items ?? [], r = this.mode === "covers" && !this.dashboard && this.page?.has_more && n.length >= this.coverColumns ? n.slice(0, n.length - n.length % this.coverColumns) : n, i = this.scope?.permissions.edit, a = [...$r.map(([e]) => e), "status"].reduce((e, t) => e + (this.applied[t]?.length ?? 0), (this.applied.system_filters?.length ?? 0) + Number(!!this.applied.missing_metadata_artwork) + Number(!!this.applied.missing_purchase_information) + Number(!!this.applied.recently_added));
+			let e = this.page?.limit ?? this.requestLimit, t = this.loading || !!this.layoutTimer, n = this.page?.items ?? [], r = this.mode === "covers" && !this.dashboard && this.page?.has_more && n.length >= this.coverColumns ? n.slice(0, n.length - n.length % this.coverColumns) : n, i = this.scope?.permissions.edit, a = [...si.map(([e]) => e), "status"].reduce((e, t) => e + (this.applied[t]?.length ?? 0), (this.applied.system_filters?.length ?? 0) + Number(!!this.applied.missing_metadata_artwork) + Number(!!this.applied.missing_purchase_information) + Number(!!this.applied.recently_added));
 			return v`<section
       class="library-page"
       @access-denied=${(e) => {
-				e.stopPropagation(), this.fail(new M("unauthorized"));
+				e.stopPropagation(), this.fail(new D("unauthorized"));
 			}}
     >
       <div class="library-notifications" aria-label="Library notifications">
+        ${this.cachedUnverified ? v`<p role="status">${this.loading ? "Checking cached Library…" : "Cached Library could not be refreshed. Use Refresh cached data to retry."}</p>` : x}
         ${this.preferenceError ? v`<div
                 class="warning library-notification notification-error"
                 role="alert"
@@ -11878,14 +12283,14 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                 class="warning library-notification notification-error"
                 role="status"
               >
-                ${A(new M(this.info.error))}<button
+                ${T(new D(this.info.error))}<button
                   class="notification-close"
                   aria-label="Dismiss Library warning"
                   @click=${() => {
 				this.dismissedLibraryErrors.add(this.info.error), this.requestUpdate();
 			}}
                 >
-                  ${D("clear")}
+                  ${F("clear")}
                 </button>
               </div>` : x}
         ${this.error ? v`<div
@@ -11903,7 +12308,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				this.error = "", this.requestUpdate();
 			}}
                 >
-                  ${D("clear")}
+                  ${F("clear")}
                 </button>
               </div>` : x}
         ${this.notice ? v`<div
@@ -11917,7 +12322,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				this.notice = "", this.requestUpdate();
 			}}
                 >
-                  ${D("clear")}
+                  ${F("clear")}
                 </button>
               </div>` : x}
         ${this.collectionToast ? v`<div
@@ -11931,7 +12336,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				this.collectionToast = "", this.requestUpdate();
 			}}
                 >
-                  ${D("clear")}
+                  ${F("clear")}
                 </button>
               </div>` : x}
         ${i ? (this.info?.collection_jobs ?? []).filter((e) => ["failed", "interrupted"].includes(e.status) && e.error !== "acknowledged").slice(0, 3).map((e) => v`<div
@@ -11945,7 +12350,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                         aria-label="Dismiss collection failure"
                         @click=${() => this.dismissCollectionJob(e.request_id)}
                       >
-                        ${D("clear")}
+                        ${F("clear")}
                       </button>
                     </div>`) : x}
         ${i ? (this.info?.pending_adds ?? []).filter((e) => !this.dismissedPending.has(e.request_id)).map((e) => v`<div
@@ -11962,7 +12367,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
 				this.dismissedPending.add(e.request_id), this.requestUpdate();
 			}}
                       >
-                        ${D("clear")}
+                        ${F("clear")}
                       </button>
                       <div class="actions">
                         <button
@@ -12000,7 +12405,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
               ?hidden=${this.dashboard?.show_filters === !1}
               @click=${this.openFilters}
             >
-              ${D("filter")}
+              ${F("filter")}
             </button>
             <button
               type="button"
@@ -12010,7 +12415,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
               ?disabled=${this.loading}
               @click=${this.clearFilters}
             >
-              ${D("clear")}
+              ${F("clear")}
             </button>
             <button
               type="button"
@@ -12019,7 +12424,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
               ?hidden=${this.dashboard?.show_sort === !1}
               @click=${() => this.sort(String(this.applied.sort))}
             >
-              ${D(this.applied.sort === "random" ? "shuffle" : this.applied.descending ? "descending" : "ascending")}
+              ${F(this.applied.sort === "random" ? "shuffle" : this.applied.descending ? "descending" : "ascending")}
             </button>
             <button
               type="button"
@@ -12030,7 +12435,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
               ?hidden=${!!this.dashboard}
               @click=${() => this.openDialog("library-options")}
             >
-              ${D("options")}
+              ${F("options")}
             </button>
           </div>
           <form
@@ -12045,7 +12450,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                 name="library_query"
                 type="search"
                 maxlength="500"
-                .value=${an(String(this.filters.query ?? ""))}
+                .value=${pn(String(this.filters.query ?? ""))}
                 @input=${(e) => {
 				this.filters.query = e.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
 			}}
@@ -12072,7 +12477,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                 .value=${String(this.applied.sort)}
                 @change=${(e) => this.sort(e.target.value)}
               >
-                ${ei.map(([e, t]) => v`<option value=${e}>${t}</option>`)}
+                ${ci.map(([e, t]) => v`<option value=${e}>${t}</option>`)}
               </select></label
             >
             <button
@@ -12097,6 +12502,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                 style=${`--cover-size: ${this.coverSize}px; --cover-columns: ${this.coverColumns}`}
               >
                 ${r.map((e) => v`<button
+                      ?disabled=${this.cachedUnverified}
                       class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && e.rating ? " has-rating" : ""}`}
                       aria-label=${`Details for ${e.title}${e.year ? ` (${e.year})` : ""}${this.warningMessage(e) ? `; ${this.warningMessage(e)}` : ""}`}
                       aria-describedby=${this.previewItem?.id === e.id && this.previewAnchor ? "library-movie-preview" : x}
@@ -12120,12 +12526,12 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                       @click=${() => this.select(e)}
                     >
                       <div class="cover-image">${this.cover(e)}</div>
-                      ${this.display.show_badges || this.pendingCollection(e) ? v`<div class=${`cover-flags${this.pendingCollection(e) ? " collection-pending" : ""}`}>${this.display.show_badges ? Wn(e, !0, ["unwatched"], this.movieStatusLabels, this.libraryBadgeStyle) : x}${this.pendingCollectionBadge(e)}</div>` : x}
+                      ${this.display.show_badges || this.pendingCollection(e) ? v`<div class=${`cover-flags${this.pendingCollection(e) ? " collection-pending" : ""}`}>${this.display.show_badges ? Qn(e, !0, ["unwatched"], this.movieStatusLabels, this.libraryBadgeStyle) : x}${this.pendingCollectionBadge(e)}</div>` : x}
                       ${this.display.show_format || this.display.show_audio_format ? v`<div class="cover-formats">${Y(e, !0, void 0, !1, {
 				video: this.display.show_format,
 				audio: this.display.show_audio_format
 			})}</div>` : x}
-                      ${this.display.show_rating ? v`<div class="cover-rating">${Gn(e.rating)}</div>` : x}
+                      ${this.display.show_rating ? v`<div class="cover-rating">${$n(e.rating)}</div>` : x}
                       ${this.conflictIcon(e)}
                       ${this.display.show_titles ? v`<span class="cover-caption">${e.title}${e.year ? ` (${e.year})` : ""}</span>` : x}
                     </button>`)}
@@ -12139,7 +12545,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                   </colgroup>
                   <thead>
                     <tr>
-                      ${ei.filter(([e]) => e !== "random").map(([e, t], n) => v`<th
+                      ${ci.filter(([e]) => e !== "random").map(([e, t], n) => v`<th
                             aria-sort=${!this.applied.query && this.applied.sort === e ? this.applied.descending ? "descending" : "ascending" : "none"}
                           >
                             <button
@@ -12184,6 +12590,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                           <td>
                             <button
                               class="link"
+                              ?disabled=${this.cachedUnverified}
                               @click=${() => this.select(e)}
                             >
                               ${e.title}
@@ -12193,27 +12600,27 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                               class=${`library-summary-line${this.pendingCollection(e) ? " collection-pending" : ""}`}
                               title=${this.format(e)}
                             >
-                              ${this.display.show_badges ? Wn(e, !1, [], this.movieStatusLabels, this.libraryBadgeStyle) : x}
+                              ${this.display.show_badges ? Qn(e, !1, [], this.movieStatusLabels, this.libraryBadgeStyle) : x}
                               ${this.pendingCollectionBadge(e)}
                               ${this.display.show_format || this.display.show_audio_format ? Y(e, !1, void 0, !1, {
 				video: this.display.show_format,
 				audio: this.display.show_audio_format
 			}) : x}
-                              ${this.display.show_format && !Vn(e).length ? v`<small>${this.format(e)}</small>` : x}
-                              ${(e.version_count ?? 1) > 1 ? v`<small>${z(e.version_count, "version")}</small>` : x}
+                              ${this.display.show_format && !Yn(e).length ? v`<small>${this.format(e)}</small>` : x}
+                              ${(e.version_count ?? 1) > 1 ? v`<small>${B(e.version_count, "version")}</small>` : x}
                             </div>
                           </td>
                           <td title=${this.years(e)}>${this.years(e)}</td>
                           <td>
                             <span
                               class="collection-cell"
-                              title=${e.collections.filter((e) => !oi(e)).map(Kn).join(", ")}
-                              >${e.collections.filter((e) => !oi(e)).map(Kn).join(", ") || "—"}</span
+                              title=${e.collections.filter((e) => !mi(e)).map(er).join(", ")}
+                              >${e.collections.filter((e) => !mi(e)).map(er).join(", ") || "—"}</span
                             >
                           </td>
                           <td>${this.runtime(e)}</td>
                           <td>
-                            ${(zn(e).length ? zn(e) : [e.watched_status === "unknown" ? "unknown" : "none"]).map((e) => J(e, this.movieStatusLabels)).join(", ")}
+                            ${(qn(e).length ? qn(e) : [e.watched_status === "unknown" ? "unknown" : "none"]).map((e) => J(e, this.movieStatusLabels)).join(", ")}
                           </td>
                           <td
                             title=${e.purchased_on ? "Imported purchase date" : "First detected by Companion"}
@@ -12250,7 +12657,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
           <span class="footer-mobile-summary"
             >${String(this.applied.query ?? "").trim() || a ? `Matches ${this.page?.total ?? 0}` : `Total ${this.info?.group_count ?? 0}`}</span
           >
-          ${i && this.info ? v`<span class="footer-admin">${z(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : x}
+          ${i && this.info ? v`<span class="footer-admin">${B(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : x}
           ${i && this.info?.metadata ? v`<span class="scraper-status footer-admin">${this.scraperSummary()}</span>` : x}
           ${i && (this.info?.collection_jobs ?? []).some((e) => [
 				"queued",
@@ -12279,7 +12686,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                     @click=${() => this.load()}
                   >
                     <span class="paging-label">First</span
-                    ><span class="paging-icon">${D("first")}</span>
+                    ><span class="paging-icon">${F("first")}</span>
                   </button>
                   <button
                     aria-label="Previous page"
@@ -12287,7 +12694,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                     @click=${() => this.load(Math.max(0, (this.page?.offset ?? 0) - e))}
                   >
                     <span class="paging-label">Previous</span
-                    ><span class="paging-icon">${D("previous")}</span>
+                    ><span class="paging-icon">${F("previous")}</span>
                   </button>
                   <button
                     aria-label="Next page"
@@ -12295,7 +12702,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
                     @click=${() => this.load((this.page?.offset ?? 0) + e)}
                   >
                     <span class="paging-label">Next</span
-                    ><span class="paging-icon">${D("next")}</span>
+                    ><span class="paging-icon">${F("next")}</span>
                   </button>` : x}
         </div>
       </footer>
@@ -12312,7 +12719,7 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
           aria-label="Search Library"
           placeholder="Search titles, actors or directors"
           maxlength="500"
-          .value=${an(String(this.filters.query ?? ""))}
+          .value=${pn(String(this.filters.query ?? ""))}
           @input=${(e) => {
 				this.filters.query = e.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
 			}}
@@ -12322,32 +12729,32 @@ var $r, ei, ti, ni, ri, ii, ai, oi, si, ci = t((() => {
           aria-label="Search Library"
           ?disabled=${this.loading}
         >
-          ${D("search")}
+          ${F("search")}
         </button>
       </form>
       ${this.renderPreview()} ${this.renderOptionsDialog()}
       ${this.renderFilterDialog()} ${this.renderTitleDialog()}
     </section>`;
 		}
-	}, customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", si);
+	}, customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", hi);
 }));
-B(), w(), F(), E(), Nn(), O(), Rn(), R(), On();
-var li = {
+V(), C(), A(), P(), Vn(), I(), Kn(), z(), In();
+var _i = {
 	playing: "Playing",
 	paused: "Paused",
 	forward: "Scanning forward",
 	reverse: "Scanning backward",
 	stopped: "Stopped",
 	none: "Stopped"
-}, ui = {
+}, vi = {
 	content: "Main content",
 	credits: "Credits",
 	intermission: "Intermission",
 	disc_menu: "Disc menu",
 	none: "No active content"
-}, di = class extends C {
+}, yi = class extends S {
 	constructor(...e) {
-		super(...e), this.playerId = "", this.compact = !1, this.showControls = !0, this.liveTyping = !1, this.remoteVisibility = { ...Tn }, this.preferenceError = "", this.remoteAvailable = !1, this.boundScope = "", this.generation = 0, this.player = null, this.loading = !1, this.denied = !1, this.error = "", this.image = "", this.imageKey = "", this.visibility = () => {
+		super(...e), this.playerId = "", this.compact = !1, this.showControls = !0, this.liveTyping = !1, this.remoteVisibility = { ...Nn }, this.preferenceError = "", this.remoteAvailable = !1, this.boundScope = "", this.generation = 0, this.player = null, this.loading = !1, this.denied = !1, this.error = "", this.image = "", this.imageKey = "", this.visibility = () => {
 			this.reset(), document.hidden || this.refresh();
 		};
 	}
@@ -12365,7 +12772,7 @@ var li = {
 		};
 	}
 	static {
-		this.styles = [T, l`
+		this.styles = [N, l`
       :host([compact]) .now-playing {
         min-height: 0;
         margin: 0;
@@ -12482,14 +12889,14 @@ var li = {
     `];
 	}
 	async loadPreferences() {
-		if (this.preferences?.dispose(), this.preferences = void 0, this.liveTyping = !1, this.remoteVisibility = { ...Tn }, !this.client || !this.scope?.permissions.read) return;
+		if (this.preferences?.dispose(), this.preferences = void 0, this.liveTyping = !1, this.remoteVisibility = { ...Nn }, !this.client || !this.scope?.permissions.read) return;
 		let e = new q(this.client, this.scope, !1, (t) => {
 			e === this.preferences && (this.preferenceError = t ? "Could not save Now Playing options." : "", this.requestUpdate());
 		}, "interface");
 		this.preferences = e;
 		try {
 			let t = await e.load();
-			e === this.preferences && (this.liveTyping = t.live_search_input === !0, this.remoteVisibility = Object.fromEntries(wn.map(([e]) => [e, t[e] !== !1])));
+			e === this.preferences && (this.liveTyping = t.live_search_input === !0, this.remoteVisibility = Object.fromEntries(Mn.map(([e]) => [e, t[e] !== !1])));
 		} catch {
 			e === this.preferences && (this.preferenceError = "Could not load Now Playing options.");
 		}
@@ -12532,20 +12939,20 @@ var li = {
 					let r = await e.artwork(i.entity_id, t.signal);
 					n === this.generation && r && (this.image = URL.createObjectURL(r));
 				} catch (e) {
-					if (k(e) === "unauthorized") throw e;
+					if (w(e) === "unauthorized") throw e;
 				} finally {
 					clearTimeout(r), this.abort === t && (this.abort = void 0);
 				}
 			}
 		} catch (e) {
 			if (n !== this.generation) return;
-			this.player = null, this.clearImage(), this.denied = k(e) === "unauthorized", this.error = this.denied ? "Now Playing access is unavailable. Check your account and source permissions." : "Now Playing could not refresh. Check the connection or refresh again.";
+			this.player = null, this.clearImage(), this.denied = w(e) === "unauthorized", this.error = this.denied ? "Now Playing access is unavailable. Check your account and source permissions." : "Now Playing could not refresh. Check the connection or refresh again.";
 		} finally {
 			n === this.generation && (this.loading = !1, this.requestUpdate(), !this.denied && this.isConnected && !document.hidden && (this.timer = setTimeout(() => void this.refresh(), 5e3)));
 		}
 	}
 	recordingStatus(e, t) {
-		return e.recording_error ? "Recording needs attention. Check HA diagnostics." : e.recording_paused ? "Recording paused for backup." : e.available ? t && e.recording_exclusion === "below_minimum_runtime" ? `Not recording: runtime is below the minimum of ${z(e.minimum_runtime_minutes, "minute")}.` : t && e.recording_exclusion === "runtime_unknown" ? "Waiting for a known runtime before recording." : "Recording enabled." : "Recording waiting for source entities.";
+		return e.recording_error ? "Recording needs attention. Check HA diagnostics." : e.recording_paused ? "Recording paused for backup." : e.available ? t && e.recording_exclusion === "below_minimum_runtime" ? `Not recording: runtime is below the minimum of ${B(e.minimum_runtime_minutes, "minute")}.` : t && e.recording_exclusion === "runtime_unknown" ? "Waiting for a known runtime before recording." : "Recording enabled." : "Recording waiting for source entities.";
 	}
 	render() {
 		let e = this.player, t = e?.available && !["stopped", "none"].includes(e.play_status);
@@ -12583,7 +12990,7 @@ var li = {
 			this.imageKey = "", this.refresh(), this.renderRoot.querySelector("kaleidescape-device-controls")?.refresh();
 		}}
           >
-            ${D("refresh")}
+            ${F("refresh")}
           </button>
           ${this.showControls ? v`<button
                   type="button"
@@ -12596,7 +13003,7 @@ var li = {
                 >
                   <span class="now-options-label">Options</span>
                   <span class="now-options-icon" aria-hidden="true"
-                    >${D("options")}</span
+                    >${F("options")}</span
                   >
                 </button>` : x}
         </div>
@@ -12617,7 +13024,7 @@ var li = {
                   <h3>
                     ${e.available ? t ? e.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
                   </h3>
-                  ${e.available ? v`<p>${li[e.play_status] ?? "Unknown playback state"} · ${ui[e.location] ?? "Unknown location"}</p>` : x}
+                  ${e.available ? v`<p>${_i[e.play_status] ?? "Unknown playback state"} · ${vi[e.location] ?? "Unknown location"}</p>` : x}
                   ${t && e.duration_seconds != null ? v`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : x}
                   ${this.scope?.permissions.edit && t && e.session ? v`<p>
                             This session ·
@@ -12627,11 +13034,11 @@ var li = {
                           <small
                             >Pauses and scans are excluded.
                             ${e.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
-                            ${e.session.gap_count ? v` ${z(e.session.gap_count, "timing gap")}.` : x}</small
+                            ${e.session.gap_count ? v` ${B(e.session.gap_count, "timing gap")}.` : x}</small
                           >` : x}
                   ${this.scope?.permissions.edit && e.recording_paused !== void 0 ? v`<p role="status">
                           ${this.recordingStatus(e, !!t)}
-                          ${e.buffered_observations ? v` ${z(e.buffered_observations, "update")} buffered.` : x}
+                          ${e.buffered_observations ? v` ${B(e.buffered_observations, "update")} buffered.` : x}
                         </p>` : x}
                   <small
                     >Live snapshot refreshes about every 5 seconds while
@@ -12660,11 +13067,11 @@ var li = {
               id="now-playing-options"
               class="database-dialog"
               aria-labelledby="now-playing-options-title"
-              @click=${L}
+              @click=${R}
             >
               <div class="card-head">
                 <h2 id="now-playing-options-title">Now Playing options</h2>
-                ${I(() => this.renderRoot.querySelector("#now-playing-options")?.close())}
+                ${L(() => this.renderRoot.querySelector("#now-playing-options")?.close())}
               </div>
               <p class="muted">
                 Changes save automatically for your HA user’s
@@ -12682,7 +13089,7 @@ var li = {
               >
               <fieldset>
                 <legend>Remote controls</legend>
-                ${wn.map(([e, t]) => v`<label class="check">
+                ${Mn.map(([e, t]) => v`<label class="check">
                       <input
                         type="checkbox"
                         name=${e}
@@ -12703,8 +13110,8 @@ var li = {
 	}
 };
 // src/cards/config.ts
-customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", di), Cr();
-var fi = [
+customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", yi), jr();
+var bi = [
 	"remote",
 	"now-playing",
 	"library-covers",
@@ -12712,7 +13119,7 @@ var fi = [
 	"library",
 	"journal-calendar"
 ];
-function pi(e, t) {
+function xi(e, t) {
 	let n = {
 		title: "",
 		entry_id: "",
@@ -12783,7 +13190,7 @@ function pi(e, t) {
 		show_sort: !1
 	}), n;
 }
-function mi(e) {
+function Si(e) {
 	let t = (e) => ({
 		name: e,
 		selector: { text: {} }
@@ -12798,7 +13205,7 @@ function mi(e) {
 			step: 1,
 			mode: "box"
 		} }
-	}), i = e === "library" || e === "library-covers", a = pi({ type: `custom:kaleidescape-${e}-card` }, e);
+	}), i = e === "library" || e === "library-covers", a = xi({ type: `custom:kaleidescape-${e}-card` }, e);
 	return {
 		schema: [
 			t("title"),
@@ -12847,8 +13254,8 @@ function mi(e) {
 		computeHelper: (e) => e.name === "entry_id" ? "Leave blank for the loaded Companion integration." : e.name === "channel" ? "Search and Library cards with the same channel work together on this dashboard." : void 0
 	};
 }
-w(), F(), E(), R(), ci(), Nn();
-var hi = "kaleidescape-companion-card-search", gi = class extends C {
+C(), A(), P(), z(), gi(), Vn();
+var Ci = "kaleidescape-companion-card-search", wi = class extends S {
 	constructor(...e) {
 		super(...e), this.identity = "", this.generation = 0, this.error = "", this.query = "", this.locked = !1, this.visibility = () => {
 			clearTimeout(this.timer), !document.hidden && this.api && this.refresh();
@@ -12869,8 +13276,8 @@ var hi = "kaleidescape-companion-card-search", gi = class extends C {
 	}
 	static {
 		this.styles = [
-			T,
-			_t,
+			N,
+			kt,
 			l`
       :host {
         display: block;
@@ -12939,7 +13346,7 @@ var hi = "kaleidescape-companion-card-search", gi = class extends C {
 		return { channel: "main" };
 	}
 	static getConfigForm() {
-		return mi(this.kind);
+		return Si(this.kind);
 	}
 	getCardSize() {
 		return this.kind === "library-search" ? 2 : this.kind === "remote" ? 9 : 7;
@@ -12954,13 +13361,13 @@ var hi = "kaleidescape-companion-card-search", gi = class extends C {
 	setConfig(e) {
 		if (this.locked) throw Error("Finish the pending player command before reconfiguring this card.");
 		if (!e || typeof e != "object") throw Error("Card configuration is required");
-		this.config = pi(e, this.kind), this.reset(), this.requestUpdate("hass");
+		this.config = xi(e, this.kind), this.reset(), this.requestUpdate("hass");
 	}
 	connectedCallback() {
-		super.connectedCallback(), window.addEventListener(hi, this.receiveSearch), document.addEventListener("visibilitychange", this.visibility), this.requestUpdate("hass");
+		super.connectedCallback(), window.addEventListener(Ci, this.receiveSearch), document.addEventListener("visibilitychange", this.visibility), this.requestUpdate("hass");
 	}
 	disconnectedCallback() {
-		super.disconnectedCallback(), window.removeEventListener(hi, this.receiveSearch), document.removeEventListener("visibilitychange", this.visibility), this.reset();
+		super.disconnectedCallback(), window.removeEventListener(Ci, this.receiveSearch), document.removeEventListener("visibilitychange", this.visibility), this.reset();
 	}
 	reset() {
 		this.generation++, clearTimeout(this.timer), this.api = void 0, this.scope = void 0, this.identity = "", this.boundConnection = void 0, this.criterion = this.popupCriterion = void 0, this.calendarStatus = void 0, this.query = this.error = "", this.locked = !1, this.renderRoot?.querySelector("dialog")?.close();
@@ -12968,7 +13375,7 @@ var hi = "kaleidescape-companion-card-search", gi = class extends C {
 	willUpdate(e) {
 		if (!e.has("hass") || !this.config) return;
 		let t = `${this.hass?.user?.id}:${this.hass?.user?.is_admin}:${this.hass?.connection.connected}`;
-		(t !== this.identity || this.hass?.connection !== this.boundConnection) && (this.reset(), this.identity = t, this.boundConnection = this.hass?.connection, this.hass?.connection.connected && this.hass.user && (this.api = new lt({
+		(t !== this.identity || this.hass?.connection !== this.boundConnection) && (this.reset(), this.identity = t, this.boundConnection = this.hass?.connection, this.hass?.connection.connected && this.hass.user && (this.api = new st({
 			callWS: (e) => this.hass.callWS(e),
 			fetchWithAuth: (e, t) => this.hass.fetchWithAuth(e, t)
 		}), this.refresh()));
@@ -12981,7 +13388,7 @@ var hi = "kaleidescape-companion-card-search", gi = class extends C {
 			let t = await this.api.info();
 			if (e !== this.generation) return;
 			let n = this.config.entry_id ? t.entries.find((e) => e.entry_id === this.config.entry_id) : t.entries[0];
-			if (!n?.permissions.read || n.api_version !== 1) throw new M("not_ready");
+			if (!n?.permissions.read || n.api_version !== 1) throw new D("not_ready");
 			this.scope = {
 				...n,
 				permissions: {
@@ -12992,7 +13399,7 @@ var hi = "kaleidescape-companion-card-search", gi = class extends C {
 			}, this.error = "";
 		} catch (t) {
 			if (e !== this.generation) return;
-			this.scope = void 0, this.error = A(t);
+			this.scope = void 0, this.error = T(t);
 		} finally {
 			e === this.generation && (this.requestUpdate(), this.timer = setTimeout(() => void this.refresh(), 3e4));
 		}
@@ -13001,7 +13408,7 @@ var hi = "kaleidescape-companion-card-search", gi = class extends C {
 		this.reset(), this.error = "Access to Companion is unavailable. Check your HA account and integration.", this.requestUpdate();
 	}
 	search(e) {
-		e.preventDefault(), this.scope && this.config && window.dispatchEvent(new CustomEvent(hi, { detail: {
+		e.preventDefault(), this.scope && this.config && window.dispatchEvent(new CustomEvent(Ci, { detail: {
 			entry: this.scope.entry_id,
 			dataset: this.scope.dataset_id,
 			channel: this.config.channel,
@@ -13078,8 +13485,8 @@ var hi = "kaleidescape-companion-card-search", gi = class extends C {
                         ></kaleidescape-journal-calendar>
                         <footer class="calendar-footer">
                           <span
-                            >${ft(this.scope, this.calendarStatus, !0)}</span
-                          >${mt(this.calendarStatus, () => void this.renderRoot.querySelector("kaleidescape-journal-calendar")?.refresh())}
+                            >${wt(this.scope, this.calendarStatus, !0)}</span
+                          >${Et(this.calendarStatus, () => void this.renderRoot.querySelector("kaleidescape-journal-calendar")?.refresh())}
                         </footer>` : this.scope.library_enabled ? v`<kaleidescape-library
         .client=${this.api}
         .scope=${this.scope}
@@ -13091,10 +13498,10 @@ var hi = "kaleidescape-companion-card-search", gi = class extends C {
                         </p>` : v`<p class="message" role="status">
                 ${this.hass?.user ? "Loading Companion…" : "Sign in to Home Assistant to use this card."}
               </p>`}
-      ${this.popupCriterion && this.scope?.library_enabled ? v`<dialog @click=${L} @cancel=${this.closePopup}>
+      ${this.popupCriterion && this.scope?.library_enabled ? v`<dialog @click=${R} @cancel=${this.closePopup}>
               <div class="card-head">
                 <h2>Library</h2>
-                ${I((e) => this.closePopup(e), this.locked)}
+                ${L((e) => this.closePopup(e), this.locked)}
               </div>
               <kaleidescape-library
                 .client=${this.api}
@@ -13105,34 +13512,34 @@ var hi = "kaleidescape-companion-card-search", gi = class extends C {
             </dialog>` : x}
     </ha-card>`;
 	}
-}, _i = {
+}, Ti = {
 	remote: "Theater remote",
 	"now-playing": "Now Playing",
 	"library-covers": "Library covers",
 	"library-search": "Library search",
 	library: "Full Library",
 	"journal-calendar": "Journal calendar"
-}, vi = window;
-vi.customCards ??= [];
-for (let e of fi) {
+}, Ei = window;
+Ei.customCards ??= [];
+for (let e of bi) {
 	let t = `kaleidescape-${e}-card`;
 	if (!customElements.get(t)) {
-		class n extends gi {
+		class n extends wi {
 			static {
 				this.kind = e;
 			}
 		}
 		customElements.define(t, n);
 	}
-	vi.customCards.some((e) => e.type === t) || vi.customCards.push({
+	Ei.customCards.some((e) => e.type === t) || Ei.customCards.push({
 		type: t,
-		name: `Kaleidescape · ${_i[e]}`,
-		description: _i[e],
+		name: `Kaleidescape · ${Ti[e]}`,
+		description: Ti[e],
 		preview: !0
 	});
 }
 // src/ui/viewport.ts
-var yi = class {
+var Di = class {
 	constructor(e, t) {
 		this.host = e, this.resized = t, this.observed = [], this.containers = [], this.schedule = () => {
 			this.frame === void 0 && this.host.isConnected && (this.frame = requestAnimationFrame(() => {
@@ -13170,13 +13577,13 @@ var yi = class {
 		window.removeEventListener("resize", this.schedule), this.viewport?.removeEventListener("resize", this.schedule), this.viewport?.removeEventListener("scroll", this.schedule), this.viewport = void 0, this.observer?.disconnect(), this.observer = void 0, this.observed = [], this.containers = [], this.frame !== void 0 && cancelAnimationFrame(this.frame), this.frame = void 0;
 	}
 };
-function bi(e, t) {
-	e.addController(new yi(e, t));
+function Oi(e, t) {
+	e.addController(new Di(e, t));
 }
-w(), F(), zt(), E(), ci();
-var xi = class extends C {
+C(), A(), M(), P(), gi();
+var ki = class extends S {
 	constructor(...e) {
-		super(...e), this.viewingId = "", this.disabled = !1, this.advanced = !1, this.queue = new V(), this.error = "", this.generation = 0, this.bound = "";
+		super(...e), this.viewingId = "", this.disabled = !1, this.advanced = !1, this.queue = new j(), this.error = "", this.generation = 0, this.bound = "";
 	}
 	static {
 		this.properties = {
@@ -13188,7 +13595,7 @@ var xi = class extends C {
 		};
 	}
 	static {
-		this.styles = [T, l`
+		this.styles = [N, l`
       :host {
         display: block;
       }
@@ -13229,7 +13636,7 @@ var xi = class extends C {
 		super.disconnectedCallback(), this.clear(), this.bound = "", this.boundClient = void 0;
 	}
 	clear() {
-		this.generation++, this.queue.cache.dispose(), this.queue = new V(), this.openTitleId = void 0, this.link = void 0, this.error = "";
+		this.generation++, this.queue.cache.dispose(), this.queue = new j(), this.openTitleId = void 0, this.link = void 0, this.error = "";
 	}
 	async load() {
 		if (!this.client || !this.scope?.library_enabled || !this.viewingId) return;
@@ -13239,7 +13646,7 @@ var xi = class extends C {
 			e === this.generation && (this.link = t.library, this.reportLink());
 		} catch (t) {
 			if (e !== this.generation) return;
-			this.error = A(t), k(t) === "unauthorized" && (this.clear(), this.requestUpdate(), this.dispatchEvent(new CustomEvent("access-denied", {
+			this.error = T(t), w(t) === "unauthorized" && (this.clear(), this.requestUpdate(), this.dispatchEvent(new CustomEvent("access-denied", {
 				bubbles: !0,
 				composed: !0
 			})));
@@ -13294,38 +13701,38 @@ var xi = class extends C {
 	}
 };
 // node_modules/lit-html/static.js
-customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", xi), Je();
-var Si = Symbol.for(""), Ci = (e) => {
-	if (e?.r === Si) return e?._$litStatic$;
-}, wi = (e, ...t) => ({
+customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", ki), Ye();
+var Ai = Symbol.for(""), ji = (e) => {
+	if (e?.r === Ai) return e?._$litStatic$;
+}, Mi = (e, ...t) => ({
 	_$litStatic$: t.reduce((t, n, r) => t + ((e) => {
 		if (e._$litStatic$ !== void 0) return e._$litStatic$;
 		throw Error(`Value passed to 'literal' function must be a 'literal' result: ${e}. Use 'unsafeStatic' to pass non-literal values, but\n            take care to ensure page security.`);
 	})(n) + e[r + 1], e[0]),
-	r: Si
-}), Ti = /* @__PURE__ */ new Map(), Ei = ((e) => (t, ...n) => {
+	r: Ai
+}), Ni = /* @__PURE__ */ new Map(), Pi = ((e) => (t, ...n) => {
 	let r = n.length, i, a, o = [], s = [], c, l = 0, u = !1;
 	for (; l < r;) {
-		for (c = t[l]; l < r && (a = n[l], (i = Ci(a)) !== void 0);) c += i + t[++l], u = !0;
+		for (c = t[l]; l < r && (a = n[l], (i = ji(a)) !== void 0);) c += i + t[++l], u = !0;
 		l !== r && s.push(a), o.push(c), l++;
 	}
 	if (l === r && o.push(t[r]), u) {
 		let e = o.join("$$lit$$");
-		(t = Ti.get(e)) === void 0 && (o.raw = o, Ti.set(e, t = o)), n = s;
+		(t = Ni.get(e)) === void 0 && (o.raw = o, Ni.set(e, t = o)), n = s;
 	}
 	return e(t, ...n);
 })(v);
 // src/ui/editor.ts
-w();
-function Di(e) {
+C();
+function Fi(e) {
 	let t = new Date(e);
 	return (/* @__PURE__ */ new Date(t.getTime() - t.getTimezoneOffset() * 6e4)).toISOString().slice(0, 19);
 }
-function Oi(e) {
+function Ii(e) {
 	return {
 		title: e?.title ?? "",
-		started_at: Di(e?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
-		ended_at: e?.ended_at ? Di(e.ended_at) : "",
+		started_at: Fi(e?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
+		ended_at: e?.ended_at ? Fi(e.ended_at) : "",
 		duration_seconds: e?.duration_seconds == null ? "" : (e.duration_seconds / 60).toFixed(2),
 		watched_seconds: ((e?.watched_seconds ?? 0) / 60).toFixed(2),
 		status: e?.status ?? "partial",
@@ -13335,7 +13742,7 @@ function Oi(e) {
 		raw_content_id: e?.raw_content_id ?? ""
 	};
 }
-function ki(e, t, n, r = e) {
+function Li(e, t, n, r = e) {
 	let i = {
 		...e,
 		[t]: n
@@ -13346,11 +13753,11 @@ function ki(e, t, n, r = e) {
 			e,
 			t,
 			a
-		].every(Number.isFinite) && (i.ended_at = Di(new Date(e + a - t).toISOString()));
+		].every(Number.isFinite) && (i.ended_at = Fi(new Date(e + a - t).toISOString()));
 	}
 	return i;
 }
-function Ai(e, t) {
+function Ri(e, t) {
 	let n = {};
 	for (let [r, i] of Object.entries(e)) t && i === t[r] || (n[r] = r === "started_at" || r === "ended_at" ? i ? new Date(i).toISOString() : null : r === "duration_seconds" || r === "watched_seconds" ? i === "" ? null : Number(i) * 60 : [
 		"source_id",
@@ -13359,7 +13766,7 @@ function Ai(e, t) {
 	].includes(r) && i === "" ? null : i);
 	return n;
 }
-function ji(e, t, n) {
+function zi(e, t, n) {
 	function r(n, r, i = "text", a = !1, o) {
 		return v`<label
       >${r}<input
@@ -13419,8 +13826,8 @@ function ji(e, t, n) {
     </details>
   `;
 }
-w(), F(), E(), ln(), tr();
-var Mi = class extends C {
+C(), A(), P(), _n(), lr();
+var Bi = class extends S {
 	constructor(...e) {
 		super(...e), this.value = "", this.initialTitle = "", this.requireRuntime = !0, this.disabled = !1, this.fuzzySearch = !0, this.query = "", this.items = [], this.open = !1, this.active = 0, this.error = "", this.request = 0, this.bound = "";
 	}
@@ -13436,7 +13843,7 @@ var Mi = class extends C {
 		};
 	}
 	static {
-		this.styles = [T, cn];
+		this.styles = [N, gn];
 	}
 	willUpdate(e) {
 		let t = !1;
@@ -13471,7 +13878,7 @@ var Mi = class extends C {
 				let n = await this.client.librarySearch(this.scope, e, this.fuzzySearch);
 				t === this.request && this.isConnected && (this.items = n.items, this.requestUpdate());
 			} catch (e) {
-				t === this.request && (this.error = A(e), this.requestUpdate(), k(e) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
+				t === this.request && (this.error = T(e), this.requestUpdate(), w(e) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
 					bubbles: !0,
 					composed: !0
 				})));
@@ -13510,13 +13917,13 @@ var Mi = class extends C {
         ${this.open ? v`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => v`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${this.requireRuntime && !e.duration_seconds} @pointerdown=${(e) => e.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats?.length ? e.formats : [e.edition]).filter(Boolean).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime unknown"}</button>`)}${this.items.length ? x : v`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : x}
       </div>
       ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-      ${this.selected ? v`<p class="manual-metadata">${this.selected.year ?? ""} ${Y(this.selected)} ${Gn(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : x}
+      ${this.selected ? v`<p class="manual-metadata">${this.selected.year ?? ""} ${Y(this.selected)} ${$n(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : x}
     </fieldset>`;
 	}
 };
-customElements.get("kaleidescape-library-title-picker") || customElements.define("kaleidescape-library-title-picker", Mi), w(), E(), ln();
-function Ni() {
-	let e = Di((/* @__PURE__ */ new Date()).toISOString());
+customElements.get("kaleidescape-library-title-picker") || customElements.define("kaleidescape-library-title-picker", Bi), C(), P(), _n();
+function Vi() {
+	let e = Fi((/* @__PURE__ */ new Date()).toISOString());
 	return {
 		library_title_id: "",
 		date: e.slice(0, 10),
@@ -13526,7 +13933,7 @@ function Ni() {
 		notes: ""
 	};
 }
-function Pi(e) {
+function Hi(e) {
 	if (!/^[a-f0-9]{64}$/.test(e.library_title_id)) throw Error("Select a Library movie from the suggestions.");
 	let t = e.time.trim().match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/i);
 	if (!t || !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) throw Error("Enter a date and time such as 19:30 or 7:30 PM.");
@@ -13534,7 +13941,7 @@ function Pi(e) {
 	if (r > 59 || n > (i ? 12 : 23) || i && n < 1) throw Error("Enter a valid local time.");
 	i && (n = n % 12 + (i === "pm" ? 12 : 0));
 	let a = `${e.date}T${String(n).padStart(2, "0")}:${String(r).padStart(2, "0")}:00`, o = new Date(a);
-	if (!Number.isFinite(o.getTime()) || Di(o.toISOString()) !== a) throw Error("That local date/time does not exist. Check the date or daylight-saving transition.");
+	if (!Number.isFinite(o.getTime()) || Fi(o.toISOString()) !== a) throw Error("That local date/time does not exist. Check the date or daylight-saving transition.");
 	let s = Number(e.watched_minutes) * 60;
 	if (e.status === "partial" && (!e.watched_minutes.trim() || !Number.isFinite(s) || s <= 0)) throw Error("Enter positive watched minutes for a partial viewing.");
 	return {
@@ -13545,9 +13952,9 @@ function Pi(e) {
 		...e.status === "partial" ? { watched_seconds: s } : {}
 	};
 }
-var Fi = class extends C {
+var Ui = class extends S {
 	constructor(...e) {
-		super(...e), this.draft = Ni(), this.disabled = !1, this.fuzzySearch = !0, this.runtime = null;
+		super(...e), this.draft = Vi(), this.disabled = !1, this.fuzzySearch = !0, this.runtime = null;
 	}
 	static {
 		this.properties = {
@@ -13559,7 +13966,7 @@ var Fi = class extends C {
 		};
 	}
 	static {
-		this.styles = [T, cn];
+		this.styles = [N, gn];
 	}
 	change(e) {
 		this.dispatchEvent(new CustomEvent("draft-change", {
@@ -13628,8 +14035,8 @@ var Fi = class extends C {
 	}
 };
 // src/ui/entry-layout.styles.ts
-customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", Fi), w();
-var Ii = l`
+customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", Ui), C();
+var Wi = l`
   .entries-header {
     position: sticky;
     top: var(--companion-sticky-top, 0px);
@@ -13766,7 +14173,7 @@ var Ii = l`
       padding: 8px;
     }
   }
-`, Li = [
+`, Gi = [
 	{
 		id: "now-playing",
 		label: "Now Playing",
@@ -13792,23 +14199,23 @@ var Ii = l`
 		label: "Settings",
 		description: "Configure your Companion experience."
 	}
-], Ri = Li.map((e) => e.id);
-function zi(e, t, n, r = !0) {
-	let i = (e) => Ri.includes(e) && (t || e === "now-playing" || e === "journal" || e === "library") && (e !== "library" || n), a = r ? new URL(location.href).searchParams.get("companion_page") : null;
+], Ki = Gi.map((e) => e.id);
+function qi(e, t, n, r = !0) {
+	let i = (e) => Ki.includes(e) && (t || e === "now-playing" || e === "journal" || e === "library") && (e !== "library" || n), a = r ? new URL(location.href).searchParams.get("companion_page") : null;
 	return i(a) ? a : i(e) ? e : "journal";
 }
-function Bi(e) {
+function Ji(e) {
 	let t = new URL(location.href);
 	t.searchParams.set("companion_page", e), e !== "journal" && t.searchParams.delete("companion_month"), history.replaceState(history.state, "", t);
 }
-Ln(), w(), F(), Rn(), E(), R(), _r();
-var Vi = class extends C {
+Gn(), C(), A(), Kn(), P(), z(), Tr();
+var Yi = class extends S {
 	constructor() {
 		super(), this.disabled = !1, this.mobileCompact = !1, this.listStatus = "", this.listSort = "completed_at", this.listDescending = !0, this.showListFilters = !1, this.view = "list", this.pageSize = 25, this.calendarSize = 180, this.calendarFit = !1, this.hoverPreview = !1, this.calendarTotals = {
 			calendar_show_month: !0,
 			calendar_show_year: !0,
 			calendar_show_total: !0
-		}, this.movieDetails = "full", this.bound = "", this.generation = 0, this.ready = !1, this.fuzzy = !0, this.error = "", Pn(this, () => !this.ready || this.viewStore?.unsettled || this.disabled || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.load(), !0));
+		}, this.movieDetails = "full", this.bound = "", this.generation = 0, this.ready = !1, this.fuzzy = !0, this.error = "", Hn(this, () => !this.ready || this.viewStore?.unsettled || this.disabled || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.load(), !0));
 	}
 	static {
 		this.properties = {
@@ -13823,7 +14230,7 @@ var Vi = class extends C {
 		};
 	}
 	static {
-		this.styles = [T, l`
+		this.styles = [N, l`
       .view-options {
         display: flex;
         gap: 24px;
@@ -13918,7 +14325,7 @@ var Vi = class extends C {
 		}));
 	}
 	fail(e) {
-		this.error = A(e), k(e) === "unauthorized" && (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
+		this.error = T(e), w(e) === "unauthorized" && (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
 			bubbles: !0,
 			composed: !0
 		}))), this.requestUpdate();
@@ -13936,7 +14343,7 @@ var Vi = class extends C {
 				calendar_show_month: t.calendar_show_month !== !1,
 				calendar_show_year: t.calendar_show_year !== !1,
 				calendar_show_total: t.calendar_show_total !== !1
-			}, this.movieDetails = t.movie_details === "compact" ? "compact" : "full", pr(this.movieDetails === "full"), this.ready = !0, this.error = "", this.notify(), this.requestUpdate();
+			}, this.movieDetails = t.movie_details === "compact" ? "compact" : "full", xr(this.movieDetails === "full"), this.ready = !0, this.error = "", this.notify(), this.requestUpdate();
 		} catch (t) {
 			e === this.generation && this.fail(t);
 		}
@@ -13961,11 +14368,11 @@ var Vi = class extends C {
       <dialog
         class="database-dialog"
         aria-labelledby="journal-options-title"
-        @click=${L}
+        @click=${R}
       >
         <div class="card-head">
           <h2 id="journal-options-title">Journal options</h2>
-          ${I(() => this.renderRoot.querySelector("dialog")?.close())}
+          ${L(() => this.renderRoot.querySelector("dialog")?.close())}
         </div>
         <fieldset class="view-options">
           <legend>View type</legend>
@@ -14040,7 +14447,7 @@ var Vi = class extends C {
                     name="journal_movie_details"
                     .value=${this.movieDetails}
                     @change=${(e) => {
-			this.movieDetails = e.target.value === "compact" ? "compact" : "full", this.viewStore?.set({ movie_details: this.movieDetails }), pr(this.movieDetails === "full"), this.notify(), this.requestUpdate();
+			this.movieDetails = e.target.value === "compact" ? "compact" : "full", this.viewStore?.set({ movie_details: this.movieDetails }), xr(this.movieDetails === "full"), this.notify(), this.requestUpdate();
 		}}
                   >
                     <option
@@ -14124,12 +14531,12 @@ var Vi = class extends C {
       </dialog>`;
 	}
 };
-customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", Vi), Cr(), w(), O(), F(), An(), E(), R(), Zr(), ci();
-var Hi = class extends C {
+customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", Yi), M(), jr(), C(), I(), A(), Rn(), P(), z(), ai(), gi();
+var Xi = class extends S {
 	constructor() {
-		super(), this.narrow = !1, this.api = null, this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...ut }, this.next = null, this.history = [], this.page = 1, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.controlLocked = !1, this.locationChanged = () => {
-			this.navigationReady && this.scope?.library_enabled && this.activePage !== "library" && Gr() && Kr() && this.selectPage("library");
-		}, bi(this, () => this.requestUpdate());
+		super(), this.narrow = !1, this.api = null, this.coverSession = new _t(), this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...St }, this.next = null, this.history = [], this.page = 1, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.controlLocked = !1, this.locationChanged = () => {
+			this.navigationReady && this.scope?.library_enabled && this.activePage !== "library" && $r() && ei() && this.selectPage("library");
+		}, Oi(this, () => this.requestUpdate());
 	}
 	static {
 		this.properties = {
@@ -14140,9 +14547,9 @@ var Hi = class extends C {
 	}
 	static {
 		this.styles = [
-			T,
-			Ii,
-			vt
+			N,
+			Wi,
+			At
 		];
 	}
 	confirmNavigation() {
@@ -14159,7 +14566,7 @@ var Hi = class extends C {
 		if (e.has("hass") || e.has("client")) {
 			if (this.hass) {
 				let e = `${this.hass.user?.id}:${this.hass.user?.is_admin}`;
-				!this.hass.user || !this.hass.connection.connected ? this.bind(null) : this.connection === this.hass.connection && this.userKey === e && this.api || (this.connection = this.hass.connection, this.userKey = e, this.bind(new lt({
+				!this.hass.user || !this.hass.connection.connected ? this.bind(null) : this.connection === this.hass.connection && this.userKey === e && this.api || (this.connection = this.hass.connection, this.userKey = e, this.bind(new st({
 					callWS: (e) => this.hass.callWS(e),
 					fetchWithAuth: (e, t) => this.hass.fetchWithAuth(e, t)
 				})));
@@ -14173,13 +14580,13 @@ var Hi = class extends C {
 		super.disconnectedCallback(), window.removeEventListener("location-changed", this.locationChanged), window.removeEventListener("popstate", this.locationChanged), this.bind(null);
 	}
 	clear() {
-		this.controlLocked = !1, this.generation++, this.scope = null, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest++, this.next = null, this.cursor = void 0, this.history = [], this.page = 1, this.query = this.status = this.searchText = this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...ut }, this.calendarStatus = void 0, this.journalMovie = void 0, this.libraryTitleId = void 0, this.libraryCriterion = void 0, this.loading = !1, this.error = "";
+		this.coverSession.reset(), this.controlLocked = !1, this.generation++, this.scope = null, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest++, this.next = null, this.cursor = void 0, this.history = [], this.page = 1, this.query = this.status = this.searchText = this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...St }, this.calendarStatus = void 0, this.journalMovie = void 0, this.libraryTitleId = void 0, this.libraryCriterion = void 0, this.loading = !1, this.error = "";
 	}
 	bind(e) {
 		e !== this.api && (this.clear(), this.api = e, this.requestUpdate(), e && this.refresh());
 	}
 	fail(e) {
-		k(e) === "unauthorized" && this.clear(), this.error = A(e), this.requestUpdate();
+		w(e) === "unauthorized" && this.clear(), this.error = T(e), this.requestUpdate();
 	}
 	async refresh() {
 		if (!this.api) return;
@@ -14188,8 +14595,8 @@ var Hi = class extends C {
 		try {
 			let { entries: t } = await this.api.info();
 			if (e !== this.generation) return;
-			if (!t[0]?.permissions.read || t[0].api_version !== 1) throw new M("not_ready");
-			if (this.scope = {
+			if (!t[0]?.permissions.read || t[0].api_version !== 1) throw new D("not_ready");
+			if (this.coverSession.bind(t[0]), this.scope = {
 				...t[0],
 				permissions: {
 					read: !0,
@@ -14197,10 +14604,10 @@ var Hi = class extends C {
 					export: !1
 				}
 			}, !this.navigationReady) {
-				let e = zi(this.scope.ui_defaults?.default_landing_page, !1, !!this.scope.library_enabled);
+				let e = qi(this.scope.ui_defaults?.default_landing_page, !1, !!this.scope.library_enabled);
 				this.activePage = e === "library" || e === "now-playing" ? e : "journal", this.navigationReady = !0;
 			}
-			this.activePage === "library" && !this.scope.library_enabled && (this.activePage = "journal"), Bi(this.activePage), this.announcePage(), await this.load(void 0, e);
+			this.activePage === "library" && !this.scope.library_enabled && (this.activePage = "journal"), Ji(this.activePage), this.announcePage(), await this.load(void 0, e);
 		} catch (t) {
 			e === this.generation && this.fail(t);
 		} finally {
@@ -14257,7 +14664,7 @@ var Hi = class extends C {
 		return Number.isNaN(t.getTime()) ? "—" : t.toLocaleString();
 	}
 	selectPage(e, t) {
-		this.controlLocked || e === "library" && !this.scope?.library_enabled || (this.selected = null, this.detailLoading = !1, this.detailRequest++, this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, this.activePage = e, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = this.status = this.filterStatus = "", this.page = 1, this.history = [], this.load()), Bi(e), this.announcePage(), this.requestUpdate());
+		this.controlLocked || e === "library" && !this.scope?.library_enabled || (this.selected = null, this.detailLoading = !1, this.detailRequest++, this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, this.activePage = e, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = this.status = this.filterStatus = "", this.page = 1, this.history = [], this.load()), Ji(e), this.announcePage(), this.requestUpdate());
 	}
 	tabKey(e) {
 		if (![
@@ -14278,7 +14685,7 @@ var Hi = class extends C {
 		this.query = this.searchText = "", this.page = 1, this.history = [], this.load(), this.requestUpdate();
 	}
 	render() {
-		let e = this.journalView === "calendar" && !this.query.trim(), t = window.innerWidth <= 700 ? wi`dialog` : wi`section`;
+		let e = this.journalView === "calendar" && !this.query.trim(), t = window.innerWidth <= 700 ? Mi`dialog` : Mi`section`;
 		return v`<main>
       <header>
         ${this.hass && this.narrow ? v`<button aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", {
@@ -14287,14 +14694,14 @@ var Hi = class extends C {
 		}))}>☰</button>` : x}
         <img
           class="companion-icon"
-          src=${kn}
+          src=${Ln}
           alt=""
           aria-hidden="true"
         />
         <div class="grow">
           <h1>Kaleidescape Companion</h1>
           <p>
-            ${Li.find((e) => e.id === this.activePage).description}
+            ${Gi.find((e) => e.id === this.activePage).description}
           </p>
         </div>
         <span class="view-mode-slot"><slot name="view-mode"></slot></span>
@@ -14329,13 +14736,16 @@ var Hi = class extends C {
                 .playerId=${this.playbackPlayer}
                 .client=${this.api ?? void 0}
                 .scope=${this.scope}
-                @access-denied=${() => this.fail(new M("unauthorized"))}
+                @access-denied=${() => this.fail(new D("unauthorized"))}
               ></kaleidescape-now-playing>` : this.activePage === "library" && this.scope ? v`<kaleidescape-library
                   .client=${this.api ?? void 0}
                   .scope=${this.scope}
+                  .coverQueue=${this.coverSession.queue}
+                  .pageCache=${this.coverSession.pages}
+                  .cacheUser=${this.hass?.user?.id}
                   .openTitleId=${this.libraryTitleId}
                   .openCriterion=${this.libraryCriterion}
-                  @access-denied=${() => this.fail(new M("unauthorized"))}
+                  @access-denied=${() => this.fail(new D("unauthorized"))}
                   @library-disabled=${() => {
 			this.activePage = "journal", this.refresh();
 		}}
@@ -14448,7 +14858,7 @@ var Hi = class extends C {
 			let t = this.fuzzySearch !== e.detail.fuzzy_search || this.pageSize !== e.detail.page_size;
 			this.fuzzySearch = e.detail.fuzzy_search, this.pageSize = e.detail.page_size, t && (this.page = 1, this.history = [], this.load());
 		}}
-                          @access-denied=${() => this.fail(new M("unauthorized"))}
+                          @access-denied=${() => this.fail(new D("unauthorized"))}
                         ></kaleidescape-journal-options>
                       </div>
                     </form>
@@ -14467,7 +14877,7 @@ var Hi = class extends C {
                           .fitScreen=${this.calendarFit}
                           .hoverPreview=${this.calendarHoverPreview}
                           @browse-library=${(e) => this.selectPage("library", { libraryCriterion: e.detail })}
-                          @access-denied=${() => this.fail(new M("unauthorized"))}
+                          @access-denied=${() => this.fail(new D("unauthorized"))}
                           ><button
                             slot="mobile-options"
                             class="calendar-header-action"
@@ -14478,7 +14888,7 @@ var Hi = class extends C {
                             ?disabled=${this.loading || !this.scope}
                             @click=${() => this.renderRoot.querySelector("kaleidescape-journal-options")?.open()}
                           >
-                            ${D("options")}
+                            ${F("options")}
                           </button></kaleidescape-journal-calendar
                         >` : v`
                           <div class="entries-layout">
@@ -14498,7 +14908,7 @@ var Hi = class extends C {
                                           tabindex="0"
                                           aria-label="Viewings"
                                         >
-                                          ${this.rows.map((e) => ht(e, this.selected?.id, (e) => void this.selectJournalEntry(e)))}
+                                          ${this.rows.map((e) => Dt(e, this.selected?.id, (e) => void this.selectJournalEntry(e)))}
                                         </ul>` : v`<div class="empty">
                                           No viewings to display.
                                         </div>` : v`<p>
@@ -14506,19 +14916,19 @@ var Hi = class extends C {
                                         household journal.
                                       </p>`}
                             </section>
-                            ${Ei`<${t}
+                            ${Pi`<${t}
                               class="entries-detail journal-detail-dialog"
-                  @click=${L}
+                  @click=${R}
                               aria-label="Viewing details"
                               tabindex="0"
                             >
                               <div class="card-head">
                                 <h2>Viewing details</h2>
-                    ${window.innerWidth <= 700 ? I(() => this.renderRoot.querySelector("dialog.journal-detail-dialog")?.close()) : x}
+                    ${window.innerWidth <= 700 ? L(() => this.renderRoot.querySelector("dialog.journal-detail-dialog")?.close()) : x}
                               </div>
                               ${this.detailLoading ? v`<div class="empty" role="status">
                                       Loading entry…
-                                    </div>` : this.selected ? v`${gt(this.selected, (e) => this.date(e), this.linkedViewingId === this.selected.id ? () => this.renderRoot.querySelector("kaleidescape-viewing-library")?.openLibrary() : void 0)}
+                                    </div>` : this.selected ? v`${Ot(this.selected, (e) => this.date(e), this.linkedViewingId === this.selected.id ? () => this.renderRoot.querySelector("kaleidescape-viewing-library")?.openLibrary() : void 0)}
                                         <kaleidescape-viewing-library
                                           .client=${this.api ?? void 0}
                                           .scope=${this.scope ?? void 0}
@@ -14528,7 +14938,7 @@ var Hi = class extends C {
 			let t = e.detail.linked ? e.detail.viewingId : void 0;
 			this.linkedViewingId !== t && (this.linkedViewingId = t, this.requestUpdate());
 		}}
-                                          @access-denied=${() => this.fail(new M("unauthorized"))}
+                                          @access-denied=${() => this.fail(new D("unauthorized"))}
                                           @browse-library=${(e) => this.selectPage("library", { libraryCriterion: e.detail })}
                                         ></kaleidescape-viewing-library> ` : v`<div class="empty">
                                         <strong>Select an entry</strong>
@@ -14541,7 +14951,7 @@ var Hi = class extends C {
                           </div>
                         `}
                   <footer class="entries-footer journal-status">
-                    ${e ? ft(this.scope, this.calendarStatus, !0, this.calendarTotals) : v`<span class="journal-full-total">${ft(this.scope)}</span><span class="journal-mobile-total">Total Viewings ${this.scope?.viewing_count ?? 0}</span>`}${e ? mt(this.calendarStatus, () => {
+                    ${e ? wt(this.scope, this.calendarStatus, !0, this.calendarTotals) : v`<span class="journal-full-total">${wt(this.scope)}</span><span class="journal-mobile-total">Total Viewings ${this.scope?.viewing_count ?? 0}</span>`}${e ? Et(this.calendarStatus, () => {
 			this.renderRoot.querySelector("kaleidescape-journal-calendar")?.refresh();
 		}) : x}
 
@@ -14560,7 +14970,7 @@ var Hi = class extends C {
                         >
                           <span class="journal-page-text">First</span
                           ><span class="journal-page-icon"
-                            >${D("first")}</span
+                            >${F("first")}</span
                           >
                         </button>
                         <button
@@ -14573,7 +14983,7 @@ var Hi = class extends C {
                         >
                           <span class="journal-page-text">Previous</span
                           ><span class="journal-page-icon"
-                            >${D("previous")}</span
+                            >${F("previous")}</span
                           >
                         </button>
                         <button
@@ -14586,13 +14996,13 @@ var Hi = class extends C {
                         >
                           <span class="journal-page-text">Next</span
                           ><span class="journal-page-icon"
-                            >${D("next")}</span
+                            >${F("next")}</span
                           >
                         </button>
                       </div>
                     </div>
                     ${e && this.journalMovie ? v`<button class="journal-mobile-movie-clear" type="button" ?disabled=${this.loading || !this.scope} @click=${() => this.selectPage("journal")}>Show all viewings</button>` : x}
-                    ${pt(this.searchText, this.loading || !this.scope, (e) => {
+                    ${Tt(this.searchText, this.loading || !this.scope, (e) => {
 			this.searchText = e, !e && this.query && this.clearJournalSearch(), this.requestUpdate();
 		}, () => {
 			this.query = this.searchText = this.searchText.trim(), this.page = 1, this.history = [], this.load();
@@ -14603,9 +15013,9 @@ var Hi = class extends C {
     </main>`;
 	}
 };
-customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", Hi);
+customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", Xi);
 // src/core/search.ts
-var Ui = {
+var Zi = {
 	æ: "ae",
 	œ: "oe",
 	ø: "o",
@@ -14618,13 +15028,13 @@ var Ui = {
 	ß: "ss",
 	ς: "σ"
 };
-function Wi(e) {
-	return e.toLowerCase().replace(/[æœøłđðþħıßς]/gu, (e) => Ui[e]).normalize("NFKD").replace(/\p{M}/gu, "");
+function Qi(e) {
+	return e.toLowerCase().replace(/[æœøłđðþħıßς]/gu, (e) => Zi[e]).normalize("NFKD").replace(/\p{M}/gu, "");
 }
-function Gi(e) {
-	return Wi(e).match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
+function $i(e) {
+	return Qi(e).match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
 }
-function Ki(e, t) {
+function ea(e, t) {
 	let n = Math.min(2, Math.max(1, Math.ceil(e.length / 4)));
 	if (e.length < 3 || Math.max(e.length, t.length) > 100 || Math.abs(e.length - t.length) > n) return !1;
 	let r = Array.from({ length: t.length + 1 }, (e, t) => t), i = r;
@@ -14640,7 +15050,7 @@ function Ki(e, t) {
 	}
 	return r[t.length] <= n;
 }
-function qi(e, t, n = !1) {
+function ta(e, t, n = !1) {
 	let r = t.trim();
 	if (r.length >= 2 && r.startsWith("\"") && r.endsWith("\"")) {
 		let t;
@@ -14650,19 +15060,19 @@ function qi(e, t, n = !1) {
 			t = r.slice(1, -1).trim();
 		}
 		if (!t) return !1;
-		let n = Wi(t).split(/\s+/).map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-		return RegExp("(?<![\\p{L}\\p{N}_])" + n.join("\\s+") + "(?![\\p{L}\\p{N}_])", "u").test(Wi(e));
+		let n = Qi(t).split(/\s+/).map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+		return RegExp("(?<![\\p{L}\\p{N}_])" + n.join("\\s+") + "(?![\\p{L}\\p{N}_])", "u").test(Qi(e));
 	}
-	if (Wi(e).includes(Wi(t))) return !0;
+	if (Qi(e).includes(Qi(t))) return !0;
 	if (!n) return !1;
-	let i = Gi(t), a = Gi(e);
+	let i = $i(t), a = $i(e);
 	if (!i) return !1;
 	if (a.includes(i)) return !0;
 	let o = i.split(" "), s = a.split(" ");
-	return o.length <= 12 && o.every((e) => s.some((t) => t.includes(e) || Ki(e, t)));
+	return o.length <= 12 && o.every((e) => s.some((t) => t.includes(e) || ea(e, t)));
 }
 // src/enrichment/sources.ts
-var Ji = [
+var na = [
 	[
 		"actors",
 		"Cast",
@@ -14733,12 +15143,12 @@ var Ji = [
 		"Landscape image",
 		["tmdb"]
 	]
-], Yi = {
+], ra = {
 	auto: "Automatic",
 	original: "Original library data",
 	kaleidescape: "Kaleidescape store",
 	tmdb: "TMDB"
-}, Xi = [
+}, ia = [
 	[
 		"general",
 		"General",
@@ -14793,7 +15203,7 @@ var Ji = [
 		"About Kaleidescape Companion",
 		"Installed versions, documentation and support information."
 	]
-], Zi = [
+], aa = [
 	{
 		key: "media_player",
 		label: "Media player",
@@ -14858,7 +15268,7 @@ var Ji = [
 		max: 60,
 		unit: "minutes"
 	}
-], Qi = [
+], oa = [
 	{
 		key: "library_host",
 		label: "Kaleidescape Server Address",
@@ -14887,7 +15297,7 @@ var Ji = [
 		max: 4096,
 		unit: "MiB"
 	}
-], $i = [
+], sa = [
 	[
 		"tracking_enabled",
 		"Automatically record playback",
@@ -14942,19 +15352,19 @@ var Ji = [
 		"Publish new movie completions to your selected calendar.",
 		"calendar"
 	]
-], ea = /* @__PURE__ */ new Set([
+], ca = /* @__PURE__ */ new Set([
 	"fuzzy_search",
-	...$i.map(([e]) => e),
+	...sa.map(([e]) => e),
 	"calendar_full_sync",
 	"calendar_full_sync_dedicated",
 	"metadata_store_enabled",
 	"metadata_tmdb_enabled",
 	"metadata_auto_save",
 	"metadata_clear_tmdb_key"
-]), ta = [
-	...Zi,
-	...Qi,
-	...$i.map(([e, t, n, r]) => ({
+]), la = [
+	...aa,
+	...oa,
+	...sa.map(([e, t, n, r]) => ({
 		key: e,
 		label: t,
 		hint: n,
@@ -15093,23 +15503,23 @@ var Ji = [
 		section: n,
 		hint: r
 	})),
-	...Ji.map(([e, t]) => ({
+	...na.map(([e, t]) => ({
 		key: `metadata_source_${e}`,
 		label: `${t} source`,
 		section: "metadata",
 		hint: "Preferred metadata source and fallback"
 	}))
 ];
-function na(e, t) {
+function ua(e, t) {
 	let n = (e) => Array.isArray(e) ? JSON.stringify(e) : String(e ?? "");
 	return [.../* @__PURE__ */ new Set([...Object.keys(e), ...Object.keys(t)])].filter((r) => n(e[r]) !== n(t[r]));
 }
-function ra(e) {
-	let t = Wi(e.trim()).split(/\s+/).filter(Boolean);
-	return t.length ? ta.filter((e) => t.every((t) => Wi(`${e.label} ${e.hint} ${e.section} ${e.key}`).includes(t))) : [];
+function da(e) {
+	let t = Qi(e.trim()).split(/\s+/).filter(Boolean);
+	return t.length ? la.filter((e) => t.every((t) => Qi(`${e.label} ${e.hint} ${e.section} ${e.key}`).includes(t))) : [];
 }
-w(), dn();
-function ia(e, t) {
+C(), yn();
+function fa(e, t) {
 	return v`<div class="switch-row">
       ${G("calendar_full_sync", "Enable Full Sync", "Reconcile a dedicated calendar against completed Journal entries. Unmatched events require repeated successful scans and at least 10 minutes of grace before deletion. Schedule runs in Automations or use Run Full Sync now; enabling this does not create a schedule.")}<input
         type="checkbox"
@@ -15161,8 +15571,8 @@ function ia(e, t) {
             </div>
           ` : x}`;
 }
-B(), w(), F(), E(), R();
-var aa = class extends C {
+V(), C(), A(), P(), z();
+var pa = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.working = !1, this.error = "", this.reviewToken = "", this.generation = 0, this.bound = "";
 	}
@@ -15174,7 +15584,7 @@ var aa = class extends C {
 		};
 	}
 	static {
-		this.styles = T;
+		this.styles = N;
 	}
 	willUpdate(e) {
 		if (!e.has("client") && !e.has("scope")) return;
@@ -15197,10 +15607,10 @@ var aa = class extends C {
 		return !this.working && !this.pending;
 	}
 	fail(e) {
-		k(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
+		w(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
 			bubbles: !0,
 			composed: !0
-		}))) : this.error = A(e), this.requestUpdate();
+		}))) : this.error = T(e), this.requestUpdate();
 	}
 	async refresh() {
 		if (!this.client || !this.scope) return;
@@ -15237,7 +15647,7 @@ var aa = class extends C {
 				"conflict",
 				"busy",
 				"not_ready"
-			].includes(k(t)) && (this.pending = void 0), this.fail(t);
+			].includes(w(t)) && (this.pending = void 0), this.fail(t);
 		} finally {
 			e === this.generation && (this.working = !1, this.requestUpdate());
 		}
@@ -15285,7 +15695,7 @@ var aa = class extends C {
       <p role="status">
         ${e.active ? "Syncing…" : "Last successful sync: " + (e.last_success ? new Date(e.last_success).toLocaleString() : "Not yet")}
         · Pending delete: ${e.quarantined} ·
-        ${z(e.uncertain, "unconfirmed write")}
+        ${B(e.uncertain, "unconfirmed write")}
       </p>
       ${e.quarantined ? v`<p class="muted">Replaced and unmatched events remain visible until two unchanged scans at least ten minutes apart confirm cleanup. Changes restart this grace period. A forced sync keeps these safeguards.</p>` : x}
       ${Object.keys(e.counts).length ? v`<p class="muted">
@@ -15316,7 +15726,7 @@ var aa = class extends C {
       <dialog
         id="maintenance-review"
         class="database-dialog"
-        @click=${L}
+        @click=${R}
         @cancel=${this.close}
         aria-labelledby="maintenance-review-title"
       >
@@ -15324,7 +15734,7 @@ var aa = class extends C {
           <h2 id="maintenance-review-title">
             Review unconfirmed calendar writes
           </h2>
-          ${I((e) => this.close(e))}
+          ${L((e) => this.close(e))}
         </div>
         <p>
           Inspect the assigned calendar first. A write may already have
@@ -15357,7 +15767,7 @@ var aa = class extends C {
       <dialog
         id="maintenance-run"
         class="database-dialog"
-        @click=${L}
+        @click=${R}
         @cancel=${this.close}
         aria-labelledby="maintenance-run-title"
       >
@@ -15365,11 +15775,11 @@ var aa = class extends C {
           <h2 id="maintenance-run-title">
             Run Full Sync with pending operations?
           </h2>
-          ${I((e) => this.close(e))}
+          ${L((e) => this.close(e))}
         </div>
         <p>
           Pending delete: ${e.quarantined} ·
-          ${z(e.uncertain, "unconfirmed write")}
+          ${B(e.uncertain, "unconfirmed write")}
         </p>
         <p class="warning">
           A forced sync rechecks pending operations. It does not bypass the
@@ -15412,7 +15822,7 @@ var aa = class extends C {
       </div>
       ${e ? v`<p role="status">
               ${e.finished ? "Export finished" : "Export in progress"} ·
-              ${z(e.total, "viewing")} ·
+              ${B(e.total, "viewing")} ·
               ${Object.entries(e.counts).map(([e, t]) => `${t} ${e}`).join(" · ")}
             </p>` : x}
       ${this.error ? v`<p role="alert" class="error">${this.error}</p>` : x}
@@ -15420,16 +15830,16 @@ var aa = class extends C {
         class="database-dialog"
         aria-labelledby="calendar-export-title"
         aria-describedby="calendar-export-summary"
-        @click=${L}
+        @click=${R}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2 id="calendar-export-title">Export Journal to calendar</h2>
-          ${I((e) => this.close(e))}
+          ${L((e) => this.close(e))}
         </div>
         <p id="calendar-export-summary">
           Create events for up to
-          ${z(this.status?.completed_viewings ?? 0, "completed viewing")}
+          ${B(this.status?.completed_viewings ?? 0, "completed viewing")}
           using the saved calendar and templates?
         </p>
         <p>
@@ -15469,8 +15879,8 @@ var aa = class extends C {
     </section>`;
 	}
 };
-customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", aa), w(), F(), R(), E(), Sn();
-var oa = [
+customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", pa), C(), A(), z(), P(), An();
+var ma = [
 	[
 		"purchase_email",
 		"Purchase receipt email",
@@ -15501,18 +15911,18 @@ var oa = [
 		"Maintain a dedicated calendar from completed viewings.",
 		"Save a dedicated calendar and enable Full Sync first. Unmatched events can be deleted; the schedule includes a later safeguard check."
 	]
-], sa = {
+], ha = {
 	current: "Up to date",
 	outdated: "Update available",
 	modified: "Modified or unrecognized",
 	missing: "Not installed",
 	unavailable: "Unable to check"
 };
-function ca(e) {
+function ga(e) {
 	let t = e.split(/\r?\n/), n = t.indexOf("# Version history:"), r = t.indexOf("# End version history", n + 1);
 	return n < 0 || r < 0 ? [] : t.slice(n + 1, r).filter((e) => /^# v\d+: /.test(e)).map((e) => e.slice(2));
 }
-var la = class extends C {
+var _a = class extends S {
 	constructor(...e) {
 		super(...e), this.versionsOnly = !1, this.disabled = !1, this.busy = !1, this.message = "", this.error = "", this.checking = !1, this.generation = 0, this.reviewRequest = 0;
 	}
@@ -15526,8 +15936,8 @@ var la = class extends C {
 	}
 	static {
 		this.styles = [
-			T,
-			xn,
+			N,
+			kn,
 			l`
       .blueprint-table-wrap {
         overflow-x: auto;
@@ -15652,10 +16062,10 @@ var la = class extends C {
 		this.busy ? e?.preventDefault() : (this.reviewRequest++, this.review = void 0, this.renderRoot.querySelector("dialog")?.close(), this.opener?.focus(), this.opener = void 0, this.requestUpdate());
 	}
 	fail(e) {
-		k(e) === "unauthorized" ? (this.reset(), this.dispatchEvent(new CustomEvent("access-denied", {
+		w(e) === "unauthorized" ? (this.reset(), this.dispatchEvent(new CustomEvent("access-denied", {
 			bubbles: !0,
 			composed: !0
-		}))) : this.error = A(e);
+		}))) : this.error = T(e);
 	}
 	async refresh() {
 		if (!this.client || !this.scope?.permissions.edit || this.checking) return;
@@ -15694,15 +16104,15 @@ var la = class extends C {
 			this.review = {
 				...this.review,
 				loading: !1,
-				entries: ca(t.yaml),
+				entries: ga(t.yaml),
 				template: t
 			};
 		} catch (e) {
 			if (!l()) return;
-			k(e) === "unauthorized" ? this.fail(e) : this.review = {
+			w(e) === "unauthorized" ? this.fail(e) : this.review = {
 				...this.review,
 				loading: !1,
-				error: A(e)
+				error: T(e)
 			};
 		}
 		this.requestUpdate();
@@ -15717,7 +16127,7 @@ var la = class extends C {
 			this.message = `${e.label} blueprint ${e.mode === "update" ? "updated" : "installed"}. Open Home Assistant Blueprints to create or review its automations.`;
 		} catch (t) {
 			if (!i()) return;
-			k(t) === "already_exists" ? this.message = `${e.label} was installed while you were reviewing. Existing contents were preserved; check its refreshed status.` : this.fail(t);
+			w(t) === "already_exists" ? this.message = `${e.label} was installed while you were reviewing. Existing contents were preserved; check its refreshed status.` : this.fail(t);
 		} finally {
 			i() && (this.setBusy(!1), this.closeReview(), await this.refresh(), this.requestUpdate());
 		}
@@ -15727,7 +16137,7 @@ var la = class extends C {
 		return v`<dialog
       class="blueprint-review"
       aria-labelledby="blueprint-review-title"
-      @click=${L}
+      @click=${R}
       @cancel=${(e) => {
 			this.busy && e.preventDefault();
 		}}
@@ -15738,9 +16148,9 @@ var la = class extends C {
           ${e?.label} ·
           ${e?.mode === "history" ? "change log" : e?.mode === "install" ? "Install blueprint" : "Review update"}
         </h2>
-        ${I((e) => this.closeReview(e), this.busy)}
+        ${L((e) => this.closeReview(e), this.busy)}
       </div>
-      <p>${oa.find(([t]) => t === e?.kind)?.[3]}</p>
+      <p>${ma.find(([t]) => t === e?.kind)?.[3]}</p>
       <div class="review-versions">
         <span
           >Installed:
@@ -15845,7 +16255,7 @@ var la = class extends C {
                     </tr>
                   </thead>
                   <tbody>
-                    ${oa.map(([e, t, n]) => {
+                    ${ma.map(([e, t, n]) => {
 			let r = this.statuses?.[e], i = r?.status ?? "unavailable";
 			return v`<tr data-blueprint=${e}>
                         <td>
@@ -15859,7 +16269,7 @@ var la = class extends C {
                         </td>
                         <td>
                           <span class=${`status ${i}`}
-                            >${sa[i]}</span
+                            >${ha[i]}</span
                           >
                         </td>
                         <td>
@@ -15902,14 +16312,14 @@ var la = class extends C {
     </section>` : x;
 	}
 };
-customElements.get("kaleidescape-automation-blueprints") || customElements.define("kaleidescape-automation-blueprints", la), w(), F(), E(), R();
-var ua = [
+customElements.get("kaleidescape-automation-blueprints") || customElements.define("kaleidescape-automation-blueprints", _a), C(), A(), P(), z();
+var va = [
 	["rules", "Runtime rules and feature enablement"],
 	["browsing", "Personal browsing preferences · may include searches/names"],
 	["shared", "Shared hidden collection names"],
 	["connections", "Network addresses, player and HA entity choices · private"],
 	["templates", "Custom calendar text templates · private"]
-], da = class extends C {
+], ya = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.generation = 0, this.selected = /* @__PURE__ */ new Set(["rules", "browsing"]), this.request = "", this.busy = !1, this.pending = !1, this.error = "", this.notice = "";
 	}
@@ -15921,7 +16331,7 @@ var ua = [
 		};
 	}
 	static {
-		this.styles = T;
+		this.styles = N;
 	}
 	willUpdate(e) {
 		(e.has("client") || e.has("scope")) && this.reset();
@@ -15936,7 +16346,7 @@ var ua = [
 		e?.preventDefault(), this.reset(), this.requestUpdate();
 	}
 	fail(e) {
-		this.error = A(e), k(e) === "unauthorized" && (this.reset(), this.dispatchEvent(new CustomEvent("access-denied", {
+		this.error = T(e), w(e) === "unauthorized" && (this.reset(), this.dispatchEvent(new CustomEvent("access-denied", {
 			bubbles: !0,
 			composed: !0
 		})));
@@ -15960,7 +16370,7 @@ var ua = [
 		let t = this.generation;
 		this.busy = !0, this.error = "", this.requestUpdate();
 		try {
-			e === "apply" && (this.request ||= it(), this.pending = !0);
+			e === "apply" && (this.request ||= nt(), this.pending = !0);
 			let n = await this.client.settingsTransfer(this.scope, e, [...this.selected], this.artifact, this.request);
 			if (t !== this.generation) return;
 			if (e === "export") {
@@ -15990,19 +16400,19 @@ var ua = [
       ${this.notice ? v`<p class="notice" role="status">${this.notice}</p>` : x}
       <dialog
         class="database-dialog"
-        @click=${L}
+        @click=${R}
         @cancel=${(e) => this.close(e)}
       >
         <div class="card-head">
           <h2>Export / import settings</h2>
-          ${I(() => this.close())}
+          ${L(() => this.close())}
         </div>
         <p>
           Choose the categories to transfer. Credentials are always excluded.
           Connection choices, searches, names and templates can contain private
           information; protect the downloaded file.
         </p>
-        ${ua.map(([t, n]) => v`<label class="check"
+        ${va.map(([t, n]) => v`<label class="check"
               ><input
                 type="checkbox"
                 .checked=${this.selected.has(t)}
@@ -16069,11 +16479,11 @@ ${JSON.stringify(t, null, 2)}</pre>
 	}
 };
 // src/core/test-dashboard.ts
-customElements.get("kaleidescape-settings-transfer") || customElements.define("kaleidescape-settings-transfer", da), F();
-function fa(e) {
-	return Array.isArray(e) ? `[${e.map(fa).join(",")}]` : e && typeof e == "object" ? `{${Object.entries(e).sort(([e], [t]) => e.localeCompare(t)).map(([e, t]) => `${JSON.stringify(e)}:${fa(t)}`).join(",")}}` : JSON.stringify(e);
+customElements.get("kaleidescape-settings-transfer") || customElements.define("kaleidescape-settings-transfer", ya), A();
+function ba(e) {
+	return Array.isArray(e) ? `[${e.map(ba).join(",")}]` : e && typeof e == "object" ? `{${Object.entries(e).sort(([e], [t]) => e.localeCompare(t)).map(([e, t]) => `${JSON.stringify(e)}:${ba(t)}`).join(",")}}` : JSON.stringify(e);
 }
-var Q = class extends Error {}, pa = class {
+var Q = class extends Error {}, xa = class {
 	constructor(e, t) {
 		if (this.client = e, this.plan = t, this.attempted = !1, this.created = !1, !/^companion-test-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(t.url_path) || new TextEncoder().encode(t.yaml).length > 262144) throw new Q("Invalid generated dashboard artifact");
 	}
@@ -16093,20 +16503,20 @@ var Q = class extends Error {}, pa = class {
 		try {
 			i = await this.client.haTestDashboardConfig(this.plan.url_path), t();
 		} catch (e) {
-			if (t(), k(e) !== "config_not_found") throw e;
+			if (t(), w(e) !== "config_not_found") throw e;
 		}
 		if (i) {
-			if (fa(i) === fa(this.plan.config)) return;
+			if (ba(i) === ba(this.plan.config)) return;
 			throw new Q("This dashboard already contains different content. It was not overwritten. Inspect it in HA dashboard settings.");
 		}
 		if (!this.created && !r) throw new Q("Could not verify the new dashboard");
 		await this.client.saveHATestDashboard(this.plan), t();
 		let a = await this.client.haTestDashboardConfig(this.plan.url_path);
-		if (t(), fa(a) !== fa(this.plan.config)) throw new Q("The saved dashboard could not be verified. Inspect it before continuing.");
+		if (t(), ba(a) !== ba(this.plan.config)) throw new Q("The saved dashboard could not be verified. Inspect it before continuing.");
 	}
 };
-w(), F(), E(), R();
-var ma = class extends C {
+C(), A(), P(), z();
+var Sa = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.name = "Kaleidescape test guide", this.request = "", this.generation = 0, this.busy = !1, this.pending = !1, this.complete = !1, this.error = "", this.bound = "";
 	}
@@ -16118,7 +16528,7 @@ var ma = class extends C {
 		};
 	}
 	static {
-		this.styles = T;
+		this.styles = N;
 	}
 	willUpdate(e) {
 		if (!e.has("client") && !e.has("scope")) return;
@@ -16149,17 +16559,17 @@ var ma = class extends C {
 		let t = this.generation, n = () => t === this.generation && this.isConnected;
 		this.busy = !0, this.error = "", this.signal(), this.requestUpdate();
 		try {
-			if (this.request ||= it(), !this.plan) {
+			if (this.request ||= nt(), !this.plan) {
 				let e = await this.client.testDashboard(this.scope, this.request, this.name.trim());
 				if (!n()) return;
-				this.installer = new pa(this.client, e), this.plan = e;
+				this.installer = new xa(this.client, e), this.plan = e;
 			}
 			if (this.pending = !0, await this.installer.install(n), !n() || (await this.client.verifyTestDashboard(this.scope, this.request), !n())) return;
 			this.complete = !0, this.pending = !1;
 		} catch (e) {
 			if (!n()) return;
-			let t = k(e), r = e?.message;
-			this.error = typeof r == "string" && (t.startsWith("dashboard_") || e instanceof Q) ? r : A(e), t === "unauthorized" && (this.reset(), this.dispatchEvent(new CustomEvent("access-denied", {
+			let t = w(e), r = e?.message;
+			this.error = typeof r == "string" && (t.startsWith("dashboard_") || e instanceof Q) ? r : T(e), t === "unauthorized" && (this.reset(), this.dispatchEvent(new CustomEvent("access-denied", {
 				bubbles: !0,
 				composed: !0
 			})));
@@ -16192,12 +16602,12 @@ var ma = class extends C {
       <dialog
         data-admin-dialog
         class="database-dialog"
-        @click=${L}
+        @click=${R}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2>Generate test dashboard</h2>
-          ${I((e) => this.close(e))}
+          ${L((e) => this.close(e))}
         </div>
         <p>
           Creates a separate HA-managed dashboard visible to household users,
@@ -16252,8 +16662,8 @@ var ma = class extends C {
       </dialog>` : x;
 	}
 };
-customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", ma), w(), F(), B(), R(), E();
-var ha = class extends C {
+customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", Sa), C(), A(), V(), z(), P();
+var Ca = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
 	}
@@ -16265,7 +16675,7 @@ var ha = class extends C {
 		};
 	}
 	static {
-		this.styles = T;
+		this.styles = N;
 	}
 	willUpdate(e) {
 		if (!e.has("scope") && !e.has("client")) return;
@@ -16285,10 +16695,10 @@ var ha = class extends C {
 		e?.preventDefault(), this.clear(), this.requestUpdate();
 	}
 	fail(e) {
-		k(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
+		w(e) === "unauthorized" ? (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
 			bubbles: !0,
 			composed: !0
-		}))) : this.error = A(e), this.requestUpdate();
+		}))) : this.error = T(e), this.requestUpdate();
 	}
 	async open() {
 		if (!this.client || !this.scope || this.disabled || this.working) return;
@@ -16327,7 +16737,7 @@ var ha = class extends C {
 				"backup_in_progress",
 				"library_disabled",
 				"repair_limit"
-			].includes(k(t)) && (this.pending = void 0, this.review = void 0), this.fail(t);
+			].includes(w(t)) && (this.pending = void 0, this.review = void 0), this.fail(t);
 		} finally {
 			e === this.generation && (this.working = !1, this.requestUpdate());
 		}
@@ -16348,19 +16758,19 @@ var ha = class extends C {
       >
         ${this.working ? "Checking…" : "Repair Journal Library metadata"}
       </button>
-      ${this.result ? v`<p role="status">Updated ${z(this.result.updated_count, "entry", "entries")} · ${this.result.unmatched_count} unmatched · ${this.result.active_count} active and skipped.</p>` : x}
+      ${this.result ? v`<p role="status">Updated ${B(this.result.updated_count, "entry", "entries")} · ${this.result.unmatched_count} unmatched · ${this.result.active_count} active and skipped.</p>` : x}
       ${this.error ? v`<p role="alert" class="error">${this.error}</p>` : x}
       <dialog
         class="database-dialog"
         aria-labelledby="metadata-repair-title"
-        @click=${L}
+        @click=${R}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2 id="metadata-repair-title">Repair Journal Library metadata</h2>
-          ${I((e) => this.close(e))}
+          ${L((e) => this.close(e))}
         </div>
-        ${e ? v`<p>${z(e.updated_count, "entry", "entries")} with missing details can be updated. ${e.unchanged_count} already up to date · ${e.unmatched_count} unmatched · ${e.active_count} active and skipped.</p>` : x}
+        ${e ? v`<p>${B(e.updated_count, "entry", "entries")} with missing details can be updated. ${e.unchanged_count} already up to date · ${e.unmatched_count} unmatched · ${e.active_count} active and skipped.</p>` : x}
         <p>
           Matches use version identifiers in the configured Library, including
           recognized playback handles. Movie names are never guessed. Existing
@@ -16398,8 +16808,8 @@ var ha = class extends C {
     </section>`;
 	}
 };
-customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", ha), w(), F(), E(), R(), dn();
-var ga = [
+customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Ca), C(), A(), P(), z(), yn();
+var wa = [
 	[
 		"calendar",
 		"Calendar reconciliation history",
@@ -16415,7 +16825,7 @@ var ga = [
 		"Playback control history",
 		"Finished or reviewed playback control receipts; pending and uncertain commands are kept."
 	]
-], _a = class extends C {
+], Ta = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.busy = !1, this.policies = {
 			calendar: 180,
@@ -16431,7 +16841,7 @@ var ga = [
 		};
 	}
 	static {
-		this.styles = [T, l`
+		this.styles = [N, l`
       :host {
         display: inline-block;
       }
@@ -16460,7 +16870,7 @@ var ga = [
 		this.review = void 0, this.error = "", this.notice = "", this.requestUpdate(), await this.updateComplete, this.renderRoot.querySelector("dialog")?.showModal();
 	}
 	report(e) {
-		this.error = k(e) === "conflict" ? "The database changed. Review cleanup again." : A(e), k(e) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
+		this.error = w(e) === "conflict" ? "The database changed. Review cleanup again." : T(e), w(e) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
 			bubbles: !0,
 			composed: !0
 		}));
@@ -16494,7 +16904,7 @@ var ga = [
 		}
 	}
 	updated() {
-		for (let [e] of ga) {
+		for (let [e] of wa) {
 			let t = this.renderRoot.querySelector(`#${e}`);
 			t && (t.value = String(this.policies[e]));
 		}
@@ -16519,12 +16929,12 @@ var ga = [
       >
         <div class="card-head">
           <h2 id="cleanup-heading">Database cleanup</h2>
-          ${I(() => this.renderRoot.querySelector("dialog")?.close(), this.busy)}
+          ${L(() => this.renderRoot.querySelector("dialog")?.close(), this.busy)}
         </div>
         ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
         ${this.review ? v` <p>Review the proposed cleanup:</p>
                 <ul>
-                  ${ga.filter(([e]) => this.review.policies[e]).map(([e, t]) => v`<li>${t}: ${this.review.counts[e]} older than ${this.review.policies[e]} days</li>`)}
+                  ${wa.filter(([e]) => this.review.policies[e]).map(([e, t]) => v`<li>${t}: ${this.review.counts[e]} older than ${this.review.policies[e]} days</li>`)}
                 </ul>
                 <p>
                   Artwork links to repair: ${this.review.artwork_links ?? 0}
@@ -16581,7 +16991,7 @@ var ga = [
                     ></span>
                   </button>
                 </div>
-                ${ga.map(([e, t, n]) => v`<div class="cleanup-field">
+                ${wa.map(([e, t, n]) => v`<div class="cleanup-field">
                       <span class="cleanup-label"
                         ><label for=${e}>${t}</label
                         >${W(t, n)}</span
@@ -16626,8 +17036,8 @@ var ga = [
       </dialog>`;
 	}
 };
-customElements.get("kaleidescape-database-cleanup") || customElements.define("kaleidescape-database-cleanup", _a), w(), F(), B(), E(), Sn(), dn(), Nt();
-var va = class extends C {
+customElements.get("kaleidescape-database-cleanup") || customElements.define("kaleidescape-database-cleanup", Ta), C(), A(), V(), P(), An(), yn(), Gt();
+var Ea = class extends S {
 	constructor(...e) {
 		super(...e), this.draft = {}, this.disabled = !1, this.actionsDisabled = !1, this.credentialConfigured = !1, this.generation = 0, this.bound = "", this.error = "", this.loading = !1;
 	}
@@ -16642,7 +17052,7 @@ var va = class extends C {
 		};
 	}
 	static {
-		this.styles = [T, xn];
+		this.styles = [N, kn];
 	}
 	willUpdate(e) {
 		if (e.has("client") || e.has("scope")) {
@@ -16670,7 +17080,7 @@ var va = class extends C {
 			if (n !== this.generation) return;
 			this.status = r, this.error = "", r.running && (this.timer = setTimeout(() => void this.refresh(), 2e3));
 		} catch (e) {
-			n === this.generation && (this.error = A(e));
+			n === this.generation && (this.error = T(e));
 		} finally {
 			n === this.generation && (this.loading = !1, this.requestUpdate());
 		}
@@ -16775,7 +17185,7 @@ var va = class extends C {
             type="button"
             ?disabled=${this.disabled || !this.draft.metadata_tmdb_enabled}
             @click=${() => {
-			let e = Object.fromEntries(Ji.map(([e, , t]) => ["metadata_source_" + e, e === "artwork" || e === "critic_score" || e === "audience_score" || e === "distributor" ? "kaleidescape" : t.some((e) => e === "tmdb") ? "tmdb" : "auto"]));
+			let e = Object.fromEntries(na.map(([e, , t]) => ["metadata_source_" + e, e === "artwork" || e === "critic_score" || e === "audience_score" || e === "distributor" ? "kaleidescape" : t.some((e) => e === "tmdb") ? "tmdb" : "auto"]));
 			this.dispatchEvent(new CustomEvent("metadata-settings", {
 				detail: e,
 				bubbles: !0,
@@ -16786,7 +17196,7 @@ var va = class extends C {
             Prefer TMDB · keep Kaleidescape covers and RT scores
           </button>
           <div class="grid settings-grid spaced">
-            ${Ji.map(([e, t, n]) => {
+            ${na.map(([e, t, n]) => {
 			let r = "metadata_source_" + e, i = String(this.draft[r] ?? "auto"), a = e === "artwork" ? "Choose the preferred portrait cover. Kaleidescape uses the edition artwork cached from your system; TMDB downloads covers on metadata refresh when Cover artwork sync is enabled. Per-movie choices take priority." : e === "backdrop" ? "Choose the source for landscape images. TMDB is the available provider; enable TMDB and Cover artwork sync for new downloads. Existing cached images remain usable." : `Choose the preferred source for ${t.toLowerCase()}. Automatic uses available cached sources; a preferred provider falls back when its value is missing. Original library data uses only the scanned field. This does not enable providers or override reviewed per-movie choices.`;
 			return v`<div class="setting-field">
                 ${G(r, t, a)}<select
@@ -16801,7 +17211,7 @@ var va = class extends C {
 				"auto",
 				"original",
 				...n
-			].map((t) => v`<option value=${t} ?selected=${t === i}>${e === "artwork" && t === "kaleidescape" ? "Kaleidescape library cover" : Yi[t]}</option>`)}
+			].map((t) => v`<option value=${t} ?selected=${t === i}>${e === "artwork" && t === "kaleidescape" ? "Kaleidescape library cover" : ra[t]}</option>`)}
                 </select>
               </div>`;
 		})}
@@ -16879,7 +17289,7 @@ var va = class extends C {
             Check metadata status
           </button>
         </div>
-        ${this.status ? v`<p role="status">${this.status.running ? "Syncing" : "Idle"} · ${this.status.processed} of ${z(this.status.total, "movie")} · ${z(this.status.updated, "provider update")} · ${z(this.status.skipped, "skipped attempt")}${this.status.error ? ` · ${this.status.error}` : ""}</p>` : x}
+        ${this.status ? v`<p role="status">${this.status.running ? "Syncing" : "Idle"} · ${this.status.processed} of ${B(this.status.total, "movie")} · ${B(this.status.updated, "provider update")} · ${B(this.status.skipped, "skipped attempt")}${this.status.error ? ` · ${this.status.error}` : ""}</p>` : x}
         ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
         <details class="setting-help">
           <summary>When is metadata refreshed?</summary>
@@ -16892,7 +17302,7 @@ var va = class extends C {
         </details>
         <details class="setting-help">
           <summary>Metadata credits</summary>
-          ${Mt()}
+          ${Wt()}
           <p>
             Kaleidescape Store metadata and Rotten Tomatoes scores remain
             attributed to their source. TMDB votes are a separate audience
@@ -16903,8 +17313,8 @@ var va = class extends C {
     </section>` : x;
 	}
 };
-customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", va), w(), F(), E(), Sn(), dn(), tr(), B(), Rn(), Nn();
-var ya = {
+customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", Ea), C(), A(), P(), An(), yn(), lr(), V(), Kn(), Vn();
+var Da = {
 	invalid_calendar_full_sync: "Use an age window of 1–12 whole months.",
 	calendar_dedicated_required: "Acknowledge that Full Sync uses a separate calendar and deletes unmatched events.",
 	calendar_full_sync_unsupported: "Full Sync requires a calendar with event creation and deletion support.",
@@ -16919,7 +17329,7 @@ var ya = {
 	invalid_control_options: "Use a private LAN control hostname/IP and a valid player serial number.",
 	invalid_library_host: "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
 	invalid_library_options: "Choose a purchase window of 0–520 weeks and an artwork cache limit of 32–4096 MiB."
-}, ba = class extends C {
+}, Oa = class extends S {
 	constructor(...e) {
 		super(...e), this.tab = "general", this.search = "", this.automationBusy = !1, this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.savedHiddenCollections = [], this.savingCollections = !1, this.purchaseLoading = !1, this.purchaseError = "", this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.dashboardBusy = !1, this.error = "", this.bound = "";
 	}
@@ -16931,8 +17341,8 @@ var ya = {
 	}
 	static {
 		this.styles = [
-			T,
-			xn,
+			N,
+			kn,
 			l`
       [hidden] {
         display: none !important;
@@ -17186,7 +17596,7 @@ var ya = {
 		this.search = "", this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.hiddenCollections = [], this.savedHiddenCollections = [], this.savingCollections = !1, this.libraryInfo = void 0, this.purchaseTotals = void 0, this.purchaseLoading = !1, this.purchaseError = "", this.sharedReady = !1, this.sharedError = "", this.generation++, this.flow?.flow_id && this.boundClient && this.boundScope && this.boundClient.settings(this.boundScope, "cancel", { flow_id: this.flow.flow_id }).catch(() => {});
 	}
 	fail(e) {
-		this.error = A(e), k(e) === "unauthorized" && (this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.savedHiddenCollections = [], this.libraryInfo = void 0, this.purchaseTotals = void 0, this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(new CustomEvent("access-denied", {
+		this.error = T(e), w(e) === "unauthorized" && (this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.savedHiddenCollections = [], this.libraryInfo = void 0, this.purchaseTotals = void 0, this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(new CustomEvent("access-denied", {
 			bubbles: !0,
 			composed: !0
 		}))), this.requestUpdate();
@@ -17200,8 +17610,8 @@ var ya = {
 				r.flow_id && e.settings(t, "cancel", { flow_id: r.flow_id }).catch(() => {});
 				return;
 			}
-			this.flow = r, this.draft = Object.fromEntries((r.fields ?? []).map((e) => [e.name, ea.has(e.name) ? !!e.default : String(e.default ?? "")])), this.initial = { ...this.draft }, this.sharedPreferences = new q(e, t, !0, (e) => {
-				n === this.generation && (e && k(e) === "unauthorized" ? this.fail(e) : (this.sharedError = e ? A(e) : "", this.requestUpdate()));
+			this.flow = r, this.draft = Object.fromEntries((r.fields ?? []).map((e) => [e.name, ca.has(e.name) ? !!e.default : String(e.default ?? "")])), this.initial = { ...this.draft }, this.sharedPreferences = new q(e, t, !0, (e) => {
+				n === this.generation && (e && w(e) === "unauthorized" ? this.fail(e) : (this.sharedError = e ? T(e) : "", this.requestUpdate()));
 			});
 			let i = await this.sharedPreferences.load();
 			if (n !== this.generation) return;
@@ -17217,7 +17627,7 @@ var ya = {
 	}
 	confirmNavigation() {
 		let e = this.renderRoot.querySelector("kaleidescape-calendar-export"), t = this.renderRoot.querySelector("kaleidescape-test-dashboard"), n = this.renderRoot.querySelector("kaleidescape-metadata-repair");
-		return this.saving || this.savingCollections || this.automationBusy || t && !t.confirmNavigation() || e && !e.confirmNavigation() || n && !n.confirmNavigation() ? !1 : this.uncertain ? window.confirm("The settings save may already have committed. Leave this view and inspect saved values before making another change?") : !na(this.draft, this.initial).length && !this.collectionsDirty || window.confirm("Discard your unsaved settings changes?");
+		return this.saving || this.savingCollections || this.automationBusy || t && !t.confirmNavigation() || e && !e.confirmNavigation() || n && !n.confirmNavigation() ? !1 : this.uncertain ? window.confirm("The settings save may already have committed. Leave this view and inspect saved values before making another change?") : !ua(this.draft, this.initial).length && !this.collectionsDirty || window.confirm("Discard your unsaved settings changes?");
 	}
 	busy() {
 		this.dispatchEvent(new CustomEvent("settings-busy", {
@@ -17235,8 +17645,8 @@ var ya = {
 		if (!await this.validateForm(e.target) || this.saving || t !== this.generation || !this.scope?.permissions.edit) return;
 		this.saving = !0, this.busy(), this.error = "", this.requestUpdate();
 		let n = { ...this.draft };
-		for (let { key: e, type: t } of Zi) t === "number" ? n[e] = Number(n[e]) : n[e] || delete n[e];
-		for (let { key: e, type: t } of Qi) t === "number" && (n[e] = Number(n[e]));
+		for (let { key: e, type: t } of aa) t === "number" ? n[e] = Number(n[e]) : n[e] || delete n[e];
+		for (let { key: e, type: t } of oa) t === "number" && (n[e] = Number(n[e]));
 		n.library_host = String(n.library_host ?? ""), n.metadata_requests_per_second !== void 0 && (n.metadata_requests_per_second = Number(n.metadata_requests_per_second)), n.calendar_full_sync_months !== void 0 && (n.calendar_full_sync_months = Number(n.calendar_full_sync_months)), n.calendar_entity || delete n.calendar_entity;
 		try {
 			let e = await this.client.settings(this.scope, "submit", {
@@ -17255,23 +17665,23 @@ var ya = {
 					"duplicate_entities",
 					"invalid_rules"
 				].includes(t) ? "journal" : void 0;
-				n && this.selectTab(n), this.error = Object.values(e.errors ?? {}).map((e) => ya[e] ?? "Check the settings and try again.").join(" ");
+				n && this.selectTab(n), this.error = Object.values(e.errors ?? {}).map((e) => Da[e] ?? "Check the settings and try again.").join(" ");
 			} else this.error = "The settings flow ended. Reload settings to continue.";
 		} catch (e) {
 			t === this.generation && (this.fail(e), this.uncertain = ![
 				"unauthorized",
 				"invalid_request",
 				"conflict"
-			].includes(k(e)));
+			].includes(w(e)));
 		} finally {
 			t === this.generation && (this.saving = !1, this.busy(), this.requestUpdate());
 		}
 	}
 	selectTab(e) {
-		Xi.some(([t]) => t === e) && (this.tab = e, this.requestUpdate());
+		ia.some(([t]) => t === e) && (this.tab = e, this.requestUpdate());
 	}
 	tabKey(e, t) {
-		let n = Xi.map(([e]) => e), r = n.indexOf(t), i = e.key === "ArrowRight" || e.key === "ArrowDown" ? n[(r + 1) % n.length] : e.key === "ArrowLeft" || e.key === "ArrowUp" ? n[(r + n.length - 1) % n.length] : e.key === "Home" ? n[0] : e.key === "End" ? n.at(-1) : void 0;
+		let n = ia.map(([e]) => e), r = n.indexOf(t), i = e.key === "ArrowRight" || e.key === "ArrowDown" ? n[(r + 1) % n.length] : e.key === "ArrowLeft" || e.key === "ArrowUp" ? n[(r + n.length - 1) % n.length] : e.key === "Home" ? n[0] : e.key === "End" ? n.at(-1) : void 0;
 		i && (e.preventDefault(), this.selectTab(i), this.renderRoot.querySelector(`#settings-tab-${i}`)?.focus());
 	}
 	submitForm() {
@@ -17288,7 +17698,7 @@ var ya = {
 		return e.reportValidity();
 	}
 	get dirtyKeys() {
-		return na(this.draft, this.initial);
+		return ua(this.draft, this.initial);
 	}
 	get blocked() {
 		return this.saving || this.uncertain;
@@ -17312,7 +17722,7 @@ var ya = {
     </div>`;
 	}
 	toggle(e) {
-		let t = $i.find(([t]) => t === e);
+		let t = sa.find(([t]) => t === e);
 		return v`<div class="switch-row">
       ${G(e, t[1], t[2])}<input
         type="checkbox"
@@ -17443,7 +17853,7 @@ var ya = {
 		return v`<div class="settings-card">
         ${this.heading("Automatic recording", "Observe one player and keep the Journal up to date.")}${this.toggle("tracking_enabled")}
         <div class="settings-grid spaced">
-          ${Zi.filter((e) => e.type === "text").map((e) => this.field(e, this.flow?.entity_choices?.[e.key === "media_player" ? "media_player" : "sensor"] ?? []))}
+          ${aa.filter((e) => e.type === "text").map((e) => this.field(e, this.flow?.entity_choices?.[e.key === "media_player" ? "media_player" : "sensor"] ?? []))}
         </div>
         <details class="setting-help">
           <summary>How do I choose the right entities?</summary>
@@ -17461,7 +17871,7 @@ var ya = {
       <div class="settings-card">
         ${this.heading("Viewing rules", "Fine-tune when a movie is recorded, completed or resumed.")}
         <div class="settings-grid">
-          ${Zi.filter((e) => e.type === "number").map((e) => this.field(e))}
+          ${aa.filter((e) => e.type === "number").map((e) => this.field(e))}
         </div>
       </div>`;
 	}
@@ -17469,7 +17879,7 @@ var ya = {
 		return v`<div class="settings-card">
         ${this.heading("Local Library connection", "Read the movie catalog from your Kaleidescape system.")}${this.toggle("library_enabled")}
         ${this.draft.library_enabled ? v`<div class="settings-grid spaced">
-                  ${this.field(Qi[0])}
+                  ${this.field(oa[0])}
                 </div>
                 <p class="settings-note">
                   A scan runs after setup. For recurring scans, configure the
@@ -17493,7 +17903,7 @@ var ya = {
               <div class="settings-card">
                 ${this.heading("Artwork & purchase display", "Control local storage and the Recently Added purchase badge.")}
                 <div class="settings-grid">
-                  ${Qi.slice(1).map((e) => this.field(e))}
+                  ${oa.slice(1).map((e) => this.field(e))}
                 </div>
                 ${this.draft.library_sync_artwork ? v`<p class="settings-note">Artwork uses additional disk space: up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. HA backups can include these cached files.</p>` : x}
               </div>
@@ -17659,7 +18069,7 @@ var ya = {
                 ${this.templateHelp("calendar_description")}
               </div>
               <div class="settings-card">
-                ${this.heading("Dedicated calendar maintenance", "Optional Full Sync reconciles a separate calendar against completed Journal entries.")}${ia(this.draft, (e) => {
+                ${this.heading("Dedicated calendar maintenance", "Optional Full Sync reconciles a separate calendar against completed Journal entries.")}${fa(this.draft, (e) => {
 			this.draft = {
 				...this.draft,
 				...e
@@ -17720,7 +18130,7 @@ var ya = {
           @dashboard-busy=${(e) => {
 			this.dashboardBusy !== e.detail && (this.dashboardBusy = e.detail, this.busy(), this.requestUpdate());
 		}}
-          @access-denied=${() => this.fail(new M("unauthorized"))}
+          @access-denied=${() => this.fail(new D("unauthorized"))}
         ></kaleidescape-test-dashboard>
       </div>
       <div class="settings-card">
@@ -17741,7 +18151,7 @@ var ya = {
 			let t = await this.client.libraryPurchaseTotals(this.scope);
 			e === this.generation && (this.purchaseTotals = t);
 		} catch (t) {
-			e === this.generation && (this.purchaseError = A(t), k(t) === "unauthorized" && this.fail(t));
+			e === this.generation && (this.purchaseError = T(t), w(t) === "unauthorized" && this.fail(t));
 		} finally {
 			e === this.generation && (this.purchaseLoading = !1, this.requestUpdate());
 		}
@@ -17784,19 +18194,19 @@ var ya = {
                         <dd>${e.missing_information_titles}</dd>`}
               </dl>
               <p class="muted">
-                ${z(e.purchase_count, "purchase entry", "purchase entries")}
+                ${B(e.purchase_count, "purchase entry", "purchase entries")}
                 included in these totals. Entries are linked purchase records or
                 manually priced Library versions. Titles without a purchase
                 entry are excluded. The Library missing-information filter also
                 checks purchase dates. Savings use entries with both prices in
                 the same currency.
               </p>
-              ${e.missing_purchase_prices || e.missing_retail_prices ? v`<p class="muted">${z(e.missing_purchase_prices, "missing paid price")} · ${z(e.missing_retail_prices, "missing retail price")}.</p>` : x}
-              ${e.missing_price_entries ? v`<p class="muted">${z(e.missing_price_entries, "purchase entry", "purchase entries")} excluded from savings because a paid or retail price is missing.</p>` : x}
-              ${e.currency_mismatch_entries ? v`<p class="muted">${z(e.currency_mismatch_entries, "purchase entry", "purchase entries")} excluded from savings because the paid and retail prices use different currencies. The Currency mismatch filter shows available Library titles.</p>` : x}
-              ${e.unpaired_prices && e.missing_price_entries === void 0 ? v`<p class="muted">${z(e.unpaired_prices, "purchase entry", "purchase entries")} excluded from savings because prices are missing or use different currencies.</p>` : x}
-              ${e.missing_order_ids ? v`<p class="muted">${z(e.missing_order_ids, "purchase entry", "purchase entries")} without an order ID; not included in the transaction count.</p>` : x}
-              ${e.duplicate_purchases ? v`<p class="muted">${z(e.duplicate_purchases, "duplicate purchase record")} counted only once.</p>` : x}` : x}
+              ${e.missing_purchase_prices || e.missing_retail_prices ? v`<p class="muted">${B(e.missing_purchase_prices, "missing paid price")} · ${B(e.missing_retail_prices, "missing retail price")}.</p>` : x}
+              ${e.missing_price_entries ? v`<p class="muted">${B(e.missing_price_entries, "purchase entry", "purchase entries")} excluded from savings because a paid or retail price is missing.</p>` : x}
+              ${e.currency_mismatch_entries ? v`<p class="muted">${B(e.currency_mismatch_entries, "purchase entry", "purchase entries")} excluded from savings because the paid and retail prices use different currencies. The Currency mismatch filter shows available Library titles.</p>` : x}
+              ${e.unpaired_prices && e.missing_price_entries === void 0 ? v`<p class="muted">${B(e.unpaired_prices, "purchase entry", "purchase entries")} excluded from savings because prices are missing or use different currencies.</p>` : x}
+              ${e.missing_order_ids ? v`<p class="muted">${B(e.missing_order_ids, "purchase entry", "purchase entries")} without an order ID; not included in the transaction count.</p>` : x}
+              ${e.duplicate_purchases ? v`<p class="muted">${B(e.duplicate_purchases, "duplicate purchase record")} counted only once.</p>` : x}` : x}
     </details>`;
 	}
 	renderAbout() {
@@ -17817,10 +18227,10 @@ var ya = {
       ${this.scope?.library_enabled ? v`<div class="settings-card">
                 ${this.heading("Library details", "Information from the last Library scan.", "Read only")}
                 ${this.libraryInfo ? v`<p>
-                          ${z(this.libraryInfo.group_count, "movie")} ·
-                          ${z(this.libraryInfo.title_count, "individual version")}
+                          ${B(this.libraryInfo.group_count, "movie")} ·
+                          ${B(this.libraryInfo.title_count, "individual version")}
                           ·
-                          ${z(this.libraryInfo.collection_count, "collection")}.
+                          ${B(this.libraryInfo.collection_count, "collection")}.
                         </p>
                         <p>
                           Catalog synced:
@@ -17886,7 +18296,7 @@ var ya = {
 		}
 	}
 	render() {
-		let e = this.dirtyKeys, t = this.flow?.type === "form" && !!this.scope?.permissions.edit, n = ra(this.search);
+		let e = this.dirtyKeys, t = this.flow?.type === "form" && !!this.scope?.permissions.edit, n = da(this.search);
 		return v`<section class="settings-page" aria-labelledby="settings-title">
       <div class="settings-top">
         <div>
@@ -17937,14 +18347,14 @@ var ya = {
                   aria-orientation="vertical"
                   aria-label="Settings categories"
                 >
-                  ${Xi.map(([t, n]) => v`<button
+                  ${ia.map(([t, n]) => v`<button
                         type="button"
                         role="tab"
                         id=${`settings-tab-${t}`}
                         aria-controls=${`settings-${t}`}
                         aria-selected=${this.tab === t}
                         tabindex=${this.tab === t ? 0 : -1}
-                        class=${e.some((e) => ta.find((t) => t.key === e)?.section === t) ? "has-changes" : ""}
+                        class=${e.some((e) => la.find((t) => t.key === e)?.section === t) ? "has-changes" : ""}
                         @click=${() => {
 			this.search = "", this.selectTab(t);
 		}}
@@ -17960,7 +18370,7 @@ var ya = {
 			this.search = "", this.selectTab(e.target.value);
 		}}
                   >
-                    ${Xi.map(([e, t]) => v`<option value=${e} ?selected=${this.tab === e}>${t}</option>`)}
+                    ${ia.map(([e, t]) => v`<option value=${e} ?selected=${this.tab === e}>${t}</option>`)}
                   </select></label
                 >
                 <p class="settings-legend">
@@ -17988,7 +18398,7 @@ var ya = {
                                           ><strong>${e.label}</strong
                                           ><small>${e.hint}</small></span
                                         ><span class="scope-tag"
-                                          >${Xi.find(([t]) => t === e.section)?.[1]}</span
+                                          >${ia.find(([t]) => t === e.section)?.[1]}</span
                                         >
                                       </button>
                                     </li>`)}
@@ -18014,7 +18424,7 @@ var ya = {
                   ?hidden=${!!this.search.trim()}
                 >
                   <fieldset class="settings-fieldset" ?disabled=${this.blocked}>
-                    ${Xi.map(([e, , t, n]) => v`<section
+                    ${ia.map(([e, , t, n]) => v`<section
                           role="tabpanel"
                           id=${`settings-${e}`}
                           aria-labelledby=${`settings-tab-${e}`}
@@ -18057,7 +18467,7 @@ var ya = {
                 @change=${(n) => {
 			this.hiddenCollections = n.target.checked ? [...e, t] : e.filter((e) => e !== t), this.requestUpdate();
 		}}
-              />${Kn(t)}</label
+              />${er(t)}</label
             >`)}
       </div>
       <div class="actions field-actions">
@@ -18115,8 +18525,8 @@ var ya = {
 	}
 };
 // src/ui/database.styles.ts
-customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", ba), w();
-var xa = l`
+customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", Oa), C();
+var ka = l`
   .database {
     overflow: visible;
     margin-top: 24px;
@@ -18322,7 +18732,7 @@ var xa = l`
       box-shadow: -8px 0 8px var(--surface);
     }
   }
-`, Sa = {
+`, Aa = {
 	viewings: "Journal viewing records, including watched time, status, and notes.",
 	sessions: "Individual playback sessions linked to Journal viewings, used to track pauses and resumes.",
 	library: "Cached movie versions and metadata synchronized from the Kaleidescape server.",
@@ -18349,8 +18759,8 @@ var xa = l`
 	purchase_repair_events: "Before-and-after evidence for reviewed purchase corrections and reversals.",
 	purchase_identity_barriers: "Reserved purchase identities that guard against replay and duplicate imports."
 };
-w(), F();
-var Ca = class extends C {
+C(), A();
+var ja = class extends S {
 	constructor(...e) {
 		super(...e), this.table = "viewings", this.value = "", this.fields = [], this.operators = [], this.disabled = !1, this.open = !1, this.active = 0, this.cursor = 0, this.message = "", this.invalid = !1, this.generation = 0;
 	}
@@ -18529,7 +18939,7 @@ var Ca = class extends C {
 				await this.client?.validateDatabaseQuery(this.scope, this.table, this.value), e === this.generation && (this.message = "", this.invalid = !1);
 			} catch (t) {
 				if (e !== this.generation) return;
-				this.invalid = !0, this.message = k(t) === "query_syntax" && typeof t.message == "string" ? t.message : A(t), k(t) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
+				this.invalid = !0, this.message = w(t) === "query_syntax" && typeof t.message == "string" ? t.message : T(t), w(t) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
 					bubbles: !0,
 					composed: !0
 				}));
@@ -18614,8 +19024,8 @@ var Ca = class extends C {
       </details>`;
 	}
 };
-customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", Ca), w(), F(), B(), E();
-var wa = class extends C {
+customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", ja), C(), A(), V(), P();
+var Ma = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.bound = "", this.request = 0, this.query = "", this.items = [], this.active = -1, this.loading = !1, this.more = !1, this.error = "";
 	}
@@ -18630,7 +19040,7 @@ var wa = class extends C {
 		};
 	}
 	static {
-		this.styles = [T, l`
+		this.styles = [N, l`
       :host {
         display: block;
         border: 1px solid var(--line);
@@ -18710,7 +19120,7 @@ var wa = class extends C {
 			this.items = t.items, this.more = t.has_more;
 		} catch (t) {
 			if (e !== this.request || !this.isConnected) return;
-			this.error = A(t), k(t) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
+			this.error = T(t), w(t) === "unauthorized" && this.dispatchEvent(new CustomEvent("access-denied", {
 				bubbles: !0,
 				composed: !0
 			}));
@@ -18782,7 +19192,7 @@ var wa = class extends C {
                 <span
                   >${e.title} · ${e.year ?? "Year unknown"}<small
                     >${e.directors.join(", ") || "Director unknown"} ·
-                    ${z(e.version_count, "version")} · Source
+                    ${B(e.version_count, "version")} · Source
                     ${e.source_hint}</small
                   ></span
                 >
@@ -18800,10 +19210,10 @@ var wa = class extends C {
       </div>`;
 	}
 };
-customElements.get("kaleidescape-import-matcher") || customElements.define("kaleidescape-import-matcher", wa), B(), w(), F(), E(), R(), zt();
-var Ta = class extends C {
+customElements.get("kaleidescape-import-matcher") || customElements.define("kaleidescape-import-matcher", Ma), V(), C(), A(), P(), z(), M();
+var Na = class extends S {
 	constructor(...e) {
-		super(...e), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null, this.purchaseReview = !1, this.covers = new V();
+		super(...e), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null, this.purchaseReview = !1, this.covers = new j();
 	}
 	static {
 		this.properties = {
@@ -18813,7 +19223,7 @@ var Ta = class extends C {
 		};
 	}
 	static {
-		this.styles = [T, l`
+		this.styles = [N, l`
       .database-dialog {
         width: min(1100px, calc(100% - 32px));
       }
@@ -18903,7 +19313,7 @@ var Ta = class extends C {
 		super.disconnectedCallback(), this.clear(), this.boundClient = void 0;
 	}
 	clear() {
-		this.generation++, this.covers.cache.dispose(), this.covers = new V(), this.controller?.abort(), this.controller = void 0, this.file = void 0, this.review = void 0, this.matching = void 0, this.selected.clear();
+		this.generation++, this.covers.cache.dispose(), this.covers = new j(), this.controller?.abort(), this.controller = void 0, this.file = void 0, this.review = void 0, this.matching = void 0, this.selected.clear();
 		let e = this.renderRoot.querySelector("input[type=\"file\"]");
 		e && (e.value = ""), this.pending = void 0, this.working = !1, this.hideDialog(), this.error = this.notice = "", this.busy();
 	}
@@ -18941,7 +19351,7 @@ var Ta = class extends C {
 			}));
 			let n = await this.client.reconcilePurchases(this.scope);
 			if (e !== this.generation) return;
-			this.review = "empty" in n ? void 0 : n, this.notice = `Automatically matched ${z(t.matched_count, "purchase")}. Ambiguous or conflicting purchases remain for review.`, this.page = 0;
+			this.review = "empty" in n ? void 0 : n, this.notice = `Automatically matched ${B(t.matched_count, "purchase")}. Ambiguous or conflicting purchases remain for review.`, this.page = 0;
 		} catch (t) {
 			e === this.generation && this.fail(t);
 		} finally {
@@ -18966,10 +19376,10 @@ var Ta = class extends C {
 		}));
 	}
 	fail(e) {
-		k(e) === "unauthorized" && (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
+		w(e) === "unauthorized" && (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
 			bubbles: !0,
 			composed: !0
-		}))), this.error = A(e), this.requestUpdate();
+		}))), this.error = T(e), this.requestUpdate();
 	}
 	async exportData(e) {
 		if (!this.client || !this.scope || this.working || this.pending || this.disabled) return;
@@ -19013,7 +19423,7 @@ var Ta = class extends C {
 		try {
 			let t = await this.client.applyImport(this.pending);
 			if (e !== this.generation) return;
-			this.pending = void 0, this.review = void 0, this.matching = void 0, this.file = void 0, this.selected.clear(), this.notice = `Imported ${z(t.imported_count, "new entry", "new entries")}; filled missing data in ${t.updated_count}; left ${t.skipped_count} unchanged or unselected.`, this.hideDialog(), this.dispatchEvent(new CustomEvent("database-changed", {
+			this.pending = void 0, this.review = void 0, this.matching = void 0, this.file = void 0, this.selected.clear(), this.notice = `Imported ${B(t.imported_count, "new entry", "new entries")}; filled missing data in ${t.updated_count}; left ${t.skipped_count} unchanged or unselected.`, this.hideDialog(), this.dispatchEvent(new CustomEvent("database-changed", {
 				bubbles: !0,
 				composed: !0
 			}));
@@ -19025,7 +19435,7 @@ var Ta = class extends C {
 				"conflict",
 				"not_found",
 				"tracking_enabled"
-			].includes(k(t)) && (this.pending = void 0, this.review = void 0, this.matching = void 0, this.selected.clear()), this.fail(t);
+			].includes(w(t)) && (this.pending = void 0, this.review = void 0, this.matching = void 0, this.selected.clear()), this.fail(t);
 		} finally {
 			e === this.generation && (this.working = !1, this.busy(), this.requestUpdate());
 		}
@@ -19055,7 +19465,7 @@ var Ta = class extends C {
 	}
 	renderReview(e) {
 		if (!this.review) return x;
-		let t = this.review, n = this.query.trim().toLocaleLowerCase(), r = t.rows.filter((e) => (!this.changesOnly || e.needs_match || !e.needs_match && ["new", "merge"].includes(e.action)) && qi(`${e.title} ${e.detail ?? ""} ${e.table} ${Object.keys(e.changes).join(" ")}`, n)).sort((e, t) => Number(!!t.needs_match) - Number(!!e.needs_match)), i = Math.max(0, Math.ceil(r.length / this.pageSize) - 1), a = Math.min(this.page, i), o = r.slice(a * this.pageSize, (a + 1) * this.pageSize);
+		let t = this.review, n = this.query.trim().toLocaleLowerCase(), r = t.rows.filter((e) => (!this.changesOnly || e.needs_match || !e.needs_match && ["new", "merge"].includes(e.action)) && ta(`${e.title} ${e.detail ?? ""} ${e.table} ${Object.keys(e.changes).join(" ")}`, n)).sort((e, t) => Number(!!t.needs_match) - Number(!!e.needs_match)), i = Math.max(0, Math.ceil(r.length / this.pageSize) - 1), a = Math.min(this.page, i), o = r.slice(a * this.pageSize, (a + 1) * this.pageSize);
 		return v`${this.matching ? v`<kaleidescape-import-matcher
               .client=${this.client}
               .scope=${this.scope}
@@ -19073,7 +19483,7 @@ var Ta = class extends C {
         ${t.counts.new} new · ${t.counts.merge} mergeable ·
         ${t.counts.unchanged} unchanged · ${t.counts.skip} skipped.
         ${this.selected.size} selected.
-        ${t.rows.some((e) => e.needs_match) ? v`${z(t.rows.filter((e) => e.needs_match).length, "purchase requiring review")} shown first.` : x}
+        ${t.rows.some((e) => e.needs_match) ? v`${B(t.rows.filter((e) => e.needs_match).length, "purchase requiring review")} shown first.` : x}
       </p>
       ${t.rows.some((e) => e.key.startsWith("purchases:")) ? v`<p class="muted">
               Purchase records can be saved without a Library match and linked
@@ -19339,7 +19749,7 @@ var Ta = class extends C {
       ${!this.dialog && this.notice ? v`<p class="notice" role="status">${this.notice}</p>` : x}
       <dialog
         class="database-dialog"
-        @click=${L}
+        @click=${R}
         aria-labelledby="transfer-title"
         @cancel=${this.closeDialog}
       >
@@ -19347,7 +19757,7 @@ var Ta = class extends C {
           <h2 id="transfer-title">
             ${this.dialog === "export" ? "Export database" : this.purchaseReview ? "Reconcile purchases" : "Merge Import"}
           </h2>
-          ${I((e) => this.closeDialog(e))}
+          ${L((e) => this.closeDialog(e))}
         </div>
         ${this.error && this.dialog ? v`<p class="error" role="alert">${this.error}</p>` : x}
         ${this.dialog === "export" ? v`<p>
@@ -19358,13 +19768,13 @@ var Ta = class extends C {
                 downloads securely.
               </p> ` : this.dialog === "import" ? this.renderImport(e) : x}
         ${this.dialog === "export" || this.dialog === "import" && this.review ? v`<div class="actions dialog-footer">
-                ${this.dialog === "export" ? v`<button ?disabled=${e} @click=${() => this.exportData("json")}>Export JSON</button><button class="primary" ?disabled=${e} @click=${() => this.exportData("sqlite")}>Export SQLite</button>` : v`<button class="primary" ?disabled=${e || !!this.matching || !this.selected.size} @click=${this.importData}>Apply ${z(this.selected.size, "selected change")}</button>`}
+                ${this.dialog === "export" ? v`<button ?disabled=${e} @click=${() => this.exportData("json")}>Export JSON</button><button class="primary" ?disabled=${e} @click=${() => this.exportData("sqlite")}>Export SQLite</button>` : v`<button class="primary" ?disabled=${e || !!this.matching || !this.selected.size} @click=${this.importData}>Apply ${B(this.selected.size, "selected change")}</button>`}
               </div>` : x}
       </dialog>`;
 	}
 };
-customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Ta), w(), F(), E(), R();
-var Ea = [
+customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Na), C(), A(), P(), z();
+var Pa = [
 	["title", "Receipt title"],
 	["purchased_on", "Purchase date"],
 	["purchase_price", "Purchase price"],
@@ -19372,14 +19782,14 @@ var Ea = [
 	["order_id", "Transaction ID"],
 	["href", "Store link"]
 ];
-function Da(e, t = "") {
-	return typeof e == "object" && e ? Object.fromEntries(Object.entries(e).flatMap(([e, n]) => Object.entries(Da(n, t ? `${t}.${e}` : e)))) : t ? { [t]: e } : {};
+function Fa(e, t = "") {
+	return typeof e == "object" && e ? Object.fromEntries(Object.entries(e).flatMap(([e, n]) => Object.entries(Fa(n, t ? `${t}.${e}` : e)))) : t ? { [t]: e } : {};
 }
-function Oa(e) {
+function Ia(e) {
 	return e === void 0 ? "—" : e === null ? "null" : typeof e == "string" ? e : JSON.stringify(e);
 }
-function ka(e, t, n) {
-	let r = Da(t), i = Da(n), a = [.../* @__PURE__ */ new Set([...Object.keys(r), ...Object.keys(i)])];
+function La(e, t, n) {
+	let r = Fa(t), i = Fa(n), a = [.../* @__PURE__ */ new Set([...Object.keys(r), ...Object.keys(i)])];
 	return v`<h4>${e}</h4>
     <div class="diff" role="table" aria-label=${e}>
       <div class="diff-row" role="row">
@@ -19388,7 +19798,7 @@ function ka(e, t, n) {
         <strong role="columnheader">After</strong>
       </div>
       ${a.length ? a.map((e) => {
-		let t = JSON.stringify(r[e]) !== JSON.stringify(i[e]), n = Ea.find(([t]) => t === e)?.[1] ?? e;
+		let t = JSON.stringify(r[e]) !== JSON.stringify(i[e]), n = Pa.find(([t]) => t === e)?.[1] ?? e;
 		return v`<div
                 class=${t ? "diff-row changed" : "diff-row"}
                 role="row"
@@ -19397,16 +19807,16 @@ function ka(e, t, n) {
                   >${n}${t ? " (changed)" : ""}</span
                 >
                 <span class="before" role="cell"
-                  >${Oa(r[e])}</span
+                  >${Ia(r[e])}</span
                 >
                 <span class="after" role="cell"
-                  >${Oa(i[e])}</span
+                  >${Ia(i[e])}</span
                 >
               </div>`;
 	}) : v`<p>No values to compare.</p>`}
     </div>`;
 }
-var Aa = class extends C {
+var Ra = class extends S {
 	constructor(...e) {
 		super(...e), this.row = {}, this.token = "", this.reverse = !1, this.editOnly = !1, this.action = "correct", this.draft = {}, this.query = "", this.results = [], this.owner = null, this.ownerLabel = "", this.confirmed = !1, this.busy = !1, this.error = "", this.fieldErrors = {}, this.generation = 0, this.searchGeneration = 0, this.searching = !1, this.searched = !1;
 	}
@@ -19421,7 +19831,7 @@ var Aa = class extends C {
 		};
 	}
 	static {
-		this.styles = [T, l`
+		this.styles = [N, l`
       :host {
         display: block;
       }
@@ -19470,7 +19880,7 @@ var Aa = class extends C {
     `];
 	}
 	connectedCallback() {
-		super.connectedCallback(), this.draft = Object.fromEntries(Ea.map(([e]) => [e, String(this.row[e] ?? "")])), this.owner = typeof this.row.library_id == "string" ? this.row.library_id : null, this.ownerLabel = this.owner ? "Current Library entry" : "Unlinked";
+		super.connectedCallback(), this.draft = Object.fromEntries(Pa.map(([e]) => [e, String(this.row[e] ?? "")])), this.owner = typeof this.row.library_id == "string" ? this.row.library_id : null, this.ownerLabel = this.owner ? "Current Library entry" : "Unlinked";
 	}
 	firstUpdated() {
 		this.renderRoot.querySelector("dialog")?.showModal();
@@ -19495,7 +19905,7 @@ var Aa = class extends C {
 		}));
 	}
 	report(e) {
-		this.error = A(e), k(e) === "unauthorized" && (this.pending = void 0, this.review = void 0, this.dispatchEvent(new CustomEvent("access-denied", {
+		this.error = T(e), w(e) === "unauthorized" && (this.pending = void 0, this.review = void 0, this.dispatchEvent(new CustomEvent("access-denied", {
 			bubbles: !0,
 			composed: !0
 		})));
@@ -19516,7 +19926,7 @@ var Aa = class extends C {
 	}
 	changes() {
 		let e = {};
-		for (let [t] of Ea) {
+		for (let [t] of Pa) {
 			let n = this.draft[t] || null;
 			n !== (this.row[t] ?? null) && (e[t] = n);
 		}
@@ -19579,7 +19989,7 @@ var Aa = class extends C {
 				"invalid_request",
 				"not_found",
 				"unauthorized"
-			].includes(k(t)) && (this.pending = void 0, this.review = void 0), this.report(t);
+			].includes(w(t)) && (this.pending = void 0, this.review = void 0), this.report(t);
 		} finally {
 			e === this.generation && (this.busy = !1, this.notifyBusy(), this.requestUpdate());
 		}
@@ -19587,7 +19997,7 @@ var Aa = class extends C {
 	render() {
 		return v`
       <dialog
-        @click=${L}
+        @click=${R}
         @cancel=${this.close}
         aria-labelledby="repair-heading"
       >
@@ -19595,7 +20005,7 @@ var Aa = class extends C {
           <h2 id="repair-heading">
             ${this.reverse ? "Reverse purchase repair" : this.editOnly ? "Edit purchase" : "Repair purchase"}
           </h2>
-          ${I((e) => this.close(e), this.busy || !!this.pending)}
+          ${L((e) => this.close(e), this.busy || !!this.pending)}
         </div>
         <p>
           Review the invoice, its Library association and totals before applying
@@ -19603,9 +20013,9 @@ var Aa = class extends C {
         </p>
         ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
         ${this.review ? v`
-                ${ka("Purchase", this.review.before, this.review.after)}
-                ${ka("Library association", this.review.before_library, this.review.after_library)}
-                ${ka("Library totals", this.review.totals_change.map((e) => ({
+                ${La("Purchase", this.review.before, this.review.after)}
+                ${La("Library association", this.review.before_library, this.review.after_library)}
+                ${La("Library totals", this.review.totals_change.map((e) => ({
 			source_id: e.source_id,
 			totals: e.before
 		})), this.review.totals_change.map((e) => ({
@@ -19656,7 +20066,7 @@ var Aa = class extends C {
                               >`}
                         ${this.action === "correct" ? v`
                                 <div class="fields">
-                                  ${Ea.map(([e, t]) => v`
+                                  ${Pa.map(([e, t]) => v`
                                       <label
                                         >${t}<input
                                           name=${e}
@@ -19733,8 +20143,8 @@ var Aa = class extends C {
     `;
 	}
 };
-customElements.get("kaleidescape-purchase-repair") || customElements.define("kaleidescape-purchase-repair", Aa), Ln(), B(), w(), lr(), F(), E(), dn(), Rn(), R(), zt();
-var ja = {
+customElements.get("kaleidescape-purchase-repair") || customElements.define("kaleidescape-purchase-repair", Ra), Gn(), V(), C(), _r(), A(), P(), yn(), Kn(), z(), M();
+var za = {
 	viewings: "Viewings",
 	sessions: "Sessions",
 	library: "Library",
@@ -19765,26 +20175,26 @@ var ja = {
 	"sessions",
 	"library",
 	"purchase_records"
-], Ma = 100, Na = 44, Pa = [
+], Ba = 100, Va = 44, Ha = [
 	["Library", (e) => e.startsWith("library_")],
 	["Purchases", (e) => e.startsWith("purchase_")],
 	["Calendar", (e) => e.startsWith("calendar_")],
 	["Activity and audits", (e) => e.endsWith("_audit") || e === "requests" || e === "playback_controls"],
 	["System", () => !0]
 ];
-function Fa(e) {
-	return Pa.find(([, t]) => t(e))[0];
+function Ua(e) {
+	return Ha.find(([, t]) => t(e))[0];
 }
-var Ia = class extends C {
+var Wa = class extends S {
 	constructor() {
 		super(), this.bound = "", this.generation = 0, this.mutationEpoch = 0, this.request = 0, this.table = "viewings", this.filters = {
 			limit: 25,
 			query: "",
 			descending: !1
-		}, this.fitPage = !0, this.allMode = !1, this.allBatchSize = Ma, this.moreLoading = !1, this.moreError = "", this.detailLoading = !1, this.detailRequest = 0, this.referenceRequest = 0, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.listHeight = 440, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.repairing = !1, this.repairPending = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = Ni(), this.confirmed = !1, this.deleteWord = "", this.covers = new V(), this.scheduleFit = () => {
+		}, this.fitPage = !0, this.allMode = !1, this.allBatchSize = Ba, this.moreLoading = !1, this.moreError = "", this.detailLoading = !1, this.detailRequest = 0, this.referenceRequest = 0, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.listHeight = 440, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.repairing = !1, this.repairPending = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = Vi(), this.confirmed = !1, this.deleteWord = "", this.covers = new j(), this.scheduleFit = () => {
 			clearTimeout(this.fitTimer), this.fitPage && this.ready && this.page && !this.blocked && !this.operation && (this.fitTimer = setTimeout(() => this.resizePage(), 120));
-		}, bi(this, () => this.scheduleFit()), Pn(this, () => {
-			if (!this.ready || this.preferences?.unsettled || this.moreLoading || this.detailLoading || this.allMode && (this.detail || this.selected.size > 0 || (this.page?.items.length ?? 0) > Ma) || this.blocked || this.operation || this.renderRoot.querySelector("dialog[open]")) return !1;
+		}, Oi(this, () => this.scheduleFit()), Hn(this, () => {
+			if (!this.ready || this.preferences?.unsettled || this.moreLoading || this.detailLoading || this.allMode && (this.detail || this.selected.size > 0 || (this.page?.items.length ?? 0) > Ba) || this.blocked || this.operation || this.renderRoot.querySelector("dialog[open]")) return !1;
 			let e = this.detail && this.page ? {
 				row: this.detail,
 				index: this.page.offset + this.page.items.indexOf(this.detail),
@@ -19803,9 +20213,9 @@ var Ia = class extends C {
 	}
 	static {
 		this.styles = [
-			T,
-			Ii,
-			xa
+			N,
+			Wi,
+			ka
 		];
 	}
 	willUpdate(e) {
@@ -19823,7 +20233,7 @@ var Ia = class extends C {
 		super.disconnectedCallback(), window.removeEventListener("resize", this.scheduleFit), window.visualViewport?.removeEventListener("resize", this.scheduleFit), this.fitObserver?.disconnect(), this.fitObserver = void 0, this.fitList = void 0, clearTimeout(this.fitTimer), this.clear(), this.boundClient = void 0, this.bound = "";
 	}
 	clear() {
-		this.covers.cache.dispose(), this.covers = new V(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.fuzzySearch = !0, this.ready = !1, this.page = void 0, this.table = "viewings", this.fitPage = !0, this.allMode = this.moreLoading = this.detailLoading = !1, this.allBatchSize = Ma, this.moreError = "", this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.filters = {
+		this.covers.cache.dispose(), this.covers = new j(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.fuzzySearch = !0, this.ready = !1, this.page = void 0, this.table = "viewings", this.fitPage = !0, this.allMode = this.moreLoading = this.detailLoading = !1, this.allBatchSize = Ba, this.moreError = "", this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.filters = {
 			limit: 25,
 			query: "",
 			descending: !1
@@ -19834,12 +20244,12 @@ var Ia = class extends C {
 	async initialize(e) {
 		let t = ++this.generation;
 		this.preferences?.dispose(), this.preferences = new q(this.client, this.scope, !1, (e) => {
-			t === this.generation && (e && k(e) === "unauthorized" ? this.fail(e) : (this.preferenceError = e ? A(e) : "", this.requestUpdate()));
+			t === this.generation && (e && w(e) === "unauthorized" ? this.fail(e) : (this.preferenceError = e ? T(e) : "", this.requestUpdate()));
 		}, "database");
 		try {
 			let n = await this.preferences.load();
 			if (t !== this.generation) return;
-			if (this.fuzzySearch = this.scope?.ui_defaults?.fuzzy_search !== !1, this.fitPage = n.limit === "fit" || n.limit === void 0, this.allMode = n.limit === "all", this.filters.limit = this.allMode ? Ma : this.fitPage ? 25 : n.limit, this.showSystem = n.show_system, this.sorts = n.sorts ?? {}, this.table = String(n.table ?? "viewings"), !this.showSystem && !$.includes(this.table) && (this.table = "viewings"), this.filters = {
+			if (this.fuzzySearch = this.scope?.ui_defaults?.fuzzy_search !== !1, this.fitPage = n.limit === "fit" || n.limit === void 0, this.allMode = n.limit === "all", this.filters.limit = this.allMode ? Ba : this.fitPage ? 25 : n.limit, this.showSystem = n.show_system, this.sorts = n.sorts ?? {}, this.table = String(n.table ?? "viewings"), !this.showSystem && !$.includes(this.table) && (this.table = "viewings"), this.filters = {
 				...this.filters,
 				...this.sorts[this.table]
 			}, e && (this.table = e.table, this.showSystem ||= !$.includes(this.table), this.filters = {
@@ -19854,7 +20264,7 @@ var Ia = class extends C {
 				if (n && t === this.generation) {
 					await this.showDetail(n), await this.updateComplete;
 					let t = this.renderRoot.querySelector(".entry-list");
-					t && (t.scrollTop = e.index * Na, this.rowScrollTop = t.scrollTop, this.requestUpdate());
+					t && (t.scrollTop = e.index * Va, this.rowScrollTop = t.scrollTop, this.requestUpdate());
 				}
 			}
 		} catch (e) {
@@ -19895,27 +20305,27 @@ var Ia = class extends C {
 		}));
 	}
 	fail(e) {
-		k(e) === "unauthorized" && (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
+		w(e) === "unauthorized" && (this.clear(), this.dispatchEvent(new CustomEvent("access-denied", {
 			bubbles: !0,
 			composed: !0
 		})));
-		let t = k(e), n = e?.message;
+		let t = w(e), n = e?.message;
 		this.error = [
 			"query_syntax",
 			"conflict",
 			"invalid_request",
 			"busy"
-		].includes(t) && typeof n == "string" && n !== t ? n : A(e), this.requestUpdate();
+		].includes(t) && typeof n == "string" && n !== t ? n : T(e), this.requestUpdate();
 	}
 	async load(e = 0, t, n) {
 		if (!this.client || !this.scope || !this.ready || this.pending) return;
 		let r = this.generation, i = ++this.request;
-		this.loading = !0, this.moreLoading = this.detailLoading = !1, this.moreError = "", this.allBatchSize = Ma, this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.page?.table !== this.table && (this.page = void 0), this.error = "", n || (this.detail = void 0), this.selected.clear(), this.requestUpdate();
+		this.loading = !0, this.moreLoading = this.detailLoading = !1, this.moreError = "", this.allBatchSize = Ba, this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.page?.table !== this.table && (this.page = void 0), this.error = "", n || (this.detail = void 0), this.selected.clear(), this.requestUpdate();
 		try {
 			let a = this.allMode ? await this.inspectAllChunk(e, t, r, i) : await this.client.inspect(this.scope, this.table, e, t, this.filters);
 			if (r !== this.generation || i !== this.request) return;
 			if (this.allMode) {
-				if (a.has_more && !a.items.length || a.row_tokens?.length !== a.items.length) throw new M("refresh_required");
+				if (a.has_more && !a.items.length || a.row_tokens?.length !== a.items.length) throw new D("refresh_required");
 				a.items = a.items.map((e) => this.compactRow(e, a));
 			}
 			if (this.page = a, n) {
@@ -19956,7 +20366,7 @@ var Ia = class extends C {
 		await this.load(), r === this.generation && i === this.table && (this.page?.items[0] ? this.showDetail(this.page.items[0]) : this.notice = "The referenced entry no longer exists.", this.requestUpdate());
 	}
 	referenceText(e, t) {
-		return `${ja[e] ?? e} - ${t.map((e) => String(e)).join(", ")}`;
+		return `${za[e] ?? e} - ${t.map((e) => String(e)).join(", ")}`;
 	}
 	async loadReferencedBy(e) {
 		if (!this.client || !this.scope || !this.page) return;
@@ -19969,7 +20379,7 @@ var Ia = class extends C {
 				i === this.referenceRequest && a === this.generation && this.detail === e && (this.referencedBy = n.groups);
 			} catch (t) {
 				if (i !== this.referenceRequest || a !== this.generation || this.detail !== e) return;
-				k(t) === "unauthorized" ? this.fail(t) : this.referenceError = A(t);
+				w(t) === "unauthorized" ? this.fail(t) : this.referenceError = T(t);
 			} finally {
 				i === this.referenceRequest && a === this.generation && this.detail === e && (this.referenceLoading = !1, this.requestUpdate());
 			}
@@ -20007,10 +20417,10 @@ var Ia = class extends C {
 				limit: this.allBatchSize
 			});
 		} catch (e) {
-			if (n !== this.generation || r !== this.request || k(e) !== "database_page_too_large" || this.allBatchSize === 1) throw e;
+			if (n !== this.generation || r !== this.request || w(e) !== "database_page_too_large" || this.allBatchSize === 1) throw e;
 			this.allBatchSize = Math.max(1, Math.floor(this.allBatchSize / 2));
 		}
-		throw new M("not_ready");
+		throw new D("not_ready");
 	}
 	async loadMore() {
 		if (!this.allMode || !this.client || !this.scope || !this.page?.has_more || this.moreLoading || this.moreError || this.blocked || this.operation) return;
@@ -20019,7 +20429,7 @@ var Ia = class extends C {
 		try {
 			let r = await this.inspectAllChunk(n.items.length, n.revision, e, t);
 			if (e !== this.generation || t !== this.request || !this.allMode) return;
-			if (r.revision !== n.revision || r.offset !== n.items.length || r.has_more && !r.items.length || r.row_tokens?.length !== r.items.length) throw new M("refresh_required");
+			if (r.revision !== n.revision || r.offset !== n.items.length || r.has_more && !r.items.length || r.row_tokens?.length !== r.items.length) throw new D("refresh_required");
 			this.page = {
 				...n,
 				items: [...n.items, ...r.items.map((e) => this.compactRow(e, r))],
@@ -20029,7 +20439,7 @@ var Ia = class extends C {
 			};
 		} catch (n) {
 			if (e !== this.generation || t !== this.request) return;
-			k(n) === "unauthorized" ? this.fail(n) : this.moreError = k(n) === "refresh_required" ? "The database changed while loading rows." : A(n);
+			w(n) === "unauthorized" ? this.fail(n) : this.moreError = w(n) === "refresh_required" ? "The database changed while loading rows." : T(n);
 		} finally {
 			e === this.generation && t === this.request && (this.moreLoading = !1, this.requestUpdate());
 		}
@@ -20037,7 +20447,7 @@ var Ia = class extends C {
 	scrollRows(e) {
 		let t = e.currentTarget;
 		if (this.rowScrollTop = t.scrollTop, this.listHeight = t.clientHeight || 440, this.allMode && t.scrollHeight - t.scrollTop - t.clientHeight < 300 && this.loadMore(), this.allMode) {
-			let e = this.renderRoot.activeElement?.closest("li[data-row-index]"), n = e ? Number(e.dataset.rowIndex) : -1, r = Math.max(0, Math.floor(this.rowScrollTop / Na) - 8), i = r + Math.ceil(this.listHeight / Na) + 16;
+			let e = this.renderRoot.activeElement?.closest("li[data-row-index]"), n = e ? Number(e.dataset.rowIndex) : -1, r = Math.max(0, Math.floor(this.rowScrollTop / Va) - 8), i = r + Math.ceil(this.listHeight / Va) + 16;
 			n >= 0 && (n < r || n >= i) && t.focus({ preventScroll: !0 }), this.requestUpdate();
 		}
 	}
@@ -20053,7 +20463,7 @@ var Ia = class extends C {
 						limit: 1
 					});
 					if (i !== this.generation || a !== this.request || o !== this.detailRequest) return;
-					if (s.revision !== t.revision || s.offset !== n || s.table !== t.table || !s.items[0] || r && s.row_tokens?.[0] !== r) throw new M("refresh_required");
+					if (s.revision !== t.revision || s.offset !== n || s.table !== t.table || !s.items[0] || r && s.row_tokens?.[0] !== r) throw new D("refresh_required");
 					if (this.detail) {
 						let e = this.page.items.indexOf(this.detail);
 						e >= 0 && (this.page.items[e] = this.compactRow(this.detail, this.page));
@@ -20088,7 +20498,7 @@ var Ia = class extends C {
 		}
 	}
 	newEntry() {
-		this.blocked || this.table !== "viewings" || (this.operation = "new", this.createDraft = Ni(), this.original = JSON.stringify(this.createDraft), this.confirmed = !1, this.open("database-edit"));
+		this.blocked || this.table !== "viewings" || (this.operation = "new", this.createDraft = Vi(), this.original = JSON.stringify(this.createDraft), this.confirmed = !1, this.open("database-edit"));
 	}
 	deleteEntries() {
 		!this.blocked && this.page?.deletable && this.selectedRows().length && (this.operation = "delete", this.deleteWord = "", this.open("database-delete"));
@@ -20110,7 +20520,7 @@ var Ia = class extends C {
 		if (e?.preventDefault(), this.client && this.scope && !this.saving) try {
 			if (!this.pending) {
 				if (!this.operation || !this.page || this.operation === "delete" && this.deleteWord !== "DELETE" || this.operation !== "delete" && !this.confirmed) return;
-				if (this.operation === "new") this.pending = this.client.prepare(this.scope, "create", { data: Pi(this.createDraft) });
+				if (this.operation === "new") this.pending = this.client.prepare(this.scope, "create", { data: Hi(this.createDraft) });
 				else {
 					let e = {};
 					if (this.operation === "edit") {
@@ -20155,7 +20565,7 @@ var Ia = class extends C {
 					"busy",
 					"backup_in_progress",
 					"library_storage_limit"
-				].includes(k(n)) && (this.pending = void 0), this.fail(n);
+				].includes(w(n)) && (this.pending = void 0), this.fail(n);
 			} finally {
 				e === this.generation && t === this.mutationEpoch && (this.saving = !1, this.busy(), this.requestUpdate());
 			}
@@ -20208,11 +20618,11 @@ var Ia = class extends C {
 		return v`<dialog
       id="database-options"
       class="database-dialog"
-      @click=${L}
+      @click=${R}
     >
       <div class="card-head">
         <h2>Database options</h2>
-        ${I(() => this.renderRoot.querySelector("#database-options")?.close())}
+        ${L(() => this.renderRoot.querySelector("#database-options")?.close())}
       </div>
       <p>View choices save automatically for your HA user.</p>
       <fieldset ?disabled=${this.blocked}>
@@ -20222,7 +20632,7 @@ var Ia = class extends C {
             .value=${this.allMode ? "all" : this.fitPage ? "fit" : String(this.filters.limit)}
             @change=${(e) => {
 			let t = e.target.value, n = this.allMode;
-			this.fitPage = t === "fit", this.allMode = t === "all", this.preferences?.set({ limit: this.fitPage ? "fit" : this.allMode ? "all" : Number(t) }), this.fitPage && n ? (this.filters.limit = 25, this.load()) : this.fitPage ? (this.scheduleFit(), this.requestUpdate()) : this.allMode ? (this.filters.limit = Ma, this.load()) : this.browse({ limit: Number(t) });
+			this.fitPage = t === "fit", this.allMode = t === "all", this.preferences?.set({ limit: this.fitPage ? "fit" : this.allMode ? "all" : Number(t) }), this.fitPage && n ? (this.filters.limit = 25, this.load()) : this.fitPage ? (this.scheduleFit(), this.requestUpdate()) : this.allMode ? (this.filters.limit = Ba, this.load()) : this.browse({ limit: Number(t) });
 		}}
           >
             <option value="fit">Fit to screen</option>
@@ -20259,7 +20669,7 @@ var Ia = class extends C {
 	render() {
 		if (!this.ready) return v`<p>${this.error || "Loading database preferences…"}</p>
         ${this.error ? v`<button @click=${() => this.initialize()}>Retry loading database</button>` : x}`;
-		let e = Object.keys(this.page?.tables ?? ja), t = $.filter((t) => e.includes(t)), n = e.filter((e) => !$.includes(e)), r = (this.page?.schema ?? []).some((e) => e.editable), i = this.page?.items ?? [], a = this.allMode ? Math.max(0, Math.floor(this.rowScrollTop / Na) - 8) : 0, o = this.allMode ? Math.min(i.length, a + Math.ceil(this.listHeight / Na) + 16) : i.length;
+		let e = Object.keys(this.page?.tables ?? za), t = $.filter((t) => e.includes(t)), n = e.filter((e) => !$.includes(e)), r = (this.page?.schema ?? []).some((e) => e.editable), i = this.page?.items ?? [], a = this.allMode ? Math.max(0, Math.floor(this.rowScrollTop / Va) - 8) : 0, o = this.allMode ? Math.min(i.length, a + Math.ceil(this.listHeight / Va) + 16) : i.length;
 		return v`<section class="card database" aria-label="Database management">
       <div class="entries-header">
         <div class="database-toolbar">
@@ -20321,7 +20731,7 @@ var Ia = class extends C {
 			r >= 0 && !this.blocked && (e.preventDefault(), this.changeTable(t[r]), this.updateComplete.then(() => this.renderRoot.querySelector(`#table-${this.table}`)?.focus()));
 		}}
           >
-            ${t.map((e) => v`<button role="tab" id=${`table-${e}`} aria-selected=${this.table === e} tabindex=${this.table === e || !$.includes(this.table) && e === t[0] ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(e)}>${ja[e] ?? e}${this.page ? ` (${this.page.tables[e]})` : ""}</button>`)}
+            ${t.map((e) => v`<button role="tab" id=${`table-${e}`} aria-selected=${this.table === e} tabindex=${this.table === e || !$.includes(this.table) && e === t[0] ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(e)}>${za[e] ?? e}${this.page ? ` (${this.page.tables[e]})` : ""}</button>`)}
           </div>
           ${this.showSystem ? v`<label class="system-table-picker"
                   >System tables<select
@@ -20334,10 +20744,10 @@ var Ia = class extends C {
 		}}
                   >
                     <option value="">Choose a table</option>
-                    ${Pa.map(([e]) => {
-			let t = n.filter((t) => Fa(t) === e);
+                    ${Ha.map(([e]) => {
+			let t = n.filter((t) => Ua(t) === e);
 			return t.length ? v`<optgroup label=${e}>
-                            ${t.map((e) => v`<option value=${e}>${ja[e] ?? e.replaceAll("_", " ")}${this.page ? ` (${this.page.tables[e]})` : ""}</option>`)}
+                            ${t.map((e) => v`<option value=${e}>${za[e] ?? e.replaceAll("_", " ")}${this.page ? ` (${this.page.tables[e]})` : ""}</option>`)}
                           </optgroup>` : x;
 		})}
                   </select></label
@@ -20390,8 +20800,8 @@ var Ia = class extends C {
         >
           <div class="card-head">
             <span class="database-table-heading"
-              ><h2>${ja[this.table] ?? this.table}</h2>
-              ${W(ja[this.table] ?? this.table, Sa[this.table] ?? "Database table records.")}</span
+              ><h2>${za[this.table] ?? this.table}</h2>
+              ${W(za[this.table] ?? this.table, Aa[this.table] ?? "Database table records.")}</span
             >
           </div>
           ${this.loading ? v`<p role="status">Loading database…</p>` : x}
@@ -20401,8 +20811,8 @@ var Ia = class extends C {
             aria-label="Database rows"
             @scroll=${this.scrollRows}
           >
-            ${this.allMode && a ? v`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${a * Na}px`}></li>` : x}
-            ${sr(i.slice(a, o), (e, t) => `${this.request}:${a + t}`, (e, t) => {
+            ${this.allMode && a ? v`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${a * Va}px`}></li>` : x}
+            ${hr(i.slice(a, o), (e, t) => `${this.request}:${a + t}`, (e, t) => {
 			let n = a + t;
 			return v`<li
                   data-row-index=${n}
@@ -20428,7 +20838,7 @@ var Ia = class extends C {
                   </button>
                 </li>`;
 		})}
-            ${this.allMode && o < i.length ? v`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${(i.length - o) * Na}px`}></li>` : x}
+            ${this.allMode && o < i.length ? v`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${(i.length - o) * Va}px`}></li>` : x}
           </ul>
           ${this.allMode && this.moreLoading ? v`<p role="status">Loading more rows…</p>` : x}
           ${this.allMode && this.moreError ? v`<p class="error" role="alert">${this.moreError} Refresh database to restart.</p>` : x}
@@ -20510,7 +20920,7 @@ var Ia = class extends C {
                                                 @click=${() => this.follow(e)}
                                               >
                                                 View all
-                                                ${ja[e.table] ?? e.table}
+                                                ${za[e.table] ?? e.table}
                                               </button>
                                             </li>` : x}`)}
                                 </ul>` : v`<small>None</small>`}
@@ -20545,7 +20955,7 @@ var Ia = class extends C {
       </div>
       <footer class="entries-footer">
         <span
-          >${ja[this.table] ?? this.table} · ${this.page?.total ?? 0} total
+          >${za[this.table] ?? this.table} · ${this.page?.total ?? 0} total
           · Revision ${this.page?.dataset_revision ?? 0}</span
         >
         ${this.page ? v`<div class="pagination database-pagination">
@@ -20577,14 +20987,14 @@ var Ia = class extends C {
       <dialog
         id="database-edit"
         class="database-dialog"
-        @click=${L}
+        @click=${R}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2>
             ${this.operation === "new" ? "New viewing" : "Edit database entry"}
           </h2>
-          ${I((e) => this.close(e))}
+          ${L((e) => this.close(e))}
         </div>
         <p class="warning">
           Only supported fields can change. Source metadata may be restored by a
@@ -20604,7 +21014,7 @@ var Ia = class extends C {
                     @draft-change=${(e) => {
 			this.createDraft = e.detail, this.requestUpdate();
 		}}
-                    @access-denied=${() => this.fail(new M("unauthorized"))}
+                    @access-denied=${() => this.fail(new D("unauthorized"))}
                   ></kaleidescape-manual-viewing>` : (this.page?.schema ?? []).filter((e) => e.editable).map((e) => v`<div class="database-edit-field">
                           <label
                             >${e.name}${e.type === "json" || e.name === "notes" ? v`<textarea
@@ -20665,15 +21075,15 @@ var Ia = class extends C {
       <dialog
         id="database-delete"
         class="database-dialog"
-        @click=${L}
+        @click=${R}
         @cancel=${this.close}
       >
         <div class="card-head">
           <h2>
             Permanently delete
-            ${z(this.selectedRows().length, "entry", "entries")}?
+            ${B(this.selectedRows().length, "entry", "entries")}?
           </h2>
-          ${I((e) => this.close(e))}
+          ${L((e) => this.close(e))}
         </div>
         <p>
           Database deletion is permanent. Associated memberships/session
@@ -20704,8 +21114,8 @@ var Ia = class extends C {
 	}
 };
 // src/ui/view-mode.ts
-customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Ia), w();
-function La(e, t, n) {
+customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Wa), C();
+function Ga(e, t, n) {
 	return v`<button
     type="button"
     class="view-mode-switch"
@@ -20722,12 +21132,12 @@ function La(e, t, n) {
     ></span>
   </button>`;
 }
-Cr(), B(), w(), O(), F(), E(), R(), Zr(), ci(), An(), Rn(), Ln();
-var Ra = class extends C {
+M(), jr(), V(), C(), I(), A(), P(), z(), ai(), gi(), Rn(), Kn(), Gn();
+var Ka = class extends S {
 	constructor() {
-		super(), this.narrow = !1, this.api = null, this.generation = 0, this.mutationEpoch = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...ut }, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1, this.advancedView = !0, this.modeReady = !1, this.modeScope = "", this.modeError = "", this.controlLocked = !1, this.locationChanged = () => {
-			this.navigationReady && this.advancedView && this.info?.permissions.edit && this.info.library_enabled && this.activePage !== "library" && Gr() && Kr(void 0, !0) && this.switchPage("library");
-		}, bi(this, () => this.requestUpdate()), Pn(this, () => {
+		super(), this.narrow = !1, this.api = null, this.coverSession = new _t(), this.generation = 0, this.mutationEpoch = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...St }, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1, this.advancedView = !0, this.modeReady = !1, this.modeScope = "", this.modeError = "", this.controlLocked = !1, this.locationChanged = () => {
+			this.navigationReady && this.advancedView && this.info?.permissions.edit && this.info.library_enabled && this.activePage !== "library" && $r() && ei(void 0, !0) && this.switchPage("library");
+		}, Oi(this, () => this.requestUpdate()), Hn(this, () => {
 			let e = this.renderRoot.querySelector("kaleidescape-reader");
 			return !this.info?.permissions.edit || !this.modeReady || this.loading || this.saving || this.pending || this.settingsBusy || this.maintenanceBusy || this.controlLocked || this.dirty() || this.hasOpenDialog() || this.modePreferences?.unsettled || !(e?.confirmNavigation() ?? !0) ? !1 : (this.modePreferences?.dispose(), this.modePreferences = void 0, this.modeReady = !1, this.refresh(), !0);
 		});
@@ -20741,14 +21151,14 @@ var Ra = class extends C {
 	}
 	static {
 		this.styles = [
-			T,
-			Ii,
-			vt
+			N,
+			Wi,
+			At
 		];
 	}
 	modeControl(e = !1) {
 		return v`<div class="mode-control" slot="view-mode">
-      ${La(this.advancedView, e, () => void this.changeMode())}
+      ${Ga(this.advancedView, e, () => void this.changeMode())}
       ${this.modeError ? v`<small role="alert">Mode preference did not save. <button @click=${() => this.modePreferences?.retry()}>Retry</button></small>` : x}
     </div>`;
 	}
@@ -20758,7 +21168,7 @@ var Ra = class extends C {
 	async changeMode() {
 		if (!this.info?.permissions.edit || !this.modeReady || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || this.controlLocked) return;
 		let e = this.renderRoot.querySelector("kaleidescape-reader"), t = !this.advancedView, n = !t && (["database", "settings"].includes(this.activePage) || this.hasOpenDialog(this.renderRoot, !0));
-		(this.advancedView ? !this.discard() : !(e?.confirmNavigation() ?? !0)) || (this.generation++, this.listRequest++, this.detailRequest++, this.closeEditor(), this.rows = [], this.selected = this.sessions = null, this.cursor = void 0, this.history = [], this.nextCursor = null, this.page = 1, this.journalReady = !1, this.error = this.notice = "", n && (this.activePage = zi(this.info.ui_defaults?.default_landing_page, !1, !!this.info.library_enabled, !1)), Bi(this.activePage), this.advancedView = t, this.modePreferences?.set({ advanced_view: t }), this.requestUpdate(), t && await this.loadList(), await this.updateComplete, this.renderRoot.querySelector(".view-mode-switch")?.focus());
+		(this.advancedView ? !this.discard() : !(e?.confirmNavigation() ?? !0)) || (this.generation++, this.listRequest++, this.detailRequest++, this.closeEditor(), this.rows = [], this.selected = this.sessions = null, this.cursor = void 0, this.history = [], this.nextCursor = null, this.page = 1, this.journalReady = !1, this.error = this.notice = "", n && (this.activePage = qi(this.info.ui_defaults?.default_landing_page, !1, !!this.info.library_enabled, !1)), Ji(this.activePage), this.advancedView = t, this.modePreferences?.set({ advanced_view: t }), this.requestUpdate(), t && await this.loadList(), await this.updateComplete, this.renderRoot.querySelector(".view-mode-switch")?.focus());
 	}
 	willUpdate(e) {
 		if (e.has("hass") || e.has("client")) {
@@ -20767,7 +21177,7 @@ var Ra = class extends C {
 					this.bind(null);
 					return;
 				}
-				(this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new lt({
+				(this.haConnection !== this.hass.connection || this.haUser !== this.hass.user.id) && (this.haConnection = this.hass.connection, this.haUser = this.hass.user.id, this.haClient = new st({
 					callWS: (e) => this.hass.callWS(e),
 					fetchWithAuth: (e, t) => this.hass.fetchWithAuth(e, t)
 				})), this.bind(this.haClient);
@@ -20781,13 +21191,13 @@ var Ra = class extends C {
 		super.disconnectedCallback(), window.removeEventListener("location-changed", this.locationChanged), window.removeEventListener("popstate", this.locationChanged), this.bind(null);
 	}
 	clearPrivate() {
-		this.modePreferences?.dispose(), this.modePreferences = void 0, this.modeScope = this.modeError = "", this.modeReady = this.controlLocked = !1, this.advancedView = !0, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.generation++, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.sessions = null, this.pending = null, this.history = [], this.nextCursor = null, this.cursor = void 0, this.page = 1, this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.confirmDelete = !1, this.saving = !1, this.loading = !1, this.detailLoading = !1, this.sessionError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = this.maintenanceBusy = !1, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...ut }, this.calendarStatus = void 0, this.journalMovie = void 0, this.libraryTitleId = void 0, this.libraryCriterion = void 0, this.journalReady = !1;
+		this.coverSession.reset(), this.modePreferences?.dispose(), this.modePreferences = void 0, this.modeScope = this.modeError = "", this.modeReady = this.controlLocked = !1, this.advancedView = !0, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.generation++, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.sessions = null, this.pending = null, this.history = [], this.nextCursor = null, this.cursor = void 0, this.page = 1, this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.confirmDelete = !1, this.saving = !1, this.loading = !1, this.detailLoading = !1, this.sessionError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = this.maintenanceBusy = !1, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...St }, this.calendarStatus = void 0, this.journalMovie = void 0, this.libraryTitleId = void 0, this.libraryCriterion = void 0, this.journalReady = !1;
 	}
 	bind(e) {
 		this.api !== e && (this.clearPrivate(), this.api = e, this.error = "", this.requestUpdate(), e && this.refresh());
 	}
 	fail(e) {
-		k(e) === "unauthorized" && this.clearPrivate(), this.lastError = k(e), this.error = A(e), this.requestUpdate();
+		w(e) === "unauthorized" && this.clearPrivate(), this.lastError = w(e), this.error = T(e), this.requestUpdate();
 	}
 	dirty() {
 		return this.manual ? JSON.stringify(this.manual) !== this.manualInitial : this.draft && (this.editTitleTouched || JSON.stringify(this.draft) !== JSON.stringify(this.initial));
@@ -20796,10 +21206,10 @@ var Ra = class extends C {
 		return (!this.dirty() || window.confirm("Discard your unsaved changes?")) && (this.activePage !== "library" || (this.renderRoot.querySelector("kaleidescape-library")?.confirmNavigation() ?? !0)) && (this.activePage !== "database" || (this.renderRoot.querySelector("kaleidescape-database")?.confirmNavigation() ?? !0)) && (this.activePage !== "settings" || (this.renderRoot.querySelector("kaleidescape-settings")?.confirmNavigation() ?? !0));
 	}
 	async switchPage(e, t) {
-		e === "library" && !this.info?.library_enabled || e === this.activePage && !(e === "journal" && this.journalMovie) || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || this.controlLocked || !this.discard() || (this.closeEditor(), this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = "", this.status = this.filterStatus = ""), this.activePage = e, Bi(e), this.error = this.notice = "", this.requestUpdate(), e === "journal" && (this.page = 1, this.history = [], await this.loadList()));
+		e === "library" && !this.info?.library_enabled || e === this.activePage && !(e === "journal" && this.journalMovie) || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || this.controlLocked || !this.discard() || (this.closeEditor(), this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = "", this.status = this.filterStatus = ""), this.activePage = e, Ji(e), this.error = this.notice = "", this.requestUpdate(), e === "journal" && (this.page = 1, this.history = [], await this.loadList()));
 	}
 	pageKey(e) {
-		let t = Li.filter((e) => e.id !== "library" || this.info?.library_enabled), n = t.findIndex((e) => e.id === this.activePage), r = e.key === "ArrowRight" ? (n + 1) % t.length : e.key === "ArrowLeft" ? (n + t.length - 1) % t.length : e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : -1;
+		let t = Gi.filter((e) => e.id !== "library" || this.info?.library_enabled), n = t.findIndex((e) => e.id === this.activePage), r = e.key === "ArrowRight" ? (n + 1) % t.length : e.key === "ArrowLeft" ? (n + t.length - 1) % t.length : e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : -1;
 		r < 0 || (e.preventDefault(), this.switchPage(t[r].id).then(() => this.updateComplete).then(() => this.renderRoot.querySelector(`#page-${this.activePage}`)?.focus()));
 	}
 	async refresh(e = !1) {
@@ -20813,20 +21223,20 @@ var Ra = class extends C {
 				({entries: r} = await t.info());
 			}
 			if (n !== this.generation) return;
-			if (!r.length || r[0].api_version !== 1) throw new M("not_ready");
-			if (this.info = r[0], !this.info.permissions.edit) return;
+			if (!r.length || r[0].api_version !== 1) throw new D("not_ready");
+			if (this.coverSession.bind(r[0]), this.info = r[0], !this.info.permissions.edit) return;
 			let i = `${this.info.entry_id}:${this.info.dataset_id}`;
 			if (!this.modePreferences || !this.modeReady || this.modeScope !== i) {
 				this.modeReady = !1, this.modePreferences?.dispose();
 				let e = new q(t, this.info, !1, (t) => {
-					this.modePreferences === e && (this.modeError = t ? A(t) : "", this.requestUpdate());
+					this.modePreferences === e && (this.modeError = t ? T(t) : "", this.requestUpdate());
 				}, "interface");
 				this.modePreferences = e, this.modeScope = i;
 				let r = await e.load();
 				if (n !== this.generation) return;
 				this.advancedView = r.advanced_view === !0, this.modeReady = !0;
 			}
-			this.navigationReady || (this.activePage = zi(this.info.ui_defaults?.default_landing_page, !0, !!this.info.library_enabled), this.navigationReady = !0, Bi(this.activePage)), this.activePage === "library" && !this.info.library_enabled && (this.activePage = "journal", Bi(this.activePage)), this.history = [], this.cursor = void 0, this.page = 1, this.advancedView && await this.loadList();
+			this.navigationReady || (this.activePage = qi(this.info.ui_defaults?.default_landing_page, !0, !!this.info.library_enabled), this.navigationReady = !0, Ji(this.activePage)), this.activePage === "library" && !this.info.library_enabled && (this.activePage = "journal", Ji(this.activePage)), this.history = [], this.cursor = void 0, this.page = 1, this.advancedView && await this.loadList();
 		} catch (e) {
 			n === this.generation && this.fail(e);
 		} finally {
@@ -20880,7 +21290,7 @@ var Ra = class extends C {
 				let a = await t.sessions(n, e);
 				r === this.generation && i === this.detailRequest && (this.sessions = a);
 			} catch (e) {
-				r === this.generation && i === this.detailRequest && (k(e) === "unauthorized" ? this.fail(e) : this.sessionError = "Session details could not be loaded.");
+				r === this.generation && i === this.detailRequest && (w(e) === "unauthorized" ? this.fail(e) : this.sessionError = "Session details could not be loaded.");
 			}
 		} catch (e) {
 			r === this.generation && i === this.detailRequest && this.fail(e);
@@ -20892,7 +21302,7 @@ var Ra = class extends C {
 		this.timingAnchor = void 0, this.renderRoot.querySelectorAll("dialog").forEach((e) => e.close()), this.manual = null, this.manualInitial = "", this.detailRequest++, this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.confirmDelete = !1, this.detailLoading = !1;
 	}
 	newRecord() {
-		!this.pending && this.discard() && (this.closeEditor(), this.draft = Oi(), this.initial = { ...this.draft }, this.manual = Ni(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
+		!this.pending && this.discard() && (this.closeEditor(), this.draft = Ii(), this.initial = { ...this.draft }, this.manual = Vi(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
 			this.renderRoot.querySelector("#journal-editor")?.showModal();
 			let e = this.renderRoot.querySelector("kaleidescape-manual-viewing");
 			await e?.updateComplete;
@@ -20901,7 +21311,7 @@ var Ra = class extends C {
 		}));
 	}
 	input(e, t) {
-		this.draft && (this.draft = ki(this.draft, e, t.target.value, this.timingAnchor ?? this.draft), Number.isFinite(new Date(this.draft.started_at).getTime()) ? this.timingAnchor = {
+		this.draft && (this.draft = Li(this.draft, e, t.target.value, this.timingAnchor ?? this.draft), Number.isFinite(new Date(this.draft.started_at).getTime()) ? this.timingAnchor = {
 			started_at: this.draft.started_at,
 			ended_at: this.draft.ended_at
 		} : e === "ended_at" && this.timingAnchor && (this.timingAnchor = {
@@ -20913,8 +21323,8 @@ var Ra = class extends C {
 		if (e.preventDefault(), this.api && this.info && this.draft && !this.pending && !this.saving && e.target.reportValidity()) {
 			if (!this.manual && this.editTitleTouched && !this.editMovieId) this.error = "Select a Library movie from the suggestions.", this.requestUpdate();
 			else try {
-				let e = this.manual ? Pi(this.manual) : {
-					...Ai(this.draft, this.selected ? this.initial : void 0),
+				let e = this.manual ? Hi(this.manual) : {
+					...Ri(this.draft, this.selected ? this.initial : void 0),
 					...this.editTitleTouched ? { library_title_id: this.editMovieId } : {}
 				};
 				if (this.manual || delete e.title, this.selected && !Object.keys(e).length) {
@@ -20931,7 +21341,7 @@ var Ra = class extends C {
 					patch: e
 				} : { data: e }), await this.commit();
 			} catch (e) {
-				k(e) === "request_id_unavailable" ? this.fail(e) : (this.error = this.manual && e instanceof Error ? e.message : "Check the dates and numeric fields before saving.", this.requestUpdate());
+				w(e) === "request_id_unavailable" ? this.fail(e) : (this.error = this.manual && e instanceof Error ? e.message : "Check the dates and numeric fields before saving.", this.requestUpdate());
 			}
 		}
 	}
@@ -20955,7 +21365,7 @@ var Ra = class extends C {
 			this.pending = null, this.closeEditor(), this.notice = i.viewing.deleted_at ? "Entry removed from the journal. Stored history is retained." : "Entry saved.", i.viewing.deleted_at || (this.selected = i.viewing, this.manual = null), this.page = 1, this.history = [], await this.loadList();
 			try {
 				let { entries: t } = await e.info();
-				n === this.generation && r === this.mutationEpoch && t[0]?.dataset_id === this.info?.dataset_id && (this.info = t[0]);
+				n === this.generation && r === this.mutationEpoch && t[0]?.dataset_id === this.info?.dataset_id && (this.coverSession.bind(t[0]), this.info = t[0]);
 			} catch (e) {
 				n === this.generation && r === this.mutationEpoch && this.fail(e);
 			}
@@ -20965,7 +21375,7 @@ var Ra = class extends C {
 				"invalid_request",
 				"conflict",
 				"unauthorized"
-			].includes(k(e)) && (this.pending = null), this.fail(e);
+			].includes(w(e)) && (this.pending = null), this.fail(e);
 		} finally {
 			n === this.generation && r === this.mutationEpoch && (this.saving = !1, this.requestUpdate());
 		}
@@ -20987,7 +21397,7 @@ var Ra = class extends C {
 		let e = this.generation;
 		try {
 			let { entries: t } = await this.api.info();
-			e === this.generation && t[0]?.dataset_id === this.info?.dataset_id && (this.info = t[0], this.requestUpdate());
+			e === this.generation && t[0]?.dataset_id === this.info?.dataset_id && (this.coverSession.bind(t[0]), this.info = t[0], this.requestUpdate());
 		} catch (t) {
 			e === this.generation && this.fail(t);
 		}
@@ -21004,8 +21414,8 @@ var Ra = class extends C {
                 @draft-change=${(e) => {
 			this.manual = e.detail, this.requestUpdate();
 		}}
-                @access-denied=${() => this.fail(new M("unauthorized"))}
-              ></kaleidescape-manual-viewing>` : ji(this.draft, (e, t) => this.input(e, t), v`<kaleidescape-library-title-picker
+                @access-denied=${() => this.fail(new D("unauthorized"))}
+              ></kaleidescape-manual-viewing>` : zi(this.draft, (e, t) => this.input(e, t), v`<kaleidescape-library-title-picker
                     .client=${this.api}
                     .scope=${this.info}
                     .initialTitle=${this.initial?.title ?? ""}
@@ -21019,7 +21429,7 @@ var Ra = class extends C {
 				title: e.detail.query
 			}, this.requestUpdate());
 		}}
-                    @access-denied=${() => this.fail(new M("unauthorized"))}
+                    @access-denied=${() => this.fail(new D("unauthorized"))}
                   ></kaleidescape-library-title-picker>
                   <small
                     >Selecting a different movie keeps the recorded times and
@@ -21051,7 +21461,7 @@ var Ra = class extends C {
 		await i, t.isConnected && n === this.generation && a === this.detailRequest && r === this.activePage && this.advancedView && this.info?.permissions.edit && this.selected?.id === e && !this.draft && this.editRecord();
 	}
 	editRecord() {
-		!this.selected || this.pending || this.saving || (this.draft = Oi(this.selected), this.timingAnchor = {
+		!this.selected || this.pending || this.saving || (this.draft = Ii(this.selected), this.timingAnchor = {
 			started_at: this.draft.started_at,
 			ended_at: this.draft.ended_at
 		}, this.editMovieId = null, this.editTitleTouched = !1, this.initial = { ...this.draft }, this.error = this.notice = "", this.requestUpdate(), this.updateComplete.then(() => this.renderRoot.querySelector("#journal-editor")?.showModal()));
@@ -21080,7 +21490,7 @@ var Ra = class extends C {
                 ${this.date(this.selected.updated_at)}<br />Completion:
                 ${this.selected.completion_reason ?? "Not completed"}
               </div>
-              ${this.sessionError ? v`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? v` ${this.sessions.items.map((e) => v`<div class="session">${this.date(e.started_at)}<br />${(e.watched_seconds / 60).toFixed(2)} min watched · ${e.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${z(e.gap_count, "timing gap")}<br />${e.end_reason ?? "Open session"}</div>`)}
+              ${this.sessionError ? v`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? v` ${this.sessions.items.map((e) => v`<div class="session">${this.date(e.started_at)}<br />${(e.watched_seconds / 60).toFixed(2)} min watched · ${e.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${B(e.gap_count, "timing gap")}<br />${e.end_reason ?? "Open session"}</div>`)}
                         ${this.sessions.has_more ? v`<small>Showing the latest 100 sessions.</small>` : x}` : v`<p class="muted">
                           No recorded sessions for this entry.
                         </p>` : v`<p class="muted">
@@ -21094,7 +21504,7 @@ var Ra = class extends C {
 		this.query = this.searchText = "", this.page = 1, this.history = [], this.loadList(), this.requestUpdate();
 	}
 	renderJournal() {
-		let e = this.journalView === "calendar" && !this.query.trim(), t = window.innerWidth <= 700 ? wi`dialog` : wi`section`, n = this.loading || this.saving || !!this.pending, r = v`<span class="journal-system-details"
+		let e = this.journalView === "calendar" && !this.query.trim(), t = window.innerWidth <= 700 ? Mi`dialog` : Mi`section`, n = this.loading || this.saving || !!this.pending, r = v`<span class="journal-system-details"
       >${this.bytes(this.info?.database_bytes ?? 0)} /
       ${this.bytes(this.info?.database_limit_bytes ?? 0)} database · Recording:
       ${this.info?.tracking_enabled ? "Enabled" : "Manual only"} ·
@@ -21212,7 +21622,7 @@ var Ra = class extends C {
               .client=${this.api}
               .scope=${this.info}
               .disabled=${n}
-              @access-denied=${() => this.fail(new M("unauthorized"))}
+              @access-denied=${() => this.fail(new D("unauthorized"))}
               @journal-options=${(e) => {
 			this.journalReady = !0, this.journalView = e.detail.view, this.calendarSize = e.detail.calendar_size, this.calendarFit = e.detail.calendar_fit, this.calendarHoverPreview = e.detail.calendar_hover_preview, this.calendarTotals = e.detail;
 			let t = this.fuzzySearch !== e.detail.fuzzy_search || this.pageSize !== e.detail.page_size;
@@ -21239,7 +21649,7 @@ var Ra = class extends C {
               .editable=${!0}
               @edit-viewing=${(e) => this.editCalendarViewing(e.detail)}
               @browse-library=${(e) => this.switchPage("library", { libraryCriterion: e.detail })}
-              @access-denied=${() => this.fail(new M("unauthorized"))}
+              @access-denied=${() => this.fail(new D("unauthorized"))}
               ><button
                 slot="mobile-add"
                 class="calendar-header-action"
@@ -21249,7 +21659,7 @@ var Ra = class extends C {
                 ?disabled=${n || !this.journalReady}
                 @click=${this.newRecord}
               >
-                ${D("add")}</button
+                ${F("add")}</button
               ><button
                 slot="mobile-options"
                 class="calendar-header-action"
@@ -21260,7 +21670,7 @@ var Ra = class extends C {
                 ?disabled=${n}
                 @click=${() => this.renderRoot.querySelector("kaleidescape-journal-options")?.open()}
               >
-                ${D("options")}
+                ${F("options")}
               </button></kaleidescape-journal-calendar
             >` : v`
               <div class="entries-layout">
@@ -21275,7 +21685,7 @@ var Ra = class extends C {
                             tabindex="0"
                             aria-label="Viewings"
                           >
-                            ${this.rows.map((e) => ht(e, this.selected?.id, (e) => void this.selectJournalEntry(e), this.saving || !!this.pending))}
+                            ${this.rows.map((e) => Dt(e, this.selected?.id, (e) => void this.selectJournalEntry(e), this.saving || !!this.pending))}
                           </ul>` : v`<div class="empty">
                             <strong
                               >${this.query || this.status ? "No matching viewings" : "Your journal is empty"}</strong
@@ -21285,20 +21695,20 @@ var Ra = class extends C {
                             </p>
                           </div>`}
                 </section>
-                ${Ei`<${t}
+                ${Pi`<${t}
                   class="entries-detail journal-detail-dialog"
-                  @click=${L}
+                  @click=${R}
                   aria-label="Viewing details"
                   tabindex="0"
                 >
                   <div class="card-head">
                     <h2>Viewing details</h2>
-                    ${window.innerWidth <= 700 ? I(() => this.renderRoot.querySelector("dialog.journal-detail-dialog")?.close()) : x}
+                    ${window.innerWidth <= 700 ? L(() => this.renderRoot.querySelector("dialog.journal-detail-dialog")?.close()) : x}
                     ${this.selected ? v`<span class="desktop-detail-actions"><button ?disabled=${n} @click=${this.editRecord}>Edit viewing</button><button class="danger" ?disabled=${n} @click=${this.openDelete}>Delete entry</button></span>` : x}
                   </div>
                   ${this.detailLoading ? v`<div class="empty" role="status">
                           Loading entry…
-                        </div>` : this.selected ? v`${gt(this.selected, (e) => this.date(e), !n && this.linkedViewingId === this.selected.id ? () => this.renderRoot.querySelector("kaleidescape-viewing-library")?.openLibrary() : void 0)}
+                        </div>` : this.selected ? v`${Ot(this.selected, (e) => this.date(e), !n && this.linkedViewingId === this.selected.id ? () => this.renderRoot.querySelector("kaleidescape-viewing-library")?.openLibrary() : void 0)}
                             <div class="journal-detail-artwork-row">
                               <kaleidescape-viewing-library
                                 .client=${this.api}
@@ -21311,7 +21721,7 @@ var Ra = class extends C {
 		}}
                                 .disabled=${n}
                                 .advanced=${!0}
-                                @access-denied=${() => this.fail(new M("unauthorized"))}
+                                @access-denied=${() => this.fail(new D("unauthorized"))}
                                 @browse-library=${(e) => this.switchPage("library", { libraryCriterion: e.detail })}
                               ></kaleidescape-viewing-library>
                               <div class="journal-detail-actions">
@@ -21322,7 +21732,7 @@ var Ra = class extends C {
                                   ?disabled=${n}
                                   @click=${this.editRecord}
                                 >
-                                  ${D("edit")}</button
+                                  ${F("edit")}</button
                                 ><button
                                   type="button"
                                   class="danger"
@@ -21331,7 +21741,7 @@ var Ra = class extends C {
                                   ?disabled=${n}
                                   @click=${this.openDelete}
                                 >
-                                  ${D("delete")}
+                                  ${F("delete")}
                                 </button>
                               </div>
                             </div>
@@ -21347,11 +21757,11 @@ var Ra = class extends C {
               </div>
             `}
       <footer class="entries-footer journal-status">
-        ${e ? v`${ft(this.info, this.calendarStatus, !0, this.calendarTotals)}${r}` : v`<span class="journal-full-total">
-                  ${ft(this.info)} · ${r}</span
+        ${e ? v`${wt(this.info, this.calendarStatus, !0, this.calendarTotals)}${r}` : v`<span class="journal-full-total">
+                  ${wt(this.info)} · ${r}</span
                 ><span class="journal-mobile-total"
                   >Total Viewings ${this.info?.viewing_count ?? 0}</span
-                >`}${e ? mt(this.calendarStatus, () => {
+                >`}${e ? Et(this.calendarStatus, () => {
 			this.renderRoot.querySelector("kaleidescape-journal-calendar")?.refresh();
 		}) : x}
 
@@ -21369,7 +21779,7 @@ var Ra = class extends C {
 		}}
             >
               <span class="journal-page-text">First</span
-              ><span class="journal-page-icon">${D("first")}</span>
+              ><span class="journal-page-icon">${F("first")}</span>
             </button>
             <button
               aria-label="Previous page"
@@ -21380,7 +21790,7 @@ var Ra = class extends C {
 		}}
             >
               <span class="journal-page-text">Previous</span
-              ><span class="journal-page-icon">${D("previous")}</span>
+              ><span class="journal-page-icon">${F("previous")}</span>
             </button>
             <button
               aria-label="Next page"
@@ -21391,12 +21801,12 @@ var Ra = class extends C {
 		}}
             >
               <span class="journal-page-text">Next</span
-              ><span class="journal-page-icon">${D("next")}</span>
+              ><span class="journal-page-icon">${F("next")}</span>
             </button>
           </div>
         </div>
         ${e && this.journalMovie ? v`<button class="journal-mobile-movie-clear" type="button" ?disabled=${n} @click=${() => this.switchPage("journal")}>Show all viewings</button>` : x}
-        ${pt(this.searchText, n, (e) => {
+        ${Tt(this.searchText, n, (e) => {
 			this.searchText = e, !e && this.query && this.clearJournalSearch(), this.requestUpdate();
 		}, () => {
 			this.query = this.searchText = this.searchText.trim(), this.page = 1, this.history = [], this.loadList();
@@ -21420,14 +21830,14 @@ var Ra = class extends C {
         data-admin-dialog
         class="database-dialog journal-dialog"
         aria-labelledby="journal-editor-title"
-        @click=${L}
+        @click=${R}
         @cancel=${this.cancelEdit}
       >
         <div class="card-head">
           <h2 id="journal-editor-title">
             ${this.manual ? "New viewing" : "Edit viewing"}
           </h2>
-          ${I((e) => this.cancelEdit(e))}
+          ${L((e) => this.cancelEdit(e))}
         </div>
         ${this.notice ? v`<p class="notice" role="status">${this.notice}</p>` : x}
         ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
@@ -21439,12 +21849,12 @@ var Ra = class extends C {
         data-admin-dialog
         class="database-dialog"
         aria-labelledby="journal-delete-title"
-        @click=${L}
+        @click=${R}
         @cancel=${this.cancelDelete}
       >
         <div class="card-head">
           <h2 id="journal-delete-title">Remove this entry from the journal?</h2>
-          ${I((e) => this.cancelDelete(e))}
+          ${L((e) => this.cancelDelete(e))}
         </div>
         <p>${this.selected?.title}</p>
         <p>
@@ -21498,14 +21908,14 @@ var Ra = class extends C {
 		}))}>☰</button>` : x}
         <img
           class="companion-icon"
-          src=${kn}
+          src=${Ln}
           alt=""
           aria-hidden="true"
         />
         <div class="grow">
           <h1>Kaleidescape Companion</h1>
           <p>
-            ${Li.find((e) => e.id === this.activePage).description}
+            ${Gi.find((e) => e.id === this.activePage).description}
           </p>
         </div>
         ${this.info?.permissions.edit ? this.modeControl(e) : x}
@@ -21517,7 +21927,7 @@ var Ra = class extends C {
                 aria-label="Companion pages"
                 @keydown=${(e) => this.pageKey(e)}
               >
-                ${Li.map((t) => v`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : x} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
+                ${Gi.map((t) => v`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : x} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
               </div>
             </div>` : x}
       ${this.error ? v`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? v` <button ?disabled=${e} @click=${this.reloadSelected}>Reload entry</button>` : x}</div>` : x}
@@ -21541,16 +21951,19 @@ var Ra = class extends C {
                         .client=${this.api}
                         .scope=${this.info}
                         .advanced=${!0}
+                        .coverQueue=${this.coverSession.queue}
+                        .pageCache=${this.coverSession.pages}
+                        .cacheUser=${this.hass?.user?.id}
                         .openTitleId=${this.libraryTitleId}
                         .openCriterion=${this.libraryCriterion}
-                        @access-denied=${() => this.fail(new M("unauthorized"))}
+                        @access-denied=${() => this.fail(new D("unauthorized"))}
                         @library-disabled=${() => {
 			this.activePage = "journal", this.refresh();
 		}}
                       ></kaleidescape-library>` : this.activePage === "database" ? v`<kaleidescape-database
                           .client=${this.api}
                           .scope=${this.info}
-                          @access-denied=${() => this.fail(new M("unauthorized"))}
+                          @access-denied=${() => this.fail(new D("unauthorized"))}
                           @maintenance-busy=${(e) => {
 			this.maintenanceBusy !== e.detail && (this.maintenanceBusy = e.detail, this.requestUpdate());
 		}}
@@ -21558,12 +21971,12 @@ var Ra = class extends C {
                         ></kaleidescape-database>` : this.activePage === "settings" ? v`<kaleidescape-settings
                             .client=${this.api}
                             .scope=${this.info}
-                            @access-denied=${() => this.fail(new M("unauthorized"))}
+                            @access-denied=${() => this.fail(new D("unauthorized"))}
                             @settings-busy=${(e) => {
 			this.settingsBusy !== e.detail && (this.settingsBusy = e.detail, this.requestUpdate());
 		}}
                             @settings-saved=${() => {
-			this.activePage = "settings", Bi("settings"), this.notice = "Settings saved. Reloading the integration…";
+			this.activePage = "settings", Ji("settings"), this.notice = "Settings saved. Reloading the integration…";
 			let e = this.api;
 			this.refresh(!0).then(() => {
 				this.api === e && this.info && (this.notice = "Settings saved.", this.requestUpdate());
@@ -21589,5 +22002,5 @@ var Ra = class extends C {
     </main>`;
 	}
 };
-customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Ra);
-export { Ra as KaleidescapePanel };
+customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Ka);
+export { Ka as KaleidescapePanel };

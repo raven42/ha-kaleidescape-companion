@@ -267,16 +267,39 @@ The full dialog is shared with linked Journal entries, with no navigation
 between Library and Journal pages. Each user can select the full or compact
 viewing dialog in Journal options; Library always uses full movie details.
 
+The first Library result page can be retained in the current panel session (up
+to four results and 8 MiB total). Returning to a matching view displays that
+page while an authenticated status check compares the Library and database
+revisions, hidden-collection preference key, and a token for the HA local date,
+recent-purchase window, timezone and Library source. Movie selection stays
+disabled until the check succeeds. If any evidence changed or is unavailable,
+the page is queried again. Random sorts are cached against the user's saved
+shuffle seed, which is rechecked in Library status so a shuffle on another
+display invalidates the old order. Explicit Refresh always queries again. All
+results are cached only if the database and time context agree across every
+chunk; concurrent recording remains allowed even when it prevents caching.
+
+The **Keep across restarts** cache option also stores these bounded Library
+results in this browser, partitioned by HA user, integration entry and dataset.
+They are revalidated in the same way after reopening and remain in browser
+storage after logout until cleared or evicted. They can contain household movie
+and filter information and are not encrypted from other users of the same
+browser profile. **Clear Library and cover cache** removes both types of saved
+browser data for the current user and dataset; it does not change server data.
+
 Sync progress/status refreshes only while the Library page is visible: about
 every five seconds during a scan and 30 seconds when idle. Newly cached metadata
-refreshes the current results from the first page. Leaving the tab stops status
-polling, aborts cover requests, revokes their object URLs, and clears data.
-Cover images load only while visible, with at most three requests at once and a
-five-second budget per request. Completed images stay in a bounded session LRU
-cache across scrolling, paging, view changes and title popups (1000 images / 128
-MiB compressed bytes). Offscreen unfinished requests still cancel. Cache
-eviction revokes URLs, preferring offscreen images; leaving Library or an
-account/access/scope change clears all retained covers. See
+refreshes the current results from the first page. Leaving Library stops status
+polling, aborts unfinished cover requests and clears the displayed catalog.
+Cover images load asynchronously within 600 pixels of the viewport, so nearby
+rows can fill in before scrolling. A single background worker also warms the
+rest of the current page, while near-viewport requests have queue priority. At
+most three requests run at once, with a five-second network budget per request.
+Completed images can be reused across Library navigation, scrolling, paging and
+title popups. Library Options chooses how long to retain them. Individual
+near-viewport requests cancel outside the prefetch area. Background warming
+stops when the page changes or Library is hidden. Account, access or scope
+changes and closing the panel clear in-memory covers. See
 [cover retention and layout options](user-interface.md#personal-and-shared-preferences).
 Regular users poll cached counts/revisions/timestamps every 30 seconds, without
 administrator sync progress, settings, errors, or storage details. User-created
@@ -338,17 +361,24 @@ group. Regular-user info also includes the name count and an opaque
 `preferences_key`. List pages include that key; subsequent pages can send it to
 reject stale display preferences without changing the source revision. Visible
 Library polling uses it to refresh hidden labels after an external
-shared-preference change. Facets take arrays of at most 100 strings; a single
-string is retained for existing clients. `status` values are `watched`,
-`unwatched`, `in_progress`, and `unknown`. `sort` is one of `name`, `year`,
-`collection`, `length`, `watched`, `added`, or `random`. Random uses the
-validated `random_seed` so pages and personal display profiles share one stable
-shuffle until Randomize is clicked. List pages use source/preference revisions,
-a 1000-entry ceiling, and an 8 MiB conservative serialized JSON payload budget
-(including facets). Oversized pages fail with `library_page_too_large`; reduce
-the target and retry. Internal lookup batches stay below 999 SQLite parameters.
-Individual-version pages share the byte budget and remain capped at 50. Fixed
-sort expressions and bound values accept no client SQL or paths.
+shared-preference change. Both `library/info` and `library/list` also expose
+`cache_revision`, the overall database content revision, and an opaque
+`cache_context` fingerprint of the local date, recent-purchase window, timezone
+and source. `library/info` also returns the requesting user's saved random seed
+for checking cached shuffle order. These fields permit a previously read first
+page to be reused only when all cache evidence agrees. They are not a substitute
+for authorization or the source revision used in pagination. Facets take arrays
+of at most 100 strings; a single string is retained for existing clients.
+`status` values are `watched`, `unwatched`, `in_progress`, and `unknown`. `sort`
+is one of `name`, `year`, `collection`, `length`, `watched`, `added`, or
+`random`. Random uses the validated `random_seed` so pages and personal display
+profiles share one stable shuffle until Randomize is clicked. List pages use
+source/preference revisions, a 1000-entry ceiling, and an 8 MiB conservative
+serialized JSON payload budget (including facets). Oversized pages fail with
+`library_page_too_large`; reduce the target and retry. Internal lookup batches
+stay below 999 SQLite parameters. Individual-version pages share the byte budget
+and remain capped at 50. Fixed sort expressions and bound values accept no
+client SQL or paths.
 
 ## Storage, artwork, and recovery
 
@@ -916,21 +946,35 @@ remain available regardless of these presentation choices.
 
 ## Cover image retention
 
-Requests still begin only when a cover is visible, with three concurrent
-requests and five-second request budgets. An offscreen or hidden page cancels
-unfinished requests. Successfully loaded covers remain in a private in-memory
-LRU cache for this mounted Library session, reusable across scrolling,
-pagination, view changes and title popups. It holds at most 1000 images and 128
-MiB of compressed image bytes. Eviction prefers the least recently used
-offscreen image, revokes its object URL, and clears any mounted references. If
-visible images alone exceed the budget, they can also be evicted. Browser image
-decoding/DOM memory is additional and not bounded by the compressed-byte cap.
-Evicted images can download again when revisited.
+Requests start within 600 pixels of the viewport; one background worker also
+warms the rest of the current page. Visible requests take priority, with at most
+three concurrent requests and five-second network budgets. Selecting All warms
+all returned covers in the background, subject to cache limits. Warming stops on
+navigation or when the browser is hidden. Library Options saves a personal,
+per-display-profile retention mode:
 
-The cache uses entry/dataset scope and the content-hash artwork key. Changed
-artwork bytes therefore use a new key. It is not local storage, a cookie, a
-service worker or a shared HTTP cache. Leaving Library, disconnecting/changing
-accounts, role/scope changes, detected access denial or opt-out revoke all URLs
-and discard the cache; late requests cannot repopulate a disposed cache. Closing
-a title popup or hiding the browser retains already accepted covers within the
-same session. No tokens, source URLs or images enter UI settings.
+- **Balanced:** retain up to 4,096 covers and 512 MiB of compressed bytes in a
+  least-recently-used in-memory cache, preferring offscreen entries for
+  eviction.
+- **Keep for panel session:** retain every loaded cover in memory without an
+  eviction limit until the panel closes. Large libraries can consume substantial
+  memory; decoded images add to compressed-byte use.
+- **Keep across restarts:** retain loaded cover blobs in this browser's
+  IndexedDB and reuse them after reopening the panel. In-memory objects remain
+  bounded as in Balanced mode. Browser quota, private browsing, site-data
+  deletion, or storage eviction can prevent or remove persistent storage;
+  network loading remains the fallback. This mode needs a signed-in HA user.
+
+**Clear Library and cover cache** removes in-memory and browser-saved Library
+results and covers for the current user and Library dataset. Visible covers can
+reload after clearing. It does not remove the separate server artwork cache,
+which has its own configured storage limit and can evict covers before the
+browser fetches them.
+
+Persistent entries are partitioned by HA user, integration entry and dataset,
+and keyed by content-hash artwork key. They remain on the browser after logout
+and are not encrypted from other users of the same browser profile. Account,
+role, scope or access changes and panel disconnect revoke in-memory object URLs;
+persistent entries remain until explicitly cleared or removed by the browser. No
+authentication tokens or source URLs are stored with the images. Stale or failed
+browser storage falls back to the authenticated artwork endpoint.

@@ -63,6 +63,14 @@ not establish that it is current.
 The Library cover view combines cached artwork, format badges and household
 status. Open a cover to inspect its movie.
 
+In **Library → Options**, choose **Balanced**, **Keep for panel session**, or
+**Keep across restarts** for Library and cover retention. Session mode can use
+considerable memory; persistent mode stores Library results and images in this
+browser, subject to browser storage limits. **Clear Library and cover cache**
+removes this browser's saved results and covers for your current Library; the
+separate server artwork cache is unaffected. Covers for the current page also
+warm in the background; choose **All** to warm the full result set.
+
 If discovery fails, verify that HA can resolve the server hostname and reach its
 local browser interface. Only standard HTTP/HTTPS ports and private LAN
 destinations are accepted; URLs containing credentials, paths or queries are

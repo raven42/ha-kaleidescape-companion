@@ -149,6 +149,8 @@ export class FixtureTransport implements Transport {
   }
   preferencesKey = "0".repeat(64);
   revision = 5;
+  cacheRevision?: number;
+  cacheContext = "fixture-context";
   failure: string | null = null;
   pendingAdds: {
     request_id: string;
@@ -238,6 +240,7 @@ export class FixtureTransport implements Transport {
     view: "list",
     page_size: 100,
     cover_size: 150,
+    cover_cache: "balanced",
     cast_limit: 8,
     show_titles: true,
     show_format: true,
@@ -418,6 +421,9 @@ export class FixtureTransport implements Transport {
       result = { ...this.purchaseTotals, revision: this.revision };
     else if (operation === "library/info")
       result = {
+        cache_revision: this.cacheRevision ?? this.revision,
+        cache_context: this.cacheContext,
+        random_seed: this.uiPreferences.random_seed,
         collection_add_enabled:
           !!this.options.library_allow_collection_add &&
           !!this.options.library_sync_collections,
@@ -1066,6 +1072,7 @@ export class FixtureTransport implements Transport {
                   : a.title.localeCompare(b.title),
       );
       if (filters.sort === "random") {
+        filters.random_seed = String(this.uiPreferences.random_seed ?? "");
         // A deterministic fixture shuffle; production uses SHA-256 on the worker.
         const rank = (id: string) => {
           let value = 2166136261;
@@ -1078,6 +1085,11 @@ export class FixtureTransport implements Transport {
       const limit = Number(filters.limit ?? 50);
       const offset = Number(filters.offset ?? 0);
       result = {
+        cache_revision: this.cacheRevision ?? this.revision,
+        cache_context: this.cacheContext,
+        ...(filters.sort === "random"
+          ? { random_seed: filters.random_seed }
+          : {}),
         preferences_key: this.preferencesKey,
         limit,
         items: rows.slice(offset, offset + limit).map((row) => ({

@@ -233,9 +233,18 @@ history retention, filesystem-wide quota or guarantee against disk exhaustion.
 Frontend rendering treats titles, notes, provider metadata and device responses
 as untrusted text. Do not use dynamic HTML, executable templates, remote scripts
 or arbitrary asset URLs. Cached artwork passes format/signature/size validation
-and authenticated serving; browser object URLs are bounded and revoked on scope
-changes. Settings transfer excludes secrets. Development tokens stay in memory
-and never enter bundles or browser persistent storage.
+and authenticated serving. Browser object URLs are revoked on scope changes; the
+opt-in session cache can exceed the normal memory bound. The optional persistent
+browser cache stores artwork blobs partitioned by user, entry and dataset
+without credentials, persists after logout and is not encrypted from other users
+of the same browser profile. Library Options can clear the current user and
+dataset's browser cache. The same opt-in persists bounded first-page Library
+results, including titles and filters, for that user and dataset. They are
+revalidated against authenticated database revision and time-dependent context
+before movie selection is enabled. Like covers, these records persist after
+logout and are accessible to other users of the same browser profile. Settings
+transfer excludes secrets. Development tokens stay in memory and never enter
+bundles or browser persistent storage.
 
 Collection changes remain separately opted in and administrator-only. The queue
 persists actor-bound requests and permits at most ten active items. Accepted
