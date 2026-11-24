@@ -240,7 +240,6 @@ export class FixtureTransport implements Transport {
     view: "list",
     page_size: 100,
     cover_size: 150,
-    cover_cache: "balanced",
     cast_limit: 8,
     show_titles: true,
     show_format: true,

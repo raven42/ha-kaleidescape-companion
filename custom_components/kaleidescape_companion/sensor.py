@@ -305,6 +305,21 @@ class LibrarySensor(CompanionSensor):
             return {}
         data = self.coordinator.data
         key = self.entity_description.key
+        if key == "last_scrape_date":
+            details = data.get("last_scrape_details") or {}
+            return {
+                name: details.get(name)
+                for name in (
+                    "operation",
+                    "status",
+                    "providers",
+                    "processed",
+                    "total",
+                    "updated",
+                    "skipped",
+                    "provider_attempts",
+                )
+            }
         if key in {
             "missing_artwork",
             "missing_metadata",

@@ -20,7 +20,6 @@ LIBRARY_DEFAULTS = {
     "view": "covers",
     "page_size": 100,
     "cover_size": 150,
-    "cover_cache": "balanced",
     "show_titles": True,
     "show_format": True,
     "show_audio_format": True,
@@ -79,9 +78,11 @@ def validate_library(patch, previous=None):
     if isinstance(patch, dict):
         patch = dict(patch)
         patch.pop("show_system_buttons", None)
+        patch.pop("cover_cache", None)
         if "scraper_conflict" in patch:
             patch.setdefault("missing_metadata_artwork", patch.pop("scraper_conflict"))
     previous = dict(previous or {})
+    previous.pop("cover_cache", None)
     # The former single toggle controlled both kinds of format badge.
     previous.setdefault("show_audio_format", previous.get("show_format", True))
     if "scraper_conflict" in previous:
@@ -121,8 +122,6 @@ def validate_library(patch, previous=None):
         )
     ):
         raise invalid("Invalid display toggle")
-    if values["cover_cache"] not in ("balanced", "session", "persistent"):
-        raise invalid("Invalid cover cache mode")
     if type(values["cover_size"]) is not int or not 90 <= values["cover_size"] <= 300:
         raise invalid("Invalid cover size")
     if type(values["cast_limit"]) is not int or not 1 <= values["cast_limit"] <= 30:

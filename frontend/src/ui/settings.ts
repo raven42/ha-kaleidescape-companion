@@ -3,6 +3,7 @@ import { LitElement, css, html, nothing } from "lit";
 import type { PropertyValues } from "lit";
 import { ApiError, errorCode, errorMessage } from "../core/api";
 import type {
+  AboutSensorState,
   JournalClient,
   JournalInfo,
   LibraryInfo,
@@ -30,6 +31,8 @@ import type {
 } from "./settings-catalog";
 import { collectionLabel } from "../library/badges";
 import { counted } from "../core/text";
+import { ABOUT_SENSORS } from "./about-sensors";
+import { readNavigationValue, writeNavigationValue } from "./navigation";
 import { fullSyncSettings } from "./calendar-settings";
 import "./calendar-export";
 import "./automation-blueprints";
@@ -74,6 +77,7 @@ export class KaleidescapeSettings extends LitElement {
   static properties = {
     client: { attribute: false },
     scope: { attribute: false },
+    navigationUser: { attribute: false },
   };
   static styles = [
     styles,
@@ -215,6 +219,18 @@ export class KaleidescapeSettings extends LitElement {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 20px;
       }
+      .sensor-detail {
+        border-top: 1px solid var(--line);
+        padding: 12px 0;
+      }
+      .sensor-detail summary {
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .sensor-detail dd {
+        margin: 4px 0 12px;
+        overflow-wrap: anywhere;
+      }
       .purchase-summary {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -313,6 +329,7 @@ export class KaleidescapeSettings extends LitElement {
   ];
   client?: JournalClient;
   scope?: JournalInfo;
+  navigationUser?: string;
   private tab: SettingsSection = "general";
   private search = "";
   private automationBusy = false;
@@ -325,6 +342,10 @@ export class KaleidescapeSettings extends LitElement {
   private savedHiddenCollections: string[] = [];
   private savingCollections = false;
   private libraryInfo?: LibraryInfo;
+  private aboutSensors?: Record<string, AboutSensorState>;
+  private aboutError = "";
+  private aboutTimer?: ReturnType<typeof setTimeout>;
+  private aboutLoading = false;
   private purchaseTotals?: LibraryPurchaseTotals;
   private purchaseLoading = false;
   private purchaseError = "";
@@ -349,6 +370,12 @@ export class KaleidescapeSettings extends LitElement {
     this.bound = key;
     this.boundClient = this.client;
     this.boundScope = this.scope;
+    const savedTab =
+      new URL(location.href).searchParams.get("companion_settings") ??
+      readNavigationValue(this.navigationKey());
+    this.tab = SETTINGS_SECTIONS.some(([key]) => key === savedTab)
+      ? (savedTab as SettingsSection)
+      : "general";
     this.flow = undefined;
     this.draft = {};
     this.initial = {};
@@ -357,8 +384,16 @@ export class KaleidescapeSettings extends LitElement {
     this.uncertain = this.saving = false;
     if (this.client && this.scope?.permissions.edit) void this.start();
   }
+  private locationChanged = () => {
+    const url = new URL(location.href);
+    if (url.searchParams.get("companion_page") !== "settings") return;
+    const tab = url.searchParams.get("companion_settings") ?? "general";
+    if (SETTINGS_SECTIONS.some(([key]) => key === tab))
+      this.selectTab(tab, true);
+  };
   disconnectedCallback() {
     super.disconnectedCallback();
+    window.removeEventListener("popstate", this.locationChanged);
     this.cancelFlow();
     this.flow = undefined;
     this.draft = {};
@@ -370,6 +405,7 @@ export class KaleidescapeSettings extends LitElement {
   }
   connectedCallback() {
     super.connectedCallback();
+    window.addEventListener("popstate", this.locationChanged);
     this.requestUpdate("client");
     this.requestUpdate("scope");
   }
@@ -381,6 +417,10 @@ export class KaleidescapeSettings extends LitElement {
     if (landing && landing.value !== value) landing.value = value;
   }
   private cancelFlow() {
+    clearTimeout(this.aboutTimer);
+    this.aboutSensors = undefined;
+    this.aboutError = "";
+    this.aboutLoading = false;
     this.search = "";
     this.sharedPreferences?.dispose();
     this.sharedPreferences = undefined;
@@ -475,6 +515,7 @@ export class KaleidescapeSettings extends LitElement {
       if (generation === this.generation) {
         this.loading = false;
         if (this.tab === "general") void this.selectTab("general");
+        if (this.tab === "about") void this.loadAboutSensors();
         this.requestUpdate();
       }
     }
@@ -631,9 +672,31 @@ export class KaleidescapeSettings extends LitElement {
       }
     }
   }
-  private selectTab(tab: string) {
+  private navigationKey() {
+    return `settings:${this.navigationUser ?? "preview"}:${this.scope?.entry_id ?? ""}:${this.scope?.dataset_id ?? ""}`;
+  }
+  private selectTab(tab: string, fromHistory = false) {
     if (!SETTINGS_SECTIONS.some(([key]) => key === tab)) return;
+    const previous = this.tab;
     this.tab = tab as SettingsSection;
+    const url = new URL(location.href);
+    if (!fromHistory && url.searchParams.get("companion_page") === "settings") {
+      if (
+        previous !== this.tab &&
+        !url.searchParams.has("companion_settings")
+      ) {
+        url.searchParams.set("companion_settings", previous);
+        history.replaceState(history.state, "", url);
+      }
+      url.searchParams.set("companion_settings", this.tab);
+      if (previous !== this.tab) history.pushState(history.state, "", url);
+      else history.replaceState(history.state, "", url);
+    }
+    writeNavigationValue(this.navigationKey(), this.tab);
+    if (previous !== this.tab) {
+      clearTimeout(this.aboutTimer);
+      if (this.tab === "about") void this.loadAboutSensors();
+    }
     this.requestUpdate();
   }
   private tabKey(event: KeyboardEvent, current: string) {
@@ -1277,6 +1340,39 @@ export class KaleidescapeSettings extends LitElement {
       }
     </details>`;
   }
+  private async loadAboutSensors() {
+    if (
+      !this.client ||
+      !this.scope?.permissions.edit ||
+      this.aboutLoading ||
+      this.tab !== "about"
+    )
+      return;
+    const client = this.client,
+      scope = this.scope,
+      generation = this.generation;
+    this.aboutLoading = true;
+    try {
+      const result = await client.aboutSensors(scope);
+      if (generation !== this.generation || this.tab !== "about") return;
+      this.aboutSensors = result;
+      this.aboutError = "";
+    } catch (error) {
+      if (generation !== this.generation || this.tab !== "about") return;
+      if (errorCode(error) === "unauthorized") this.fail(error);
+      else this.aboutError = "Sensor states are unavailable. Try refreshing.";
+    } finally {
+      if (generation === this.generation) {
+        this.aboutLoading = false;
+        if (this.tab === "about")
+          this.aboutTimer = setTimeout(
+            () => void this.loadAboutSensors(),
+            30000,
+          );
+        this.requestUpdate();
+      }
+    }
+  }
   private renderAbout() {
     return html`<div class="settings-card">
         ${this.heading("Installed versions", "Version information for troubleshooting this installation.", "Read only")}
@@ -1326,6 +1422,110 @@ export class KaleidescapeSettings extends LitElement {
               </div>`
           : nothing
       }
+      <div class="settings-card">
+        ${this.heading("Integration status", "Values loaded when Settings opened; saved settings are shown.", "Read only")}
+        <dl class="version-grid">
+          ${[
+            [
+              "Automatic recording",
+              this.scope?.tracking_enabled ? "Enabled" : "Disabled",
+            ],
+            ["Library", this.scope?.library_enabled ? "Enabled" : "Disabled"],
+            [
+              "Calendar publishing",
+              this.initial.calendar_enabled === undefined
+                ? "Unknown"
+                : this.initial.calendar_enabled
+                  ? "Enabled"
+                  : "Disabled",
+            ],
+            [
+              "Store metadata",
+              this.initial.metadata_store_enabled === undefined
+                ? "Unknown"
+                : this.initial.metadata_store_enabled
+                  ? "Enabled"
+                  : "Disabled",
+            ],
+            [
+              "TMDB metadata",
+              this.initial.metadata_tmdb_enabled === undefined
+                ? "Unknown"
+                : this.initial.metadata_tmdb_enabled
+                  ? "Enabled"
+                  : "Disabled",
+            ],
+            ["Viewings", String(this.scope?.viewing_count ?? "Unknown")],
+            ["Database revision", String(this.scope?.revision ?? "Unknown")],
+            [
+              "Backup",
+              this.scope?.backup_in_progress
+                ? "In progress"
+                : "Not in progress",
+            ],
+          ].map(
+            ([label, value]) =>
+              html`<div>
+                <dt>${label}</dt>
+                <dd>${value}</dd>
+              </div>`,
+          )}
+        </dl>
+      </div>
+      <div class="settings-card">
+        ${this.heading("Home Assistant sensors", "Current states and attributes, with descriptions for automations and templates.", "Read only")}
+        <details class="sensors-section">
+          <summary>Sensor details</summary>
+          <p class="muted">
+            Updates every 30 seconds while this page is open. Movie lists
+            contain up to 50 titles and may be truncated. Entity IDs can be
+            renamed in Home Assistant.
+          </p>
+          <button
+            type="button"
+            ?disabled=${this.aboutLoading}
+            @click=${() => {
+              clearTimeout(this.aboutTimer);
+              void this.loadAboutSensors();
+            }}
+          >
+            Refresh sensors
+          </button>
+          ${this.aboutError ? html`<p role="status">${this.aboutError}</p>` : nothing}
+          ${ABOUT_SENSORS.map(([key, name, description, attributes]) => {
+            const sensor = this.aboutSensors?.[key];
+            return html`<details class="sensor-detail">
+              <summary>
+                ${name}:
+                ${sensor?.state ?? "Unavailable"}${sensor?.unit ? ` ${sensor.unit}` : ""}
+              </summary>
+              <p>${description}</p>
+              <p>
+                <strong>Entity ID:</strong>
+                <code
+                  >${sensor?.entity_id ?? (this.aboutSensors ? "Not registered" : "Not loaded")}</code
+                >
+              </p>
+              <p><strong>Attributes:</strong> ${attributes}</p>
+              ${
+                sensor && Object.keys(sensor.attributes).length
+                  ? html`<dl>
+                      ${Object.entries(sensor.attributes).map(
+                        ([name, value]) =>
+                          html`<dt><code>${name}</code></dt>
+                            <dd><code>${JSON.stringify(value)}</code></dd>`,
+                      )}
+                    </dl>`
+                  : nothing
+              }
+            </details>`;
+          })}
+          <p class="muted">
+            Library sensors may be unavailable when Library is disabled. The
+            size sensors remain available.
+          </p>
+        </details>
+      </div>
       <div class="settings-card">
         ${this.heading("Documentation & updates", "Find current guidance and the history of changes.", "Reference")}
         <div class="reference-links">

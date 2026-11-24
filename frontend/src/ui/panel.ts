@@ -38,6 +38,7 @@ import { entryLayoutStyles } from "./entry-layout.styles";
 import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
 import { closeButton, dismissBackdrop } from "./dialog";
 import { landingPage, rememberPage, PAGES } from "./navigation";
+import { NavigationScroll } from "./navigation-scroll";
 import type { Page } from "./navigation";
 import { isLibraryLocation, readLibraryFilters } from "../library/url-filters";
 import "./reader";
@@ -49,7 +50,7 @@ import "./settings";
 import "./database";
 import "../library/library";
 import type { KaleidescapeSettings } from "./settings";
-import type { KaleidescapeDatabase } from "./database";
+import type { KaleidescapeDatabase, DatabaseNavigationState } from "./database";
 import type { KaleidescapeLibrary } from "../library/library";
 import type { ViewingSummary } from "../core/api";
 import companionIcon from "./assets/companion-icon.png?inline";
@@ -100,6 +101,11 @@ export class KaleidescapePanel extends LitElement {
   narrow = false;
   private api: JournalClient | null = null;
   private coverSession = new CoverSession();
+  private navigationScroll = new NavigationScroll(
+    this,
+    () =>
+      `${this.hass?.user?.id ?? "preview"}:${this.info?.entry_id ?? ""}:${this.info?.dataset_id ?? ""}`,
+  );
   private haClient?: JournalClient;
   private haConnection?: Hass["connection"];
   private haUser?: string;
@@ -151,6 +157,7 @@ export class KaleidescapePanel extends LitElement {
   private notice = "";
   private playbackPlayer = "";
   private activePage: Page = "journal";
+  private databaseNavigation?: DatabaseNavigationState;
   private navigationReady = false;
   private settingsBusy = false;
   private maintenanceBusy = false;
@@ -160,7 +167,24 @@ export class KaleidescapePanel extends LitElement {
   private modeScope = "";
   private modeError = "";
   private controlLocked = false;
-  private locationChanged = () => {
+  private locationChanged = (event: Event) => {
+    if (
+      event.type === "popstate" &&
+      this.navigationReady &&
+      this.advancedView &&
+      this.info?.permissions.edit
+    ) {
+      const page = landingPage(
+        this.info.ui_defaults?.default_landing_page,
+        true,
+        !!this.info.library_enabled,
+      );
+      if (page !== this.activePage) {
+        void this.switchPage(page, undefined, true);
+        if (this.activePage !== page) rememberPage(this.activePage);
+      }
+      return;
+    }
     if (
       this.navigationReady &&
       this.advancedView &&
@@ -278,6 +302,7 @@ export class KaleidescapePanel extends LitElement {
     this.requestUpdate("client");
   }
   disconnectedCallback() {
+    this.navigationScroll.stop();
     super.disconnectedCallback();
     window.removeEventListener("location-changed", this.locationChanged);
     window.removeEventListener("popstate", this.locationChanged);
@@ -320,6 +345,7 @@ export class KaleidescapePanel extends LitElement {
     this.notice = "";
     this.playbackPlayer = "";
     this.activePage = "journal";
+    this.databaseNavigation = undefined;
     this.navigationReady = false;
     this.settingsBusy = this.maintenanceBusy = false;
     this.fuzzySearch = true;
@@ -383,6 +409,7 @@ export class KaleidescapePanel extends LitElement {
       libraryTitleId?: string;
       libraryCriterion?: LibraryCriterion;
     },
+    fromHistory = false,
   ) {
     if (
       (page === "library" && !this.info?.library_enabled) ||
@@ -397,22 +424,33 @@ export class KaleidescapePanel extends LitElement {
       !this.discard()
     )
       return;
+    this.navigationScroll.save(this.activePage);
+    if (this.activePage === "database")
+      this.databaseNavigation = this.renderRoot
+        .querySelector<KaleidescapeDatabase>("kaleidescape-database")
+        ?.snapshotNavigation();
     this.closeEditor();
     this.libraryTitleId = target?.libraryTitleId;
     this.libraryCriterion = target?.libraryCriterion;
     if (page === "journal") {
       this.journalMovie = target?.movie;
-      this.query = this.searchText = "";
-      this.status = this.filterStatus = "";
+      if (target?.movie) {
+        this.query = this.searchText = "";
+        this.status = this.filterStatus = "";
+      }
     }
     this.activePage = page;
-    rememberPage(page);
+    if (!fromHistory) rememberPage(page, true);
     this.error = this.notice = "";
     this.requestUpdate();
+    void this.updateComplete.then(() => this.navigationScroll.restore(page));
     if (page === "journal") {
-      this.page = 1;
-      this.history = [];
-      await this.loadList();
+      if (target?.movie) {
+        this.page = 1;
+        this.history = [];
+        this.cursor = undefined;
+      }
+      await this.loadList(this.cursor);
     }
   }
   private pageKey(event: KeyboardEvent) {
@@ -1700,6 +1738,7 @@ export class KaleidescapePanel extends LitElement {
                       ? html`<kaleidescape-database
                           .client=${this.api}
                           .scope=${this.info}
+                          .navigationState=${this.databaseNavigation}
                           @access-denied=${() => this.fail(new ApiError("unauthorized"))}
                           @maintenance-busy=${(event: CustomEvent<boolean>) => {
                             if (this.maintenanceBusy === event.detail) return;
@@ -1712,6 +1751,7 @@ export class KaleidescapePanel extends LitElement {
                         ? html`<kaleidescape-settings
                             .client=${this.api}
                             .scope=${this.info}
+                            .navigationUser=${this.hass?.user?.id}
                             @access-denied=${() => this.fail(new ApiError("unauthorized"))}
                             @settings-busy=${(event: CustomEvent<boolean>) => {
                               if (this.settingsBusy === event.detail) return;
@@ -1724,7 +1764,11 @@ export class KaleidescapePanel extends LitElement {
                               this.notice =
                                 "Settings saved. Reloading the integration…";
                               const api = this.api;
+                              this.navigationScroll.save("settings");
                               void this.refresh(true).then(() => {
+                                void this.updateComplete.then(() =>
+                                  this.navigationScroll.restore("settings"),
+                                );
                                 if (this.api === api && this.info) {
                                   this.notice = "Settings saved.";
                                   this.requestUpdate();

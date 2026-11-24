@@ -74,7 +74,7 @@ adds them to the same service device; existing history unique IDs are unchanged.
 | `watched_movies`               | Watched movies: integer               | Groups marked Played; `unknown_movies` and `collections_synced_at` attributes                                                                                                                          |
 | `unwatched_movies`             | Unwatched movies: integer             | Groups marked New; includes `unknown_movies` and `collections_synced_at` attributes                                                                                                                    |
 | `recently_added`               | Recently added movies: integer        | Exact count for the latest addition batch; attributes `movies` (title strings), `truncated`, and `added_at`                                                                                            |
-| `last_scrape_date`             | Last scrape date: timestamp           | Latest finished automatic pass or manual provider search/preview, including failed attempts; older installations initially use their latest saved provider/review timestamp                            |
+| `last_scrape_date`             | Last scrape date: timestamp           | Latest finished automatic pass or manual provider request, including failed attempts; attributes describe that operation (see below)                                                                   |
 | `scraper_conflicts`            | Scraper conflicts: integer            | Current available scanned movie groups with an unresolved conflict for a desired enabled provider, counted once per title; attributes `movies` and `truncated`                                         |
 | `missing_metadata`             | Missing metadata: integer             | Available scanned movie groups missing saved data from at least one globally enabled provider whose per-movie switch is on; attributes `movies` and `truncated`                                        |
 | `missing_artwork`              | Missing artwork: integer              | Available scanned movie groups without a selected cached poster or backdrop when that kind's per-movie expectation switch is on; a title missing both counts once; attributes `movies` and `truncated` |
@@ -106,6 +106,18 @@ incomplete counts. Existing cached collection data can be older than the last
 catalog: its timestamp is exposed. A valid catalog updates `last_library_sync`
 even if later detail/artwork requests fail; it does not assert that every cover
 or collection was synchronized.
+
+The last scrape date sensor exposes `operation` (`refresh` for a batch or
+`review` for an individual search, preview or artwork request), `status`
+(`completed` or `failed`) and `providers` (scrapers involved). For batch
+refreshes, `processed` and `total` count movie groups, `updated` counts
+successful provider updates, `skipped` counts skipped provider attempts and
+`provider_attempts` counts provider attempts actually started. A completed pass
+can include skipped or unmatched providers. On failure the counts describe work
+completed before the failure. Individual review requests do not provide batch
+counts. Cancelled operations are not recorded. New fields are null when a
+historical timestamp predates these summaries; no historical counts are
+inferred.
 
 Scrape activity persists per Library source in a private `settings` record and
 survives restarts. The last-scrape-date sensor includes completed and failed

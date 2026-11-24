@@ -1143,7 +1143,21 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
                 )
             self.assertEqual(
                 repository.async_enrichment.call_args.args,
-                ("activity", sync.source, False),
+                (
+                    "activity",
+                    sync.source,
+                    False,
+                    {
+                        "operation": "refresh",
+                        "status": "completed",
+                        "providers": ["tmdb"],
+                        "processed": 1,
+                        "total": 1,
+                        "updated": 1,
+                        "skipped": 0,
+                        "provider_attempts": 1,
+                    },
+                ),
             )
 
     async def test_declared_unavailable_artwork_skips_automatic_image_requests(self):
@@ -1274,6 +1288,10 @@ class EnrichmentTest(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(result["scraper_failures"], 1)
             self.assertEqual(result["scraper_conflicts"], 0)
             self.assertIsNotNone(result["last_scrape_date"])
+            self.assertEqual(result["last_scrape_details"]["status"], "failed")
+            self.assertEqual(result["last_scrape_details"]["providers"], ["tmdb"])
+            self.assertEqual(result["last_scrape_details"]["provider_attempts"], 1)
+            self.assertEqual(result["last_scrape_details"]["processed"], 0)
             sync.providers.metadata = AsyncMock(
                 side_effect=ProviderError("tmdb_not_found")
             )

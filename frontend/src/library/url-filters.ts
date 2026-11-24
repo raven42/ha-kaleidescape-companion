@@ -48,14 +48,6 @@ export function readLibraryFilters(
 ): LibraryUrlFilters | null {
   if (!isLibraryLocation(url)) return null;
   const params = url.searchParams;
-  const keys = [
-    "filters",
-    "query",
-    "system_filters",
-    ...LIBRARY_FACETS,
-    ...FLAGS,
-  ];
-  if (!keys.some((key) => params.has(`library_${key}`))) return null;
   const query = params.get("library_query") ?? "";
   const filters: LibraryUrlFilters = {
     query: query.length <= 500 && !query.includes("\0") ? query : "",
@@ -106,7 +98,6 @@ export function writeLibraryFilters(filters: LibraryUrlFilters) {
     ...FLAGS,
   ])
     params.delete(`library_${key}`);
-  params.set("library_filters", "1");
   if (typeof filters.query === "string" && filters.query)
     params.set("library_query", filters.query);
   for (const key of LIBRARY_FACETS) {

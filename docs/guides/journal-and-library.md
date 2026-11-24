@@ -63,10 +63,12 @@ not establish that it is current.
 The Library cover view combines cached artwork, format badges and household
 status. Open a cover to inspect its movie.
 
-In **Library → Options**, choose **Balanced**, **Keep for panel session**, or
-**Keep across restarts** for Library and cover retention. Session mode can use
-considerable memory; persistent mode stores Library results and images in this
-browser, subject to browser storage limits. **Clear Library and cover cache**
+In **Library → Options**, choose **Balanced**, **Keep for session**, or **Keep
+across restarts** for Library and cover retention. Balanced limits memory; Keep
+for session can use considerable memory. Keep across restarts stores Library
+results and images in this browser, subject to browser storage limits. The
+choice applies to everyone using this browser, regardless of display width.
+Changing modes does not erase saved data. **Clear Library and cover cache**
 removes this browser's saved results and covers for your current Library; the
 separate server artwork cache is unaffected. Covers for the current page also
 warm in the background; choose **All** to warm the full result set.

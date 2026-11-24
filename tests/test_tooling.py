@@ -129,37 +129,29 @@ class ToolingTest(unittest.TestCase):
                 build.main()
             check.assert_not_called()
 
-    def test_vscode_combined_task_uses_single_quality_gate(self):
+    def test_vscode_combined_task_runs_verified_package_and_tests_in_parallel(self):
         data = json.loads((tasks.ROOT / ".vscode/tasks.json").read_text())
         by_name = {item["label"]: item for item in data["tasks"]}
         combined = by_name["Maintainer: Build, check, package, deploy and restart"]
-        self.assertEqual(combined["dependsOn"][:2], ["Build and check", "Package"])
+        self.assertEqual(combined["dependsOn"][:2], ["Build", "Post-build checks"])
         self.assertEqual(combined["dependsOrder"], "sequence")
-        self.assertEqual(
-            by_name["Build and check"]["dependsOn"], ["Build", "Post-build checks"]
-        )
-        self.assertEqual(by_name["Build and check"]["dependsOrder"], "sequence")
         parallel = by_name["Post-build checks"]
         self.assertEqual(parallel["dependsOrder"], "parallel")
         self.assertEqual(
             set(parallel["dependsOn"]),
-            {
-                "Post-build: Python tests",
-                "Post-build: Frontend tests",
-                "Post-build: Reconstruct pyk",
-                "Post-build: Project checks",
-                "Post-build: Verify assets",
-            },
+            {"Post-build: Python tests", "Post-build: Frontend tests", "Package"},
         )
         self.assertEqual(by_name["Post-build: Python tests"]["args"], ["--python-only"])
         self.assertEqual(
             by_name["Post-build: Frontend tests"]["args"], ["--frontend-only"]
         )
+        visible = {name for name, item in by_name.items() if not item.get("hide")}
         self.assertEqual(
-            by_name["Post-build: Reconstruct pyk"]["args"], ["--reconstruct"]
-        )
-        self.assertEqual(
-            by_name["Post-build: Verify assets"]["args"][-1], "build:check"
+            visible,
+            {
+                "Maintainer: Deploy frontend",
+                "Maintainer: Build, check, package, deploy and restart",
+            },
         )
 
     def test_wrappers_resolve_checkout_from_an_unrelated_directory(self):

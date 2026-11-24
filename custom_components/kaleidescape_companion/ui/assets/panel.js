@@ -272,26 +272,26 @@ var e = Object.defineProperty, t = (e, t, n) => () => {
 }));
 // node_modules/lit-html/lit-html.js
 function me(e, t) {
-	if (!Te(e) || !e.hasOwnProperty("raw")) throw Error("invalid template strings array");
+	if (!Ee(e) || !e.hasOwnProperty("raw")) throw Error("invalid template strings array");
 	return ye === void 0 ? t : ye.createHTML(t);
 }
 function he(e, t, n = e, r) {
-	if (t === b) return t;
-	let i = r === void 0 ? n._$Cl : n._$Co?.[r], a = we(t) ? void 0 : t._$litDirective$;
+	if (t === y) return t;
+	let i = r === void 0 ? n._$Cl : n._$Co?.[r], a = Te(t) ? void 0 : t._$litDirective$;
 	return i?.constructor !== a && (i?._$AO?.(!1), a === void 0 ? i = void 0 : (i = new a(e), i._$AT(e, n, r)), r === void 0 ? n._$Cl = i : (n._$Co ??= [])[r] = i), i !== void 0 && (t = he(e, i._$AS(e, t.values), i, r)), t;
 }
-var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me, Ne, Pe, v, y, b, x, Fe, Ie, Le, Re, ze, Be, Ve, He, Ue, We, Ge, Ke, qe, Je, Ye = t((() => {
-	ge = globalThis, _e = (e) => e, ve = ge.trustedTypes, ye = ve ? ve.createPolicy("lit-html", { createHTML: (e) => e }) : void 0, be = "$lit$", h = `lit$${Math.random().toFixed(9).slice(2)}$`, xe = "?" + h, Se = `<${xe}>`, g = document, Ce = () => g.createComment(""), we = (e) => e === null || typeof e != "object" && typeof e != "function", Te = Array.isArray, Ee = (e) => Te(e) || typeof e?.[Symbol.iterator] == "function", De = "[ 	\n\f\r]", Oe = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, ke = /-->/g, Ae = />/g, _ = RegExp(`>|${De}(?:([^\\s"'>=/]+)(${De}*=${De}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`, "g"), je = /'/g, Me = /"/g, Ne = /^(?:script|style|textarea|title)$/i, Pe = (e) => (t, ...n) => ({
+var ge, _e, ve, ye, be, h, xe, Se, Ce, we, Te, Ee, De, Oe, ke, Ae, je, g, Me, Ne, Pe, Fe, _, v, y, b, Ie, x, Le, Re, ze, Be, Ve, He, Ue, We, Ge, Ke, qe, Je, Ye = t((() => {
+	ge = globalThis, _e = (e) => e, ve = ge.trustedTypes, ye = ve ? ve.createPolicy("lit-html", { createHTML: (e) => e }) : void 0, be = "$lit$", h = `lit$${Math.random().toFixed(9).slice(2)}$`, xe = "?" + h, Se = `<${xe}>`, Ce = document, we = () => Ce.createComment(""), Te = (e) => e === null || typeof e != "object" && typeof e != "function", Ee = Array.isArray, De = (e) => Ee(e) || typeof e?.[Symbol.iterator] == "function", Oe = "[ 	\n\f\r]", ke = /<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g, Ae = /-->/g, je = />/g, g = RegExp(`>|${Oe}(?:([^\\s"'>=/]+)(${Oe}*=${Oe}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`, "g"), Me = /'/g, Ne = /"/g, Pe = /^(?:script|style|textarea|title)$/i, Fe = (e) => (t, ...n) => ({
 		_$litType$: e,
 		strings: t,
 		values: n
-	}), v = Pe(1), y = Pe(2), Pe(3), b = Symbol.for("lit-noChange"), x = Symbol.for("lit-nothing"), Fe = /* @__PURE__ */ new WeakMap(), Ie = g.createTreeWalker(g, 129), Le = (e, t) => {
-		let n = e.length - 1, r = [], i, a = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", o = Oe;
+	}), _ = Fe(1), v = Fe(2), Fe(3), y = Symbol.for("lit-noChange"), b = Symbol.for("lit-nothing"), Ie = /* @__PURE__ */ new WeakMap(), x = Ce.createTreeWalker(Ce, 129), Le = (e, t) => {
+		let n = e.length - 1, r = [], i, a = t === 2 ? "<svg>" : t === 3 ? "<math>" : "", o = ke;
 		for (let t = 0; t < n; t++) {
 			let n = e[t], s, c, l = -1, u = 0;
-			for (; u < n.length && (o.lastIndex = u, c = o.exec(n), c !== null);) u = o.lastIndex, o === Oe ? c[1] === "!--" ? o = ke : c[1] === void 0 ? c[2] === void 0 ? c[3] !== void 0 && (o = _) : (Ne.test(c[2]) && (i = RegExp("</" + c[2], "g")), o = _) : o = Ae : o === _ ? c[0] === ">" ? (o = i ?? Oe, l = -1) : c[1] === void 0 ? l = -2 : (l = o.lastIndex - c[2].length, s = c[1], o = c[3] === void 0 ? _ : c[3] === "\"" ? Me : je) : o === Me || o === je ? o = _ : o === ke || o === Ae ? o = Oe : (o = _, i = void 0);
-			let d = o === _ && e[t + 1].startsWith("/>") ? " " : "";
-			a += o === Oe ? n + Se : l >= 0 ? (r.push(s), n.slice(0, l) + be + n.slice(l) + h + d) : n + h + (l === -2 ? t : d);
+			for (; u < n.length && (o.lastIndex = u, c = o.exec(n), c !== null);) u = o.lastIndex, o === ke ? c[1] === "!--" ? o = Ae : c[1] === void 0 ? c[2] === void 0 ? c[3] !== void 0 && (o = g) : (Pe.test(c[2]) && (i = RegExp("</" + c[2], "g")), o = g) : o = je : o === g ? c[0] === ">" ? (o = i ?? ke, l = -1) : c[1] === void 0 ? l = -2 : (l = o.lastIndex - c[2].length, s = c[1], o = c[3] === void 0 ? g : c[3] === "\"" ? Ne : Me) : o === Ne || o === Me ? o = g : o === Ae || o === je ? o = ke : (o = g, i = void 0);
+			let d = o === g && e[t + 1].startsWith("/>") ? " " : "";
+			a += o === ke ? n + Se : l >= 0 ? (r.push(s), n.slice(0, l) + be + n.slice(l) + h + d) : n + h + (l === -2 ? t : d);
 		}
 		return [me(e, a + (e[n] || "<?>") + (t === 2 ? "</svg>" : t === 3 ? "</math>" : "")), r];
 	}, Re = class e {
@@ -299,11 +299,11 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			let i;
 			this.parts = [];
 			let a = 0, o = 0, s = t.length - 1, c = this.parts, [l, u] = Le(t, n);
-			if (this.el = e.createElement(l, r), Ie.currentNode = this.el.content, n === 2 || n === 3) {
+			if (this.el = e.createElement(l, r), x.currentNode = this.el.content, n === 2 || n === 3) {
 				let e = this.el.content.firstChild;
 				e.replaceWith(...e.childNodes);
 			}
-			for (; (i = Ie.nextNode()) !== null && c.length < s;) {
+			for (; (i = x.nextNode()) !== null && c.length < s;) {
 				if (i.nodeType === 1) {
 					if (i.hasAttributes()) for (let e of i.getAttributeNames()) if (e.endsWith(be)) {
 						let t = u[o++], n = i.getAttribute(e).split(h), r = /([.?@])?(.*)/.exec(t);
@@ -318,15 +318,15 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 						type: 6,
 						index: a
 					}), i.removeAttribute(e));
-					if (Ne.test(i.tagName)) {
+					if (Pe.test(i.tagName)) {
 						let e = i.textContent.split(h), t = e.length - 1;
 						if (t > 0) {
 							i.textContent = ve ? ve.emptyScript : "";
-							for (let n = 0; n < t; n++) i.append(e[n], Ce()), Ie.nextNode(), c.push({
+							for (let n = 0; n < t; n++) i.append(e[n], we()), x.nextNode(), c.push({
 								type: 2,
 								index: ++a
 							});
-							i.append(e[t], Ce());
+							i.append(e[t], we());
 						}
 					}
 				} else if (i.nodeType === 8) {
@@ -346,7 +346,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			}
 		}
 		static createElement(e, t) {
-			let n = g.createElement("template");
+			let n = Ce.createElement("template");
 			return n.innerHTML = e, n;
 		}
 	}, ze = class {
@@ -360,17 +360,17 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			return this._$AM._$AU;
 		}
 		u(e) {
-			let { el: { content: t }, parts: n } = this._$AD, r = (e?.creationScope ?? g).importNode(t, !0);
-			Ie.currentNode = r;
-			let i = Ie.nextNode(), a = 0, o = 0, s = n[0];
+			let { el: { content: t }, parts: n } = this._$AD, r = (e?.creationScope ?? Ce).importNode(t, !0);
+			x.currentNode = r;
+			let i = x.nextNode(), a = 0, o = 0, s = n[0];
 			for (; s !== void 0;) {
 				if (a === s.index) {
 					let t;
 					s.type === 2 ? t = new Be(i, i.nextSibling, this, e) : s.type === 1 ? t = new s.ctor(i, s.name, s.strings, this, e) : s.type === 6 && (t = new Ge(i, this, e)), this._$AV.push(t), s = n[++o];
 				}
-				a !== s?.index && (i = Ie.nextNode(), a++);
+				a !== s?.index && (i = x.nextNode(), a++);
 			}
-			return Ie.currentNode = g, r;
+			return x.currentNode = Ce, r;
 		}
 		p(e) {
 			let t = 0;
@@ -381,7 +381,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			return this._$AM?._$AU ?? this._$Cv;
 		}
 		constructor(e, t, n, r) {
-			this.type = 2, this._$AH = x, this._$AN = void 0, this._$AA = e, this._$AB = t, this._$AM = n, this.options = r, this._$Cv = r?.isConnected ?? !0;
+			this.type = 2, this._$AH = b, this._$AN = void 0, this._$AA = e, this._$AB = t, this._$AM = n, this.options = r, this._$Cv = r?.isConnected ?? !0;
 		}
 		get parentNode() {
 			let e = this._$AA.parentNode, t = this._$AM;
@@ -394,7 +394,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			return this._$AB;
 		}
 		_$AI(e, t = this) {
-			e = he(this, e, t), we(e) ? e === x || e == null || e === "" ? (this._$AH !== x && this._$AR(), this._$AH = x) : e !== this._$AH && e !== b && this._(e) : e._$litType$ === void 0 ? e.nodeType === void 0 ? Ee(e) ? this.k(e) : this._(e) : this.T(e) : this.$(e);
+			e = he(this, e, t), Te(e) ? e === b || e == null || e === "" ? (this._$AH !== b && this._$AR(), this._$AH = b) : e !== this._$AH && e !== y && this._(e) : e._$litType$ === void 0 ? e.nodeType === void 0 ? De(e) ? this.k(e) : this._(e) : this.T(e) : this.$(e);
 		}
 		O(e) {
 			return this._$AA.parentNode.insertBefore(e, this._$AB);
@@ -403,7 +403,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			this._$AH !== e && (this._$AR(), this._$AH = this.O(e));
 		}
 		_(e) {
-			this._$AH !== x && we(this._$AH) ? this._$AA.nextSibling.data = e : this.T(g.createTextNode(e)), this._$AH = e;
+			this._$AH !== b && Te(this._$AH) ? this._$AA.nextSibling.data = e : this.T(Ce.createTextNode(e)), this._$AH = e;
 		}
 		$(e) {
 			let { values: t, _$litType$: n } = e, r = typeof n == "number" ? this._$AC(e) : (n.el === void 0 && (n.el = Re.createElement(me(n.h, n.h[0]), this.options)), n);
@@ -414,13 +414,13 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			}
 		}
 		_$AC(e) {
-			let t = Fe.get(e.strings);
-			return t === void 0 && Fe.set(e.strings, t = new Re(e)), t;
+			let t = Ie.get(e.strings);
+			return t === void 0 && Ie.set(e.strings, t = new Re(e)), t;
 		}
 		k(t) {
-			Te(this._$AH) || (this._$AH = [], this._$AR());
+			Ee(this._$AH) || (this._$AH = [], this._$AR());
 			let n = this._$AH, r, i = 0;
-			for (let a of t) i === n.length ? n.push(r = new e(this.O(Ce()), this.O(Ce()), this, this.options)) : r = n[i], r._$AI(a), i++;
+			for (let a of t) i === n.length ? n.push(r = new e(this.O(we()), this.O(we()), this, this.options)) : r = n[i], r._$AI(a), i++;
 			i < n.length && (this._$AR(r && r._$AB.nextSibling, i), n.length = i);
 		}
 		_$AR(e = this._$AA.nextSibling, t) {
@@ -440,41 +440,41 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			return this._$AM._$AU;
 		}
 		constructor(e, t, n, r, i) {
-			this.type = 1, this._$AH = x, this._$AN = void 0, this.element = e, this.name = t, this._$AM = r, this.options = i, n.length > 2 || n[0] !== "" || n[1] !== "" ? (this._$AH = Array(n.length - 1).fill(/* @__PURE__ */ new String()), this.strings = n) : this._$AH = x;
+			this.type = 1, this._$AH = b, this._$AN = void 0, this.element = e, this.name = t, this._$AM = r, this.options = i, n.length > 2 || n[0] !== "" || n[1] !== "" ? (this._$AH = Array(n.length - 1).fill(/* @__PURE__ */ new String()), this.strings = n) : this._$AH = b;
 		}
 		_$AI(e, t = this, n, r) {
 			let i = this.strings, a = !1;
-			if (i === void 0) e = he(this, e, t, 0), a = !we(e) || e !== this._$AH && e !== b, a && (this._$AH = e);
+			if (i === void 0) e = he(this, e, t, 0), a = !Te(e) || e !== this._$AH && e !== y, a && (this._$AH = e);
 			else {
 				let r = e, o, s;
-				for (e = i[0], o = 0; o < i.length - 1; o++) s = he(this, r[n + o], t, o), s === b && (s = this._$AH[o]), a ||= !we(s) || s !== this._$AH[o], s === x ? e = x : e !== x && (e += (s ?? "") + i[o + 1]), this._$AH[o] = s;
+				for (e = i[0], o = 0; o < i.length - 1; o++) s = he(this, r[n + o], t, o), s === y && (s = this._$AH[o]), a ||= !Te(s) || s !== this._$AH[o], s === b ? e = b : e !== b && (e += (s ?? "") + i[o + 1]), this._$AH[o] = s;
 			}
 			a && !r && this.j(e);
 		}
 		j(e) {
-			e === x ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
+			e === b ? this.element.removeAttribute(this.name) : this.element.setAttribute(this.name, e ?? "");
 		}
 	}, He = class extends Ve {
 		constructor() {
 			super(...arguments), this.type = 3;
 		}
 		j(e) {
-			this.element[this.name] = e === x ? void 0 : e;
+			this.element[this.name] = e === b ? void 0 : e;
 		}
 	}, Ue = class extends Ve {
 		constructor() {
 			super(...arguments), this.type = 4;
 		}
 		j(e) {
-			this.element.toggleAttribute(this.name, !!e && e !== x);
+			this.element.toggleAttribute(this.name, !!e && e !== b);
 		}
 	}, We = class extends Ve {
 		constructor(e, t, n, r, i) {
 			super(e, t, n, r, i), this.type = 5;
 		}
 		_$AI(e, t = this) {
-			if ((e = he(this, e, t, 0) ?? x) === b) return;
-			let n = this._$AH, r = e === x && n !== x || e.capture !== n.capture || e.once !== n.once || e.passive !== n.passive, i = e !== x && (n === x || r);
+			if ((e = he(this, e, t, 0) ?? b) === y) return;
+			let n = this._$AH, r = e === b && n !== b || e.capture !== n.capture || e.once !== n.once || e.passive !== n.passive, i = e !== b && (n === b || r);
 			r && this.element.removeEventListener(this.name, this, n), i && this.element.addEventListener(this.name, this, e), this._$AH = e;
 		}
 		handleEvent(e) {
@@ -497,7 +497,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 		C: 1,
 		L: Le,
 		R: ze,
-		D: Ee,
+		D: De,
 		V: he,
 		I: Be,
 		H: Ve,
@@ -509,7 +509,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 		let r = n?.renderBefore ?? t, i = r._$litPart$;
 		if (i === void 0) {
 			let e = n?.renderBefore ?? null;
-			r._$litPart$ = i = new Be(t.insertBefore(Ce(), e), e, void 0, n ?? {});
+			r._$litPart$ = i = new Be(t.insertBefore(we(), e), e, void 0, n ?? {});
 		}
 		return i._$AI(e), i;
 	};
@@ -533,7 +533,7 @@ var ge, _e, ve, ye, be, h, xe, Se, g, Ce, we, Te, Ee, De, Oe, ke, Ae, _, je, Me,
 			super.disconnectedCallback(), this._$Do?.setConnected(!1);
 		}
 		render() {
-			return b;
+			return y;
 		}
 	}, S._$litElement$ = !0, S.finalized = !0, Xe.litElementHydrateSupport?.({ LitElement: S }), Ze = Xe.litElementPolyfillSupport, Ze?.({ LitElement: S }), (Xe.litElementVersions ??= []).push("4.2.2");
 })), $e = t((() => {})), C = t((() => {
@@ -656,6 +656,12 @@ var D, O, it, k, at, ot, st, A = t((() => {
 		}
 		call(e) {
 			return E(this.transport.callWS(e));
+		}
+		aboutSensors(e) {
+			return this.call({
+				type: `${O}/about/sensors`,
+				...k(e)
+			});
 		}
 		automationStatuses(e) {
 			return this.call({
@@ -1907,14 +1913,14 @@ var D, O, it, k, at, ot, st, A = t((() => {
 			}
 		}
 		render() {
-			return this.url ? v`<img
+			return this.url ? _`<img
           src=${this.url}
           alt=${`Cover for ${this.title}`}
           style=${`object-fit: ${this.fit}`}
           @error=${() => {
 				this.failed = !0, this.queue?.cache.discard(this.cacheKey);
 			}}
-        />` : v`<span
+        />` : _`<span
           >${this.artworkKey && !this.failed ? "Loading artwork…" : "No cached artwork"}</span
         >`;
 		}
@@ -2732,30 +2738,30 @@ var D, O, it, k, at, ot, st, A = t((() => {
 // src/ui/action-icons.ts
 function F(e) {
 	let t = {
-		add: y`<path d="M12 4v16M4 12h16"/>`,
-		search: y`<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>`,
-		filter: y`<path d="M3 5h18l-7 8v6l-4 2v-8z"/>`,
-		clear: y`<path d="m6 6 12 12M18 6 6 18"/>`,
-		shuffle: y`<path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3m-4-4 4 4-4 4"/>`,
-		ascending: y`<path d="M7 20V4m-4 4 4-4 4 4m3-1h7m-7 5h5m-5 5h3"/>`,
-		descending: y`<path d="M7 4v16m-4-4 4 4 4-4m3-9h3m-3 5h5m-5 5h7"/>`,
-		options: y`<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="var(--surface)"/><circle cx="15" cy="12" r="2" fill="var(--surface)"/><circle cx="8" cy="18" r="2" fill="var(--surface)"/>`,
-		first: y`<path d="M5 5v14m13-14-7 7 7 7"/>`,
-		previous: y`<path d="m15 5-7 7 7 7"/>`,
-		next: y`<path d="m9 5 7 7-7 7"/>`,
-		collection: y`<path fill="#ffca28" stroke="#ffca28" d="M6 2h12v20l-6-4-6 4z"/><path fill="#302b16" stroke="none" d="m12 5 1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5z"/>`,
-		refresh: y`<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/>`,
-		delete: y`<path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 10v7M14 10v7"/>`,
-		edit: y`<path d="m15 4 5 5M4 20l4-1 12-12a2.1 2.1 0 0 0-3-3L5 16zM4 20h8"/>`,
-		scrape: y`<path d="M3 9h15v4M3 9l-1-4 14-3 1 4zM6 4l3 4m3-5 3 4M3 9v11h8"/><circle cx="16" cy="16" r="4"/><path d="m19 19 3 3M6 13h3m-3 3h2"/>`,
-		artwork: y`<rect x="8" y="2" width="13" height="9" rx="1"/><path d="m10 9 3-3 2 2 2-3 2 2"/><rect x="3" y="14" width="13" height="9" rx="1"/><path d="m5 21 3-3 2 2 2-3 2 2M3 10V6h3m0 0L4 4m2 2L4 8m17 6v4h-3m0 0 2-2m-2 2 2 2"/>`,
-		power: y`<path d="M12 2v10M6 5a9 9 0 1 0 12 0"/>`,
-		play: y`<path fill="currentColor" stroke="none" d="M7 3v18l15-9z"/>`
+		add: v`<path d="M12 4v16M4 12h16"/>`,
+		search: v`<circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/>`,
+		filter: v`<path d="M3 5h18l-7 8v6l-4 2v-8z"/>`,
+		clear: v`<path d="m6 6 12 12M18 6 6 18"/>`,
+		shuffle: v`<path d="M3 6h3c5 0 7 12 12 12h3m-4-4 4 4-4 4M3 18h3c2 0 4-3 6-6s4-6 6-6h3m-4-4 4 4-4 4"/>`,
+		ascending: v`<path d="M7 20V4m-4 4 4-4 4 4m3-1h7m-7 5h5m-5 5h3"/>`,
+		descending: v`<path d="M7 4v16m-4-4 4 4 4-4m3-9h3m-3 5h5m-5 5h7"/>`,
+		options: v`<path d="M4 6h16M4 12h16M4 18h16"/><circle cx="9" cy="6" r="2" fill="var(--surface)"/><circle cx="15" cy="12" r="2" fill="var(--surface)"/><circle cx="8" cy="18" r="2" fill="var(--surface)"/>`,
+		first: v`<path d="M5 5v14m13-14-7 7 7 7"/>`,
+		previous: v`<path d="m15 5-7 7 7 7"/>`,
+		next: v`<path d="m9 5 7 7-7 7"/>`,
+		collection: v`<path fill="#ffca28" stroke="#ffca28" d="M6 2h12v20l-6-4-6 4z"/><path fill="#302b16" stroke="none" d="m12 5 1.5 3 3.3.5-2.4 2.3.6 3.3-3-1.6-3 1.6.6-3.3-2.4-2.3 3.3-.5z"/>`,
+		refresh: v`<path d="M20 7v5h-5M4 17v-5h5"/><path d="M5.6 9A7 7 0 0 1 18 6l2 6M4 12l2 6a7 7 0 0 0 12.4-3"/>`,
+		delete: v`<path d="M4 7h16M9 7V4h6v3M7 7l1 13h8l1-13M10 10v7M14 10v7"/>`,
+		edit: v`<path d="m15 4 5 5M4 20l4-1 12-12a2.1 2.1 0 0 0-3-3L5 16zM4 20h8"/>`,
+		scrape: v`<path d="M3 9h15v4M3 9l-1-4 14-3 1 4zM6 4l3 4m3-5 3 4M3 9v11h8"/><circle cx="16" cy="16" r="4"/><path d="m19 19 3 3M6 13h3m-3 3h2"/>`,
+		artwork: v`<rect x="8" y="2" width="13" height="9" rx="1"/><path d="m10 9 3-3 2 2 2-3 2 2"/><rect x="3" y="14" width="13" height="9" rx="1"/><path d="m5 21 3-3 2 2 2-3 2 2M3 10V6h3m0 0L4 4m2 2L4 8m17 6v4h-3m0 0 2-2m-2 2 2 2"/>`,
+		power: v`<path d="M12 2v10M6 5a9 9 0 1 0 12 0"/>`,
+		play: v`<path fill="currentColor" stroke="none" d="M7 3v18l15-9z"/>`
 	};
-	return y`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t[e]}</svg>`;
+	return v`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${t[e]}</svg>`;
 }
 function yt(e, t, n, r, i = "") {
-	return v`<span
+	return _`<span
     class="icon-action-wrap"
     @pointerenter=${(e) => e.currentTarget.removeAttribute("data-tooltip-dismissed")}
     @focusin=${(e) => {
@@ -2905,14 +2911,14 @@ var xt = class extends S {
 		}));
 	}
 	render() {
-		return v`<div
+		return _`<div
       class="shortcuts"
       role="toolbar"
       aria-label="Journal shortcuts"
     >
       <h2>Viewings (${this.count})</h2>
-      ${this.allowAdd ? v`<button type="button" aria-label="Add viewing" title="Add viewing" ?disabled=${this.disabled} @click=${() => this.signal("journal-add")}>${F("add")}</button>` : x}
-      ${this.filterLabel ? v`<button type="button" aria-label="Show all viewings" title="Show all viewings" ?disabled=${this.disabled} @click=${() => this.signal("journal-clear-movie")}>All</button>` : x}
+      ${this.allowAdd ? _`<button type="button" aria-label="Add viewing" title="Add viewing" ?disabled=${this.disabled} @click=${() => this.signal("journal-add")}>${F("add")}</button>` : b}
+      ${this.filterLabel ? _`<button type="button" aria-label="Show all viewings" title="Show all viewings" ?disabled=${this.disabled} @click=${() => this.signal("journal-clear-movie")}>All</button>` : b}
       <button
         type="button"
         aria-label="Refresh Journal"
@@ -2939,7 +2945,7 @@ var xt = class extends S {
 customElements.get("kaleidescape-journal-shortcuts") || customElements.define("kaleidescape-journal-shortcuts", xt);
 // src/ui/dialog.ts
 function L(e, t = !1) {
-	return v`<button
+	return _`<button
     type="button"
     class="dialog-close"
     aria-label="Close"
@@ -2980,27 +2986,27 @@ function Ct(e = 0) {
 function wt(e, t, n = !!t, r = St) {
 	if (n) {
 		let n = [
-			r.calendar_show_month ? v`<span
+			r.calendar_show_month ? _`<span
             >${t?.monthName ?? t?.month ?? "Selected Month"}:
             ${t?.count ?? "—"}</span
-          >` : x,
-			r.calendar_show_year ? v`<span>Year: ${e?.year_viewing_count ?? "—"}</span>` : x,
-			r.calendar_show_total ? v`<span>Total: ${e?.viewing_count ?? "—"}</span>` : x
-		].filter((e) => e !== x);
-		return n.length ? v`<div
+          >` : b,
+			r.calendar_show_year ? _`<span>Year: ${e?.year_viewing_count ?? "—"}</span>` : b,
+			r.calendar_show_total ? _`<span>Total: ${e?.viewing_count ?? "—"}</span>` : b
+		].filter((e) => e !== b);
+		return n.length ? _`<div
           class="calendar-totals"
           style=${`grid-template-columns: repeat(${n.length}, minmax(0, 1fr))`}
         >
           ${n}
-        </div>` : x;
+        </div>` : b;
 	}
-	return v`<span
+	return _`<span
     >Total Viewings ${e?.viewing_count ?? 0} · Watched Time
     ${Ct(e?.watched_seconds)}</span
   >`;
 }
 function Tt(e, t, n, r, i) {
-	return v`<form
+	return _`<form
     class="journal-mobile-search"
     role="search"
     @submit=${(e) => {
@@ -3016,28 +3022,28 @@ function Tt(e, t, n, r, i) {
       ?disabled=${t}
       @input=${(e) => n(e.target.value)}
     />
-    ${e ? v`<button type="button" aria-label="Clear Journal search" ?disabled=${t} @click=${i}>×</button>` : x}
+    ${e ? _`<button type="button" aria-label="Clear Journal search" ?disabled=${t} @click=${i}>×</button>` : b}
     <button type="submit" aria-label="Search Journal" ?disabled=${t}>
       ${F("search")}
     </button>
   </form>`;
 }
 function Et(e, t) {
-	return e ? e.error ? v`<span class="error" role="alert"
+	return e ? e.error ? _`<span class="error" role="alert"
         >${e.error} <button @click=${t}>Retry month</button></span
-      >` : e.loading ? v`<span role="status">Loading month…</span>` : e.empty ? v`<span class="calendar-empty-notice" role="status"
+      >` : e.loading ? _`<span role="status">Loading month…</span>` : e.empty ? _`<span class="calendar-empty-notice" role="status"
             >No viewings match this month</span
-          >` : x : x;
+          >` : b : b;
 }
 function Dt(e, t, n, r = !1) {
 	let i = new Date(e.started_at), a = Number.isNaN(i.getTime()) ? "—" : i.toLocaleDateString();
-	return v`<li
+	return _`<li
     class=${t === e.id ? "journal-row selected" : "journal-row"}
   >
     <button
       class="link entry-name"
       title=${e.title}
-      aria-current=${t === e.id ? "true" : x}
+      aria-current=${t === e.id ? "true" : b}
       ?disabled=${r}
       @click=${() => n(e.id)}
     >
@@ -3050,10 +3056,10 @@ function Dt(e, t, n, r = !1) {
   </li>`;
 }
 function Ot(e, t, n) {
-	let r = n ? v`<button type="button" class="link" @click=${n}>
+	let r = n ? _`<button type="button" class="link" @click=${n}>
         ${e.title}
       </button>` : e.title;
-	return v`<h3 class="journal-title">${r}</h3>
+	return _`<h3 class="journal-title">${r}</h3>
     <dl class="journal-summary">
       <div>
         <dt>Status</dt>
@@ -3539,19 +3545,19 @@ function zt(e) {
 }
 function Bt(e) {
 	let t = e ? zt(e) : [];
-	return t.length ? v`<div
+	return t.length ? _`<div
     class="movie-ratings"
     slot="collection"
     aria-label="Viewer and critic ratings"
   >
     ${t.map(({ kind: e, label: t, value: n, max: r }) => {
 		let i = Math.round(n / r * 100), a = e === "critic" ? i >= 60 ? jt : Nt : i >= 60 ? Ft : Lt;
-		return v`<span
+		return _`<span
         class=${`score-chip score-${e}`}
         title=${`${t}: ${i}%`}
         aria-label=${`${t}: ${i}%${r === 10 ? ` (${n}/10)` : ""}`}
       >
-        ${e === "viewer" ? v`<svg
+        ${e === "viewer" ? _`<svg
                 class="score-ring"
                 viewBox="0 0 48 48"
                 aria-hidden="true"
@@ -3581,12 +3587,12 @@ function Bt(e) {
                   ${i}
                   <tspan font-size="7" dy="-4">%</tspan>
                 </text>
-              </svg>` : v`<img src=${a} alt="" width="30" height="30" /><span
+              </svg>` : _`<img src=${a} alt="" width="30" height="30" /><span
                   >${i}%</span
                 >`}
       </span>`;
 	})}
-  </div>` : x;
+  </div>` : b;
 }
 var Vt = t((() => {
 	Mt(), Pt(), It(), Rt(), C();
@@ -3600,7 +3606,7 @@ var V = t((() => {})), Ht, Ut = t((() => {
 }));
 // src/enrichment/credits.ts
 function Wt() {
-	return v`<a
+	return _`<a
       href="https://www.themoviedb.org"
       target="_blank"
       rel="noopener noreferrer"
@@ -3621,22 +3627,22 @@ function Kt(e, t, n = 8) {
 		["Producers", e.producers ?? []],
 		["Studios", e.studios]
 	];
-	return v`${r.some(([, e]) => e?.length) ? v`<details class="extra-credits">
+	return _`${r.some(([, e]) => e?.length) ? _`<details class="extra-credits">
           <summary>More credits</summary>
           <dl class="movie-credits">
-            ${r.map(([e, n]) => n?.length ? v`<div>
+            ${r.map(([e, n]) => n?.length ? _`<div>
                     <dt>${e}</dt>
                     <dd>
-                      ${n.map((e, r) => v`<span class="credit-name">${t(e, e + (r < n.length - 1 ? "," : ""))}</span>${r < n.length - 1 ? " " : ""}`)}
+                      ${n.map((e, r) => _`<span class="credit-name">${t(e, e + (r < n.length - 1 ? "," : ""))}</span>${r < n.length - 1 ? " " : ""}`)}
                     </dd>
-                  </div>` : x)}
+                  </div>` : b)}
           </dl>
-        </details>` : x}
-  ${e.enrichment && Object.keys(e.enrichment).length ? v`<details class="metadata-scores">
+        </details>` : b}
+  ${e.enrichment && Object.keys(e.enrichment).length ? _`<details class="metadata-scores">
           <summary>Ratings and metadata sources</summary>
-          ${Object.entries(e.enrichment).map(([e, t]) => v`<p class="muted">${e === "reviewed" ? "Reviewed metadata" : e === "tmdb" ? "TMDB" : "Kaleidescape store"}${t.critic_score == null ? x : v` · Rotten Tomatoes critics ${t.critic_score}%`}${t.audience_score == null ? x : v` · Rotten Tomatoes audience ${t.audience_score}%`}${t.audience_rating == null ? x : v` · TMDB audience ${t.audience_rating}/10 (${B(t.audience_votes ?? 0, "vote")})`}${t.distributor ? v` · Distributor: ${t.distributor}` : x}</p>`)}
-          ${e.enrichment.tmdb || e.enrichment.reviewed?.providers?.includes("tmdb") ? Wt() : x}
-        </details>` : x}`;
+          ${Object.entries(e.enrichment).map(([e, t]) => _`<p class="muted">${e === "reviewed" ? "Reviewed metadata" : e === "tmdb" ? "TMDB" : "Kaleidescape store"}${t.critic_score == null ? b : _` · Rotten Tomatoes critics ${t.critic_score}%`}${t.audience_score == null ? b : _` · Rotten Tomatoes audience ${t.audience_score}%`}${t.audience_rating == null ? b : _` · TMDB audience ${t.audience_rating}/10 (${B(t.audience_votes ?? 0, "vote")})`}${t.distributor ? _` · Distributor: ${t.distributor}` : b}</p>`)}
+          ${e.enrichment.tmdb || e.enrichment.reviewed?.providers?.includes("tmdb") ? Wt() : b}
+        </details>` : b}`;
 }
 var qt = t((() => {
 	C(), V(), Gt();
@@ -3714,7 +3720,7 @@ var qt = t((() => {
 			}
 		}
 		render() {
-			return this.url ? v`<img src=${this.url} alt="" />` : v`<span
+			return this.url ? _`<img src=${this.url} alt="" />` : _`<span
           >${this.failed ? "Preview unavailable" : "Loading preview…"}</span
         >`;
 		}
@@ -4481,13 +4487,13 @@ var Zt, Qt = t((() => {
 			}
 		}
 		status(e, t) {
-			return v`<p class="status-line" data-complete=${t}>
+			return _`<p class="status-line" data-complete=${t}>
       <span aria-hidden="true">${t ? "✓" : "⚠"}</span>${e}:
       ${t ? "Complete" : "Missing"}
     </p>`;
 		}
 		switchFor(e, t, n) {
-			return v`<label class="switch" title=${e}
+			return _`<label class="switch" title=${e}
       ><input
         type="checkbox"
         aria-label=${e}
@@ -4500,9 +4506,9 @@ var Zt, Qt = t((() => {
 		}
 		currentMovie() {
 			let e = this.options?.current;
-			if (!e) return x;
+			if (!e) return b;
 			let t = !!this.imageDraft.poster || (this.resetDraft.has("poster") ? !!e.original_artwork_key : this.options?.artwork_present?.poster ?? !!e.artwork_key), n = !!this.imageDraft.backdrop || (this.resetDraft.has("backdrop") ? !!e.previous_backdrop_key : this.options?.artwork_present?.backdrop ?? !!e.backdrop_key), r = this.options?.providers.every((e) => !this.sourceExpected[e.id] || e.has_data || !!this.providerDrafts[e.id]?.has_data) ?? !0, i = this.options?.providers.some((e) => e.id === "tmdb" && e.available);
-			return v`<section
+			return _`<section
       class="manager-section"
       aria-label="Current Library movie"
     >
@@ -4510,13 +4516,13 @@ var Zt, Qt = t((() => {
       <div class="current-layout">
         <div class="current-identity">
           <div class="current-poster">
-            ${this.imageDraft.poster && this.review ? v`<kaleidescape-scrape-image
+            ${this.imageDraft.poster && this.review ? _`<kaleidescape-scrape-image
                     .client=${this.client}
                     .scope=${this.scope}
                     .queue=${this.queue}
                     .plan=${this.review.plan_id}
                     .choice=${this.imageDraft.poster}
-                  ></kaleidescape-scrape-image>` : v`<kaleidescape-library-cover
+                  ></kaleidescape-scrape-image>` : _`<kaleidescape-library-cover
                     .client=${this.client}
                     .scope=${this.scope}
                     .queue=${this.queue}
@@ -4524,8 +4530,8 @@ var Zt, Qt = t((() => {
                     .title=${e.title}
                   ></kaleidescape-library-cover>`}
             <div class="image-links">
-              ${i && this.options?.artwork_enabled ? v`<button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => void this.editImage("poster")}>Edit</button>` : x}
-              ${e.original_artwork_key ? v`<button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => void this.resetArtwork("poster")}>Reset</button>` : x}
+              ${i && this.options?.artwork_enabled ? _`<button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => void this.editImage("poster")}>Edit</button>` : b}
+              ${e.original_artwork_key ? _`<button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => void this.resetArtwork("poster")}>Reset</button>` : b}
             </div>
           </div>
           <div>
@@ -4547,13 +4553,13 @@ var Zt, Qt = t((() => {
           </div>
         </div>
         <div class="current-backdrop">
-          ${this.imageDraft.backdrop && this.review ? v`<kaleidescape-scrape-image
+          ${this.imageDraft.backdrop && this.review ? _`<kaleidescape-scrape-image
                   .client=${this.client}
                   .scope=${this.scope}
                   .queue=${this.queue}
                   .plan=${this.review.plan_id}
                   .choice=${this.imageDraft.backdrop}
-                ></kaleidescape-scrape-image>` : v`<kaleidescape-library-cover
+                ></kaleidescape-scrape-image>` : _`<kaleidescape-library-cover
                   .client=${this.client}
                   .scope=${this.scope}
                   .queue=${this.queue}
@@ -4561,7 +4567,7 @@ var Zt, Qt = t((() => {
                   .title=${`${e.title} backdrop`}
                   .fit=${"contain"}
                 ></kaleidescape-library-cover>`}
-          ${i && this.options?.artwork_enabled ? v`<div class="image-links"><button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => void this.editImage("backdrop")}>Edit</button>${e.backdrop_key || e.backdrop_reset_available || this.imageDraft.backdrop ? v`<button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => void this.resetArtwork("backdrop")}>Reset</button>` : x}</div>` : x}
+          ${i && this.options?.artwork_enabled ? _`<div class="image-links"><button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => void this.editImage("backdrop")}>Edit</button>${e.backdrop_key || e.backdrop_reset_available || this.imageDraft.backdrop ? _`<button class="text-link" ?disabled=${this.busy || this.writePending} @click=${() => void this.resetArtwork("backdrop")}>Reset</button>` : b}</div>` : b}
         </div>
         <div class="artwork-status">
           <h3>Scraping status</h3>
@@ -4602,7 +4608,7 @@ var Zt, Qt = t((() => {
     </section>`;
 		}
 		sourcesPanel() {
-			return this.options ? v`<section class="manager-section" aria-label="Scraper sources">
+			return this.options ? _`<section class="manager-section" aria-label="Scraper sources">
       <h3>Scraper Sources</h3>
       <p class="muted">
         Refresh searches this source using the title and year above. A unique
@@ -4610,7 +4616,7 @@ var Zt, Qt = t((() => {
         ${this.options.auto_save ? "Changes are saved immediately." : "Changes remain in draft until you select Save."}
       </p>
       <div class="source-list">
-        ${this.options.providers.map((e) => v`<div class="source-row" data-provider=${e.id}>
+        ${this.options.providers.map((e) => _`<div class="source-row" data-provider=${e.id}>
               ${this.switchFor(`Use ${e.label} for this movie`, this.sourceExpected[e.id] ?? !1, (t) => {
 				this.sourceExpected = {
 					...this.sourceExpected,
@@ -4619,7 +4625,7 @@ var Zt, Qt = t((() => {
 			})}
               <div class="source-name">
                 <strong>${e.label}</strong>
-                ${Xt(e.match_url) ? v`<a href=${Xt(e.match_url)} target="_blank" rel="noopener noreferrer" aria-label=${`View ${e.label} match`}>View match</a>` : x}
+                ${Xt(e.match_url) ? _`<a href=${Xt(e.match_url)} target="_blank" rel="noopener noreferrer" aria-label=${`View ${e.label} match`}>View match</a>` : b}
               </div>
               <span class="source-detail">
                 ${this.providerDrafts[e.id] ? this.providerDrafts[e.id].has_data ? "Downloaded - Ready to save" : "No data available - Ready to save" : e.has_data ? e.fetched_at ? `Downloaded - Updated ${new Date(e.fetched_at).toLocaleDateString()}` : "Downloaded - Update date unavailable" : e.checked_at ? `No data available - Last Checked ${new Date(e.checked_at).toLocaleDateString()}` : "Not yet scanned"}
@@ -4628,7 +4634,7 @@ var Zt, Qt = t((() => {
                 >
               </span>
               <div class="source-actions">
-                ${this.hints.has(e.id) ? v`<span class="source-hint" role="status">⚠ Try again with no year</span>` : x}
+                ${this.hints.has(e.id) ? _`<span class="source-hint" role="status">⚠ Try again with no year</span>` : b}
                 <button
                   ?disabled=${!e.available || !this.sourceExpected[e.id] || this.busy || this.writePending || !this.query.trim() || !this.validYear()}
                   @click=${() => void this.refresh(e.id)}
@@ -4638,7 +4644,7 @@ var Zt, Qt = t((() => {
               </div>
             </div>`)}
       </div>
-    </section>` : x;
+    </section>` : b;
 		}
 		formatted(e) {
 			return e == null || e === "" || Array.isArray(e) && !e.length ? "—" : Array.isArray(e) ? e.join(", ") : String(e);
@@ -4657,7 +4663,7 @@ var Zt, Qt = t((() => {
 			e.preventDefault(), t[r]?.click(), t[r]?.focus();
 		}
 		mappingPanel() {
-			return this.options ? v`<section class="manager-section" aria-label="Field mapping">
+			return this.options ? _`<section class="manager-section" aria-label="Field mapping">
       <h3>Field Mapping</h3>
       <p class="muted">
         Select the source whose value should appear in the Library for each
@@ -4669,21 +4675,21 @@ var Zt, Qt = t((() => {
           <colgroup>
             <col class="field-column" />
             <col class="source-column" />
-            ${this.options.providers.map(() => v`<col class="source-column" />`)}
+            ${this.options.providers.map(() => _`<col class="source-column" />`)}
           </colgroup>
           <thead>
             <tr>
               <th scope="col">Field</th>
               <th scope="col">Raw Library</th>
-              ${this.options.providers.map((e) => v`<th scope="col">${e.label}</th>`)}
+              ${this.options.providers.map((e) => _`<th scope="col">${e.label}</th>`)}
             </tr>
           </thead>
           <tbody>
-            ${(this.options.field_mapping ?? []).map((e) => v`<tr>
+            ${(this.options.field_mapping ?? []).map((e) => _`<tr>
                   <th scope="row">${e.label}</th>
                   ${["original", ...this.options.providers.map((e) => e.id)].map((t) => {
 				let n = this.providerDrafts[t]?.has_data ? this.providerDrafts[t].values[e.field] : e.values[t], r = n != null && n !== "" && (!Array.isArray(n) || n.length > 0);
-				return v`<td>
+				return _`<td>
                       <label
                         ><input
                           type="radio"
@@ -4708,15 +4714,15 @@ var Zt, Qt = t((() => {
           </tbody>
         </table>
       </div>
-    </section>` : x;
+    </section>` : b;
 		}
 		historyPanel() {
-			return this.options ? v`<section class="manager-section" aria-label="Source history">
+			return this.options ? _`<section class="manager-section" aria-label="Source history">
       <h3>Source History</h3>
-      ${this.options.history?.length ? v`<div class="history-list">
+      ${this.options.history?.length ? _`<div class="history-list">
               ${this.options.history.map((e) => {
 				let t = this.options.providers.find((t) => t.id === e.provider), n = Object.entries(e.values);
-				return v`<article class="history-entry">
+				return _`<article class="history-entry">
                   <div class="history-head">
                     <strong>${t?.label ?? e.provider}</strong>
                     <time datetime=${e.checked_at}
@@ -4726,18 +4732,18 @@ var Zt, Qt = t((() => {
                       >${e.outcome === "downloaded" ? `${n.length} values saved` : "No data available"}</span
                     >
                   </div>
-                  ${n.length ? v`<div class="history-values">
-                          ${n.map(([e, t]) => v`<div class="history-value"><strong>${this.fieldLabel(e)}</strong><span>${this.formatted(t)}</span></div>`)}
-                        </div>` : v`<p class="muted">
+                  ${n.length ? _`<div class="history-values">
+                          ${n.map(([e, t]) => _`<div class="history-value"><strong>${this.fieldLabel(e)}</strong><span>${this.formatted(t)}</span></div>`)}
+                        </div>` : _`<p class="muted">
                           No provider values were returned for this check.
                         </p>`}
                 </article>`;
 			})}
-            </div>` : v`<p class="muted">No provider history is available yet.</p>`}
-    </section>` : x;
+            </div>` : _`<p class="muted">No provider history is available yet.</p>`}
+    </section>` : b;
 		}
 		searchPanel() {
-			return this.options ? v`<section class="manager-section" aria-label="Search and match">
+			return this.options ? _`<section class="manager-section" aria-label="Search and match">
       <h3>Search &amp; Match</h3>
       <div class="match-search">
         <label
@@ -4763,10 +4769,10 @@ var Zt, Qt = t((() => {
 			}}
         /></label>
       </div>
-    </section>` : x;
+    </section>` : b;
 		}
 		choiceContent() {
-			if (this.candidatePage) return v`<div>
+			if (this.candidatePage) return _`<div>
         <div class="card-head">
           <h2 id="choice-title">Choose a movie match</h2>
           ${L(() => this.closeChoice(), this.busy)}
@@ -4779,10 +4785,10 @@ var Zt, Qt = t((() => {
         <p class="muted">
           Select the matching result to download its metadata.
         </p>
-        ${this.candidatePage.candidates.length ? x : v`<p>No matching movies were found. Try Refresh with another title or year.</p>`}
+        ${this.candidatePage.candidates.length ? b : _`<p>No matching movies were found. Try Refresh with another title or year.</p>`}
         <div class="match-list">
-          ${this.candidatePage.candidates.map((e) => v`<article class="match-card">
-                ${e.has_artwork ? v`<kaleidescape-scrape-image .client=${this.client} .scope=${this.scope} .queue=${this.queue} .plan=${this.candidatePage.search_id} .choice=${e.id}></kaleidescape-scrape-image>` : v`<div class="muted">No cover</div>`}
+          ${this.candidatePage.candidates.map((e) => _`<article class="match-card">
+                ${e.has_artwork ? _`<kaleidescape-scrape-image .client=${this.client} .scope=${this.scope} .queue=${this.queue} .plan=${this.candidatePage.search_id} .choice=${e.id}></kaleidescape-scrape-image>` : _`<div class="muted">No cover</div>`}
                 <div>
                   <h3>${e.title} (${e.year})</h3>
                   <p>
@@ -4799,9 +4805,9 @@ var Zt, Qt = t((() => {
               </article>`)}
         </div>
       </div>`;
-			if (!this.review || !this.imageKind) return x;
+			if (!this.review || !this.imageKind) return b;
 			let e = this.review.images.filter((e) => e.kind === this.imageKind), t = this.imagePage * 6;
-			return v`<div>
+			return _`<div>
       <div class="card-head">
         <h2 id="choice-title">
           Choose ${this.imageKind === "poster" ? "cover art" : "backdrop art"}
@@ -4812,9 +4818,9 @@ var Zt, Qt = t((() => {
         Images from TMDB for
         ${this.review.matched?.title ?? this.options?.title}.
       </p>
-      ${e.length ? x : v`<p>No images available from TMDB.</p>`}
+      ${e.length ? b : _`<p>No images available from TMDB.</p>`}
       <div class="image-grid" data-kind=${this.imageKind}>
-        ${e.slice(t, t + 6).map((e, n) => v`<label>
+        ${e.slice(t, t + 6).map((e, n) => _`<label>
               <kaleidescape-scrape-image
                 .client=${this.client}
                 .scope=${this.scope}
@@ -4836,7 +4842,7 @@ var Zt, Qt = t((() => {
               <small>${e.width ?? "?"} × ${e.height ?? "?"}</small>
             </label>`)}
       </div>
-      ${e.length > 6 ? v`<div class="actions">
+      ${e.length > 6 ? _`<div class="actions">
               <button
                 ?disabled=${!t}
                 @click=${() => {
@@ -4853,7 +4859,7 @@ var Zt, Qt = t((() => {
               >
                 Next
               </button>
-            </div>` : x}
+            </div>` : b}
       <div class="dialog-footer manager-actions">
         <button
           class="primary"
@@ -4866,7 +4872,7 @@ var Zt, Qt = t((() => {
     </div>`;
 		}
 		render() {
-			return this.scope?.permissions.edit ? v`${yt("Scrape title", "scrape", this.blocked || this.writePending, () => void this.open(), "scrape-button")}
+			return this.scope?.permissions.edit ? _`${yt("Scrape title", "scrape", this.blocked || this.writePending, () => void this.open(), "scrape-button")}
       <dialog
         data-admin-dialog
         class="inset-dialog"
@@ -4883,10 +4889,10 @@ var Zt, Qt = t((() => {
           </div>
           ${L(() => this.close(), this.busy || this.writePending)}
         </div>
-        ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-        ${this.busy ? v`<p role="status">Updating movie metadata…</p>` : x}
+        ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+        ${this.busy ? _`<p role="status">Updating movie metadata…</p>` : b}
         ${this.currentMovie()}${this.searchPanel()}
-        ${this.options ? v`<div
+        ${this.options ? _`<div
                 class="page-tabs manager-tabs"
                 role="tablist"
                 aria-label="Metadata manager sections"
@@ -4896,7 +4902,7 @@ var Zt, Qt = t((() => {
 				"sources",
 				"mapping",
 				"history"
-			].map((e) => v`<button
+			].map((e) => _`<button
                       role="tab"
                       aria-selected=${this.view === e}
                       tabindex=${this.view === e ? 0 : -1}
@@ -4906,24 +4912,24 @@ var Zt, Qt = t((() => {
                     >
                       ${e === "sources" ? "Sources" : e === "mapping" ? "Field Mapping" : "History"}
                     </button>`)}
-              </div>` : x}
+              </div>` : b}
         ${this.view === "sources" ? this.sourcesPanel() : this.view === "mapping" ? this.mappingPanel() : this.historyPanel()}
-        ${this.options && (!this.options.auto_save || this.pending) ? v`<div class="dialog-footer manager-actions">
-                ${this.pending ? v`<button
+        ${this.options && (!this.options.auto_save || this.pending) ? _`<div class="dialog-footer manager-actions">
+                ${this.pending ? _`<button
                         @click=${() => {
 				window.confirm("Inspect the Library before discarding an unconfirmed save. Discard retry?") && (this.pending = void 0, this.lock(), this.requestUpdate());
 			}}
                       >
                         Discard retry
-                      </button>` : x}
-                ${!this.options?.auto_save || this.pending ? v`<button
+                      </button>` : b}
+                ${!this.options?.auto_save || this.pending ? _`<button
                         class="primary"
                         ?disabled=${this.busy || !this.pending && !this.hasDraft}
                         @click=${() => void this.save()}
                       >
                         ${this.pending ? "Retry exact save" : "Save"}
-                      </button>` : x}
-              </div>` : x}
+                      </button>` : b}
+              </div>` : b}
       </dialog>
       <dialog
         data-admin-dialog
@@ -4935,7 +4941,7 @@ var Zt, Qt = t((() => {
 			}}
       >
         ${this.choiceContent()}
-      </dialog>` : x;
+      </dialog>` : b;
 		}
 	}, customElements.get("kaleidescape-title-scrape") || customElements.define("kaleidescape-title-scrape", Zt);
 })), H, $t, en, tn = t((() => {
@@ -4964,7 +4970,7 @@ var Zt, Qt = t((() => {
 			return this.render(...t);
 		}
 	};
-})), nn, rn, an, on, sn, U, cn, ln, un, dn, fn = t((() => {
+})), nn, rn, an, on, sn, cn, ln, un, dn, fn, pn = t((() => {
 	Ye(), {I: nn} = Ke, rn = (e) => e, an = (e) => e.strings === void 0, on = () => document.createComment(""), sn = (e, t, n) => {
 		let r = e._$AA.parentNode, i = t === void 0 ? e._$AB : t._$AA;
 		if (n === void 0) {
@@ -4985,11 +4991,11 @@ var Zt, Qt = t((() => {
 			}
 		}
 		return n;
-	}, U = (e, t, n = e) => (e._$AI(t, n), e), cn = {}, ln = (e, t = cn) => e._$AH = t, un = (e) => e._$AH, dn = (e) => {
+	}, cn = (e, t, n = e) => (e._$AI(t, n), e), ln = {}, un = (e, t = ln) => e._$AH = t, dn = (e) => e._$AH, fn = (e) => {
 		e._$AR(), e._$AA.remove();
 	};
-})), pn, mn = t((() => {
-	Ye(), tn(), fn(), pn = $t(class extends en {
+})), mn, hn = t((() => {
+	Ye(), tn(), pn(), mn = $t(class extends en {
 		constructor(e) {
 			if (super(e), e.type !== H.PROPERTY && e.type !== H.ATTRIBUTE && e.type !== H.BOOLEAN_ATTRIBUTE) throw Error("The `live` directive is not allowed on child or event bindings");
 			if (!an(e)) throw Error("`live` bindings can only contain a single expression");
@@ -4998,20 +5004,20 @@ var Zt, Qt = t((() => {
 			return e;
 		}
 		update(e, [t]) {
-			if (t === b || t === x) return t;
+			if (t === y || t === b) return t;
 			let n = e.element, r = e.name;
 			if (e.type === H.PROPERTY) {
-				if (t === n[r]) return b;
+				if (t === n[r]) return y;
 			} else if (e.type === H.BOOLEAN_ATTRIBUTE) {
-				if (!!t === n.hasAttribute(r)) return b;
-			} else if (e.type === H.ATTRIBUTE && n.getAttribute(r) === t + "") return b;
-			return ln(e), t;
+				if (!!t === n.hasAttribute(r)) return y;
+			} else if (e.type === H.ATTRIBUTE && n.getAttribute(r) === t + "") return y;
+			return un(e), t;
 		}
 	});
-})), hn = t((() => {
-	mn();
-})), gn, _n = t((() => {
-	C(), gn = l`
+})), gn = t((() => {
+	hn();
+})), _n, vn = t((() => {
+	C(), _n = l`
   .library-notifications {
     position: fixed;
     z-index: 100;
@@ -6414,20 +6420,20 @@ var Zt, Qt = t((() => {
 `;
 }));
 // src/ui/settings-hint.ts
-function W(e, t) {
-	return v`<kaleidescape-settings-hint
+function U(e, t) {
+	return _`<kaleidescape-settings-hint
     .label=${e}
     .hint=${t}
   ></kaleidescape-settings-hint>`;
 }
-function G(e, t, n) {
-	return v`<span class="setting-label"
-    ><label for=${e}>${t}</label>${W(t, n)}
+function W(e, t, n) {
+	return _`<span class="setting-label"
+    ><label for=${e}>${t}</label>${U(t, n)}
     <span class="setting-description" id=${`${e}-hint`}>${n}</span></span
   >`;
 }
-var vn, yn = t((() => {
-	C(), vn = class extends S {
+var yn, bn = t((() => {
+	C(), yn = class extends S {
 		constructor(...e) {
 			super(...e), this.label = "", this.hint = "", this.open = !1, this.hovering = !1, this.focused = !1, this.pinned = !1, this.dismiss = () => {
 				clearTimeout(this.closing), this.listeners?.abort(), this.listeners = void 0, this.open = this.pinned = this.hovering = this.focused = !1, this.requestUpdate();
@@ -6544,7 +6550,7 @@ var vn, yn = t((() => {
 			clearTimeout(this.closing), this.pinned || this.focused || this.hovering || (this.closing = setTimeout(this.dismiss, 120));
 		}
 		render() {
-			return v`<span
+			return _`<span
       @pointerenter=${(e) => {
 				e.pointerType !== "touch" && (this.hovering = !0, this.show());
 			}}
@@ -6572,9 +6578,9 @@ var vn, yn = t((() => {
       ></span
     >`;
 		}
-	}, customElements.get("kaleidescape-settings-hint") || customElements.define("kaleidescape-settings-hint", vn);
-})), bn, xn = t((() => {
-	bn = [
+	}, customElements.get("kaleidescape-settings-hint") || customElements.define("kaleidescape-settings-hint", yn);
+})), xn, Sn = t((() => {
+	xn = [
 		[
 			"artwork_unavailable",
 			"Artwork unavailable",
@@ -6653,7 +6659,7 @@ var vn, yn = t((() => {
 	];
 }));
 // src/ui/movie-preview.ts
-function Sn(e, t, n) {
+function Cn(e, t, n) {
 	let r = n.left + 12, i = n.left + n.width - 12, a = n.top + 12, o = n.top + n.height - 12, s = [
 		{
 			side: "right",
@@ -6696,9 +6702,9 @@ function Sn(e, t, n) {
 		bottom: c.bottom
 	};
 }
-function Cn(e, t, n = "", r = null) {
+function wn(e, t, n = "", r = null) {
 	let i = t?.duration_seconds ?? r;
-	return v`<strong>${e}</strong> ${n ? v`<p>${n}</p>` : v`<p>
+	return _`<strong>${e}</strong> ${n ? _`<p>${n}</p>` : _`<p>
               <strong>Rating:</strong> ${t?.rating || "—"} ·
               <strong>Runtime:</strong>
               ${i == null ? "—" : `${Math.round(i / 60)} min`}
@@ -6710,10 +6716,10 @@ function Cn(e, t, n = "", r = null) {
             </p>
             <p><strong>Synopsis:</strong> ${t?.synopsis || "—"}</p>`}`;
 }
-function wn(e, t) {
+function Tn(e, t) {
 	let n = window.visualViewport;
 	e.style.maxWidth = "", e.style.maxHeight = "";
-	let r = Sn(t.getBoundingClientRect(), e.getBoundingClientRect(), {
+	let r = Cn(t.getBoundingClientRect(), e.getBoundingClientRect(), {
 		left: n?.offsetLeft ?? 0,
 		top: n?.offsetTop ?? 0,
 		width: n?.width ?? window.innerWidth,
@@ -6724,8 +6730,8 @@ function wn(e, t) {
 	let i = e.getBoundingClientRect();
 	e.style.left = `${r.side === "left" ? r.right - i.width : Math.min(r.left, r.right - i.width)}px`, e.style.top = `${r.side === "above" ? r.bottom - i.height : Math.min(r.top, r.bottom - i.height)}px`;
 }
-var Tn, En, Dn = t((() => {
-	C(), Tn = class {
+var En, Dn, On = t((() => {
+	C(), En = class {
 		constructor() {
 			this.generation = 0;
 		}
@@ -6747,7 +6753,7 @@ var Tn, En, Dn = t((() => {
 				a = !0, s();
 			}, 500)) : c();
 		}
-	}, En = l`
+	}, Dn = l`
   .movie-preview {
     position: fixed;
     z-index: 1200;
@@ -6768,8 +6774,8 @@ var Tn, En, Dn = t((() => {
     margin: 6px 0 0;
   }
 `;
-})), On, kn, An = t((() => {
-	C(), On = l`
+})), kn, An, jn = t((() => {
+	C(), kn = l`
   .setting-label {
     display: flex;
     align-items: center;
@@ -6790,8 +6796,8 @@ var Tn, En, Dn = t((() => {
     clip-path: inset(50%);
     white-space: nowrap;
   }
-`, kn = l`
-  ${On}
+`, An = l`
+  ${kn}
   .spaced {
     margin-top: 22px;
   }
@@ -7021,11 +7027,11 @@ var Tn, En, Dn = t((() => {
 `;
 }));
 // src/playback/remote.ts
-function K(e) {
-	return y`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${Pn[e]}</svg>`;
+function G(e) {
+	return v`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${Fn[e]}</svg>`;
 }
-function jn(e, t, n, r, i) {
-	let a = (n, r, a, o = "", s = !0, c = "") => v`<button
+function Mn(e, t, n, r, i) {
+	let a = (n, r, a, o = "", s = !0, c = "") => _`<button
       type="button"
       class=${o}
       aria-label=${r}
@@ -7033,8 +7039,8 @@ function jn(e, t, n, r, i) {
       ?disabled=${e || !t && !n.startsWith("power_")}
       @click=${() => i(n)}
     >
-      ${a}${s ? v`<span>${r}</span>` : ""}
-      ${c ? y`<svg class="remote-cut-border" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d=${c} fill="none" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke" /></svg>` : ""}
+      ${a}${s ? _`<span>${r}</span>` : ""}
+      ${c ? v`<svg class="remote-cut-border" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><path d=${c} fill="none" stroke="currentColor" stroke-width="1" vector-effect="non-scaling-stroke" /></svg>` : ""}
     </button>`, o = [
 		r.remote_covers,
 		r.remote_movies,
@@ -7042,70 +7048,70 @@ function jn(e, t, n, r, i) {
 		r.remote_search,
 		r.remote_settings
 	].filter(Boolean).length, s = (r.remote_transport ? 2 : 0) + +!!r.remote_intermission;
-	return v`
+	return _`
     <div class="remote-power">
       ${a("power_on", "Power on", F("power"))}
-      ${r.remote_screensaver ? a("screensaver", "Screensaver", K("screensaver"), "", !1) : x}
-      ${a("power_off", "Standby", K("standby"))}
+      ${r.remote_screensaver ? a("screensaver", "Screensaver", G("screensaver"), "", !1) : b}
+      ${a("power_off", "Standby", G("standby"))}
     </div>
-    ${o ? v`<div
+    ${o ? _`<div
             class="remote-nav"
             style=${`--remote-nav-count: ${o}`}
             ?data-few=${o <= 3}
           >
-            ${r.remote_covers ? a("movies", "Covers", K("covers")) : x}
-            ${r.remote_movies ? a("movie_list", "List", K("movies")) : x}
-            ${r.remote_collections ? a("movie_collections", "Collections", K("collections")) : x}
-            ${r.remote_search ? a("search", "Search", F("search")) : x}
-            ${r.remote_settings ? a("status_and_settings", "Settings", K("settings")) : x}
-          </div>` : x}
+            ${r.remote_covers ? a("movies", "Covers", G("covers")) : b}
+            ${r.remote_movies ? a("movie_list", "List", G("movies")) : b}
+            ${r.remote_collections ? a("movie_collections", "Collections", G("collections")) : b}
+            ${r.remote_search ? a("search", "Search", F("search")) : b}
+            ${r.remote_settings ? a("status_and_settings", "Settings", G("settings")) : b}
+          </div>` : b}
     <div class="remote-main">
       <div class="remote-side">
-        ${a("menu", "Menu", K("menu"), "", !0, "M 12 1 H 88 Q 99 1 99 8 V 35 L 93 55 L 81 75 L 67 99 H 12 Q 1 99 1 92 V 8 Q 1 1 12 1 Z")}
-        ${a("back", "Back", K("back"), "", !0, "M 12 1 H 67 L 81 25 L 93 45 L 99 65 V 92 Q 99 99 88 99 H 12 Q 1 99 1 92 V 8 Q 1 1 12 1 Z")}
+        ${a("menu", "Menu", G("menu"), "", !0, "M 12 1 H 88 Q 99 1 99 8 V 35 L 93 55 L 81 75 L 67 99 H 12 Q 1 99 1 92 V 8 Q 1 1 12 1 Z")}
+        ${a("back", "Back", G("back"), "", !0, "M 12 1 H 67 L 81 25 L 93 45 L 99 65 V 92 Q 99 99 88 99 H 12 Q 1 99 1 92 V 8 Q 1 1 12 1 Z")}
       </div>
       <div class="remote-pad" role="group" aria-label="Directional controls">
-        ${a("up", "Up", K("up"), "remote-up", !1)}
-        ${a("left", "Left", K("left"), "remote-left", !1)}
+        ${a("up", "Up", G("up"), "remote-up", !1)}
+        ${a("left", "Left", G("left"), "remote-left", !1)}
         ${a("select", "Select", "", "remote-select")}
-        ${a("right", "Right", K("right"), "remote-right", !1)}
-        ${a("down", "Down", K("down"), "remote-down", !1)}
+        ${a("right", "Right", G("right"), "remote-right", !1)}
+        ${a("down", "Down", G("down"), "remote-down", !1)}
       </div>
       <div class="remote-side">
-        ${a("page_up", "Page up", K("up"), "", !0, "M 12 1 H 88 Q 99 1 99 8 V 92 Q 99 99 88 99 H 33 L 19 75 L 7 55 L 1 35 V 8 Q 1 1 12 1 Z")}
-        ${a("page_down", "Page down", K("down"), "", !0, "M 33 1 H 88 Q 99 1 99 8 V 92 Q 99 99 88 99 H 12 Q 1 99 1 92 V 65 L 7 45 L 19 25 Z")}
+        ${a("page_up", "Page up", G("up"), "", !0, "M 12 1 H 88 Q 99 1 99 8 V 92 Q 99 99 88 99 H 33 L 19 75 L 7 55 L 1 35 V 8 Q 1 1 12 1 Z")}
+        ${a("page_down", "Page down", G("down"), "", !0, "M 33 1 H 88 Q 99 1 99 8 V 92 Q 99 99 88 99 H 12 Q 1 99 1 92 V 65 L 7 45 L 19 25 Z")}
       </div>
     </div>
-    ${n ? v`
-            ${r.remote_transport ? v`<div class="remote-transport">
-                    ${a("previous", "Previous chapter", K("previous"), "", !1)}
-                    ${a("scan_reverse", "Scan reverse", K("reverse"), "", !1)}
-                    ${a("play_pause", "Play/Pause", K("toggle"), "primary", !1)}
-                    ${a("scan_forward", "Scan forward", K("forward"), "", !1)}
-                    ${a("next", "Next chapter", K("next"), "", !1)}
-                  </div>` : x}
-            ${s ? v`<div
+    ${n ? _`
+            ${r.remote_transport ? _`<div class="remote-transport">
+                    ${a("previous", "Previous chapter", G("previous"), "", !1)}
+                    ${a("scan_reverse", "Scan reverse", G("reverse"), "", !1)}
+                    ${a("play_pause", "Play/Pause", G("toggle"), "primary", !1)}
+                    ${a("scan_forward", "Scan forward", G("forward"), "", !1)}
+                    ${a("next", "Next chapter", G("next"), "", !1)}
+                  </div>` : b}
+            ${s ? _`<div
                     class="remote-bottom"
                     style=${`--remote-bottom-count: ${s}`}
                   >
-                    ${r.remote_transport ? a("replay", "Replay", K("replay")) : x}
-                    ${r.remote_transport ? a("stop", "Stop", K("stop")) : x}
-                    ${r.remote_intermission ? a("intermission", "Intermission", K("intermission")) : x}
-                  </div>` : x}
-          ` : r.remote_collection_shortcuts ? v`<div
+                    ${r.remote_transport ? a("replay", "Replay", G("replay")) : b}
+                    ${r.remote_transport ? a("stop", "Stop", G("stop")) : b}
+                    ${r.remote_intermission ? a("intermission", "Intermission", G("intermission")) : b}
+                  </div>` : b}
+          ` : r.remote_collection_shortcuts ? _`<div
               class="remote-collections"
               role="group"
               aria-label="Collection shortcuts"
             >
-              ${a("collection_paused", "Paused", K("pausedCollection"))}
-              ${a("collection_watch_soon", "Watch Soon", K("watchSoon"))}
-              ${a("collection_new", "New", K("newCollection"))}
-              ${a("collection_favorites", "Favorites", K("favorites"))}
-            </div>` : x}
+              ${a("collection_paused", "Paused", G("pausedCollection"))}
+              ${a("collection_watch_soon", "Watch Soon", G("watchSoon"))}
+              ${a("collection_new", "New", G("newCollection"))}
+              ${a("collection_favorites", "Favorites", G("favorites"))}
+            </div>` : b}
   `;
 }
-var Mn, Nn, Pn, Fn, In = t((() => {
-	C(), I(), Mn = [
+var Nn, Pn, Fn, In, Ln = t((() => {
+	C(), I(), Nn = [
 		["remote_covers", "Covers"],
 		["remote_movies", "List"],
 		["remote_collections", "Collections"],
@@ -7115,32 +7121,32 @@ var Mn, Nn, Pn, Fn, In = t((() => {
 		["remote_transport", "Transport Controls"],
 		["remote_intermission", "Intermission"],
 		["remote_collection_shortcuts", "Collection Shortcuts"]
-	], Nn = Object.fromEntries(Mn.map(([e]) => [e, !0])), Pn = {
-		pausedCollection: y`<circle cx="12" cy="12" r="9"/><path d="M9 8v8m6-8v8"/>`,
-		watchSoon: y`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`,
-		newCollection: y`<path d="m12 2 2.2 5.2L20 9l-4.5 3.8.3 5.8L12 15.4 7.2 18.6l.3-5.8L3 9l5.8-1.8z"/>`,
-		favorites: y`<path d="M12 20S3 15 3 9a4.5 4.5 0 0 1 9-1 4.5 4.5 0 0 1 9 1c0 6-9 11-9 11z"/>`,
-		screensaver: y`<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3m0-13v5M9.5 10.5h5"/>`,
-		standby: y`<path d="M20 15A8 8 0 0 1 9 4a8 8 0 1 0 11 11Z"/>`,
-		covers: y`<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>`,
-		movies: y`<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M7 4v16M17 4v16M3 9h4m10 0h4M3 15h4m10 0h4"/>`,
-		collections: y`<path d="m2 8 10-5 10 5-10 5-10-5Zm0 4 10 5 10-5M2 16l10 5 10-5"/>`,
-		settings: y`<circle cx="12" cy="12" r="3"/><path d="m10 2 4 0 .5 2.5 2 1 2.2-1 2.8 2.8-1 2.2 1 2L24 12l-2.5 2-.8 2 1 2.2-2.8 2.8-2.2-1-2 1L14 23h-4l-.5-2.5-2-1-2.2 1-2.8-2.8 1-2.2-1-2L0 12l2.5-2 .8-2-1-2.2L5.3 3l2.2 1 2-1z" transform="translate(1 0) scale(.92 1)"/>`,
-		menu: y`<path d="M4 6h16M4 12h16M4 18h16"/>`,
-		back: y`<path d="m9 5-6 6 6 6M3 11h11a6 6 0 0 1 0 12"/>`,
-		up: y`<path d="m5 15 7-7 7 7"/>`,
-		down: y`<path d="m5 9 7 7 7-7"/>`,
-		left: y`<path d="m15 5-7 7 7 7"/>`,
-		right: y`<path d="m9 5 7 7-7 7"/>`,
-		intermission: y`<path d="M3 9h18v11H3zM3 9 2 5l17-3 1 4zM6 4l3 4m3-5 3 4"/>`,
-		previous: y`<path fill="currentColor" stroke="none" d="M4 4h2v16H4zM20 4 8 12l12 8z"/>`,
-		reverse: y`<path fill="currentColor" stroke="none" d="M12 5 2 12l10 7zm10 0-10 7 10 7z"/>`,
-		toggle: y`<path fill="currentColor" stroke="none" d="M3 4v16l11-8zM16 4h2v16h-2zM21 4h2v16h-2z"/>`,
-		forward: y`<path fill="currentColor" stroke="none" d="m2 5 10 7-10 7zm10 0 10 7-10 7z"/>`,
-		next: y`<path fill="currentColor" stroke="none" d="M18 4h2v16h-2zM4 4l12 8-12 8z"/>`,
-		replay: y`<path d="M4 11a8 8 0 1 1 2.3 6M4 5v6h6"/>`,
-		stop: y`<rect x="5" y="5" width="14" height="14" rx="1" fill="currentColor" stroke="none"/>`
-	}, Fn = l`
+	], Pn = Object.fromEntries(Nn.map(([e]) => [e, !0])), Fn = {
+		pausedCollection: v`<circle cx="12" cy="12" r="9"/><path d="M9 8v8m6-8v8"/>`,
+		watchSoon: v`<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>`,
+		newCollection: v`<path d="m12 2 2.2 5.2L20 9l-4.5 3.8.3 5.8L12 15.4 7.2 18.6l.3-5.8L3 9l5.8-1.8z"/>`,
+		favorites: v`<path d="M12 20S3 15 3 9a4.5 4.5 0 0 1 9-1 4.5 4.5 0 0 1 9 1c0 6-9 11-9 11z"/>`,
+		screensaver: v`<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3m0-13v5M9.5 10.5h5"/>`,
+		standby: v`<path d="M20 15A8 8 0 0 1 9 4a8 8 0 1 0 11 11Z"/>`,
+		covers: v`<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>`,
+		movies: v`<rect x="3" y="4" width="18" height="16" rx="1"/><path d="M7 4v16M17 4v16M3 9h4m10 0h4M3 15h4m10 0h4"/>`,
+		collections: v`<path d="m2 8 10-5 10 5-10 5-10-5Zm0 4 10 5 10-5M2 16l10 5 10-5"/>`,
+		settings: v`<circle cx="12" cy="12" r="3"/><path d="m10 2 4 0 .5 2.5 2 1 2.2-1 2.8 2.8-1 2.2 1 2L24 12l-2.5 2-.8 2 1 2.2-2.8 2.8-2.2-1-2 1L14 23h-4l-.5-2.5-2-1-2.2 1-2.8-2.8 1-2.2-1-2L0 12l2.5-2 .8-2-1-2.2L5.3 3l2.2 1 2-1z" transform="translate(1 0) scale(.92 1)"/>`,
+		menu: v`<path d="M4 6h16M4 12h16M4 18h16"/>`,
+		back: v`<path d="m9 5-6 6 6 6M3 11h11a6 6 0 0 1 0 12"/>`,
+		up: v`<path d="m5 15 7-7 7 7"/>`,
+		down: v`<path d="m5 9 7 7 7-7"/>`,
+		left: v`<path d="m15 5-7 7 7 7"/>`,
+		right: v`<path d="m9 5 7 7-7 7"/>`,
+		intermission: v`<path d="M3 9h18v11H3zM3 9 2 5l17-3 1 4zM6 4l3 4m3-5 3 4"/>`,
+		previous: v`<path fill="currentColor" stroke="none" d="M4 4h2v16H4zM20 4 8 12l12 8z"/>`,
+		reverse: v`<path fill="currentColor" stroke="none" d="M12 5 2 12l10 7zm10 0-10 7 10 7z"/>`,
+		toggle: v`<path fill="currentColor" stroke="none" d="M3 4v16l11-8zM16 4h2v16h-2zM21 4h2v16h-2z"/>`,
+		forward: v`<path fill="currentColor" stroke="none" d="m2 5 10 7-10 7zm10 0 10 7-10 7z"/>`,
+		next: v`<path fill="currentColor" stroke="none" d="M18 4h2v16h-2zM4 4l12 8-12 8z"/>`,
+		replay: v`<path d="M4 11a8 8 0 1 1 2.3 6M4 5v6h6"/>`,
+		stop: v`<rect x="5" y="5" width="14" height="14" rx="1" fill="currentColor" stroke="none"/>`
+	}, In = l`
   .remote-dialog {
     width: min(440px, calc(100% - 24px));
     --dialog-gutter: 16px;
@@ -7459,15 +7465,15 @@ var Mn, Nn, Pn, Fn, In = t((() => {
     }
   }
 `;
-})), Ln, Rn = t((() => {
-	Ln = "data:image/png;base64,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";
-})), zn, Bn, Vn = t((() => {
-	C(), A(), P(), yn(), An(), I(), In(), z(), Rn(), zn = {
+})), Rn, zn = t((() => {
+	Rn = "data:image/png;base64,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";
+})), Bn, Vn, Hn = t((() => {
+	C(), A(), P(), bn(), jn(), I(), Ln(), z(), zn(), Bn = {
 		rejected: "The player rejected the command. Nothing was retried.",
 		not_sent: "Settings or access changed before sending. The command was not sent."
-	}, Bn = class extends S {
+	}, Vn = class extends S {
 		constructor(...e) {
-			super(...e), this.mode = "remote", this.versionId = "", this.playerId = "", this.inlineRemote = !1, this.hideRefresh = !1, this.hideRemote = !1, this.liveTyping = !1, this.remoteVisibility = { ...Nn }, this.value = "", this.configured = !0, this.settingsDisabled = !1, this.generation = 0, this.key = "", this.waking = !1, this.wakeDeadline = 0, this.started = "", this.lastOperation = "", this.selectedPlayer = "", this.dialog = "players", this.acknowledge = "", this.busy = !1, this.revalidatingVersion = !1, this.error = "", this.notice = "", this.locked = !1, this.searchDraft = "", this.searchDirty = !1, this.sendingSearch = !1, this.finishingSearch = !1, this.remoteAvailable = !1;
+			super(...e), this.mode = "remote", this.versionId = "", this.playerId = "", this.inlineRemote = !1, this.hideRefresh = !1, this.hideRemote = !1, this.liveTyping = !1, this.remoteVisibility = { ...Pn }, this.value = "", this.configured = !0, this.settingsDisabled = !1, this.generation = 0, this.key = "", this.waking = !1, this.wakeDeadline = 0, this.started = "", this.lastOperation = "", this.selectedPlayer = "", this.dialog = "players", this.acknowledge = "", this.busy = !1, this.revalidatingVersion = !1, this.error = "", this.notice = "", this.locked = !1, this.searchDraft = "", this.searchDirty = !1, this.sendingSearch = !1, this.finishingSearch = !1, this.remoteAvailable = !1;
 		}
 		static {
 			this.properties = {
@@ -7489,8 +7495,8 @@ var Mn, Nn, Pn, Fn, In = t((() => {
 		static {
 			this.styles = [
 				N,
-				On,
-				Fn,
+				kn,
+				In,
 				l`
       [hidden] {
         display: none !important;
@@ -7787,7 +7793,7 @@ var Mn, Nn, Pn, Fn, In = t((() => {
 			if (!this.pending) return;
 			let e = this.generation, t = await this.client.controlExecute(this.pending);
 			if (e !== this.generation) return;
-			this.lastOutcome = t.outcome, this.notice = zn[t.outcome] ?? "", this.pending = void 0;
+			this.lastOutcome = t.outcome, this.notice = Bn[t.outcome] ?? "", this.pending = void 0;
 			let n = this.lastOperation;
 			if (["state_observed", "acknowledged"].includes(t.outcome) && (n === "power_on" ? (this.waking = !0, this.wakeDeadline = Date.now() + 12e4, this.wakeTimer = setTimeout(() => void this.pollWake(), 1e3)) : [
 				"launch",
@@ -7824,28 +7830,28 @@ var Mn, Nn, Pn, Fn, In = t((() => {
 			});
 		}
 		feedback() {
-			return v`
-      ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-      ${this.pending ? v`<button
+			return _`
+      ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+      ${this.pending ? _`<button
               ?disabled=${this.busy}
               @click=${() => this.action(() => this.send())}
             >
               Check command result
-            </button>` : x}
-      ${this.notice ? v`<p role="status">${this.notice}</p>` : x}
+            </button>` : b}
+      ${this.notice ? _`<p role="status">${this.notice}</p>` : b}
     `;
 		}
 		render() {
-			if (!this.scope?.permissions.read || this.mode === "settings" && !this.scope.permissions.edit) return x;
+			if (!this.scope?.permissions.read || this.mode === "settings" && !this.scope.permissions.edit) return b;
 			let e = this.info;
-			if (this.mode === "movie" && (!e?.enabled || !e.allow_launch)) return v`<div class="movie-actions">
+			if (this.mode === "movie" && (!e?.enabled || !e.allow_launch)) return _`<div class="movie-actions">
         <slot name="collection"></slot>
       </div>`;
 			let t = e?.devices?.filter((e) => e.is_player) ?? [], n = e?.players.find((e) => e.id === this.selectedPlayer), r = e?.blocked_players.includes(this.selectedPlayer), i = this.busy || this.revalidatingVersion || this.waking || !e?.enabled || !this.selectedPlayer || !!this.pending || r;
-			return v`<section
+			return _`<section
       class=${this.mode === "remote" ? `card control-card${this.hideRemote ? " embedded" : ""}` : "device-controls"}
     >
-      ${this.mode === "remote" ? v`<div class="card-head">
+      ${this.mode === "remote" ? _`<div class="card-head">
               <h2>Player controls</h2>
               <button
                 type="button"
@@ -7882,8 +7888,8 @@ var Mn, Nn, Pn, Fn, In = t((() => {
               >
                 Choose Player
               </button>
-            </div>` : x}
-      ${this.mode === "settings" ? v`
+            </div>` : b}
+      ${this.mode === "settings" ? _`
               <div class="actions">
                 <button
                   type="button"
@@ -7893,9 +7899,9 @@ var Mn, Nn, Pn, Fn, In = t((() => {
                   ${this.busy ? "Discovering…" : "Discover devices"}
                 </button>
               </div>
-              ${!e?.enabled || !this.configured ? v`<p class="muted">Save the enabled control hostname before discovering devices.</p>` : x}
+              ${!e?.enabled || !this.configured ? _`<p class="muted">Save the enabled control hostname before discovering devices.</p>` : b}
               <div>
-                ${G("control_player", "Default player", "Discover devices using the saved Kaleidescape Player Address, then choose the movie player Companion should use by default. Save this selection to apply it. This does not change the player observed for Journal recording or send a playback command.")}<select
+                ${W("control_player", "Default player", "Discover devices using the saved Kaleidescape Player Address, then choose the movie player Companion should use by default. Save this selection to apply it. This does not change the player observed for Journal recording or send a playback command.")}<select
                   name="control_player"
                   id="control_player"
                   aria-describedby="control_player-hint"
@@ -7910,19 +7916,19 @@ var Mn, Nn, Pn, Fn, In = t((() => {
                   <option value="" ?selected=${!this.value}>
                     No default player selected
                   </option>
-                  ${this.value && !t.some((e) => e.serial === this.value) ? v`<option value=${this.value} selected>Configured player (${this.value})</option>` : x}
-                  ${t.map((e) => v`<option value=${e.serial} ?selected=${e.serial === this.value}>${e.name || e.model || "Movie player"} (${e.serial})</option>`)}
+                  ${this.value && !t.some((e) => e.serial === this.value) ? _`<option value=${this.value} selected>Configured player (${this.value})</option>` : b}
+                  ${t.map((e) => _`<option value=${e.serial} ?selected=${e.serial === this.value}>${e.name || e.model || "Movie player"} (${e.serial})</option>`)}
                 </select>
               </div>
-              ${e?.devices?.length ? v`<details>
+              ${e?.devices?.length ? _`<details>
                       <summary>
                         Discovered components (${e.devices.length})
                       </summary>
                       <ul>
-                        ${e.devices.map((e) => v`<li>${e.name} · ${e.model} · ${e.ipaddress} · ${e.is_player ? "Player" : "Server/component"}</li>`)}
+                        ${e.devices.map((e) => _`<li>${e.name} · ${e.model} · ${e.ipaddress} · ${e.is_player ? "Player" : "Server/component"}</li>`)}
                       </ul>
-                    </details>` : x}
-            ` : this.mode === "movie" ? v`
+                    </details>` : b}
+            ` : this.mode === "movie" ? _`
                 <div class="movie-actions">
                   <button
                     type="button"
@@ -7933,7 +7939,7 @@ var Mn, Nn, Pn, Fn, In = t((() => {
                     @click=${() => this.status && this.status.readiness !== "starting" ? this.prepare(this.status.ready ? "launch" : "power_on") : this.refresh()}
                   >
                     ${F(this.status?.ready && !this.waking ? "play" : "power")}
-                    ${this.waking ? v`<span class="spinner" aria-hidden="true">◌</span> Starting player…` : !this.status || this.status.readiness === "starting" ? "Check player" : this.status.ready ? "Play" : "Power On"}</button
+                    ${this.waking ? _`<span class="spinner" aria-hidden="true">◌</span> Starting player…` : !this.status || this.status.readiness === "starting" ? "Check player" : this.status.ready ? "Play" : "Power On"}</button
                   ><button
                     type="button"
                     ?disabled=${this.busy || this.revalidatingVersion || this.waking || !!this.pending}
@@ -7943,14 +7949,14 @@ var Mn, Nn, Pn, Fn, In = t((() => {
                     Choose Player</button
                   ><slot name="collection"></slot>
                 </div>
-                ${(e?.players.length ?? 0) > 1 || !n ? v`<p class="muted player-target">${n ? `On ${n.name}` : "Choose a player to start playback"}</p>` : x}
-              ` : e?.enabled ? v`
-                  ${this.waking ? v`<span role="status">◌ Starting player…</span>` : x}
-                ` : v`<p class="muted">Playback controls are disabled.</p>`}
-      ${this.mode === "remote" && this.inlineRemote && e?.enabled ? jn(!!i, !!this.status?.ready, this.status?.state.mode !== 0, this.remoteVisibility, (e) => void this.prepare(e)) : x}
-      ${this.dialog !== "remote" || this.acknowledge ? this.feedback() : x}
-      ${r && !(e?.can_manage && this.scope.permissions.edit) ? v`<p class="warning">Player controls are paused. Ask an administrator to review the player.</p>` : x}
-      ${e?.can_manage && this.scope.permissions.edit ? e.pending.map((t) => v`<p class="warning">Player controls are paused for ${e.players.find((e) => e.id === t.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(t.request_id)}>I inspected the player…</button></p>`) : x}
+                ${(e?.players.length ?? 0) > 1 || !n ? _`<p class="muted player-target">${n ? `On ${n.name}` : "Choose a player to start playback"}</p>` : b}
+              ` : e?.enabled ? _`
+                  ${this.waking ? _`<span role="status">◌ Starting player…</span>` : b}
+                ` : _`<p class="muted">Playback controls are disabled.</p>`}
+      ${this.mode === "remote" && this.inlineRemote && e?.enabled ? Mn(!!i, !!this.status?.ready, this.status?.state.mode !== 0, this.remoteVisibility, (e) => void this.prepare(e)) : b}
+      ${this.dialog !== "remote" || this.acknowledge ? this.feedback() : b}
+      ${r && !(e?.can_manage && this.scope.permissions.edit) ? _`<p class="warning">Player controls are paused. Ask an administrator to review the player.</p>` : b}
+      ${e?.can_manage && this.scope.permissions.edit ? e.pending.map((t) => _`<p class="warning">Player controls are paused for ${e.players.find((e) => e.id === t.player_id)?.name || "a previously selected player"}. <button type="button" ?disabled=${this.busy} @click=${() => this.reviewPending(t.request_id)}>I inspected the player…</button></p>`) : b}
       <dialog
         ?data-admin-dialog=${!!this.acknowledge}
         class=${this.dialog === "remote" && !this.acknowledge ? "database-dialog remote-dialog" : "database-dialog"}
@@ -7959,15 +7965,15 @@ var Mn, Nn, Pn, Fn, In = t((() => {
       >
         <div class="card-head">
           <h2>
-            ${this.dialog === "remote" && !this.acknowledge ? v`<img class="remote-header-icon" src=${Ln} alt="" />` : x}
+            ${this.dialog === "remote" && !this.acknowledge ? _`<img class="remote-header-icon" src=${Rn} alt="" />` : b}
             ${this.acknowledge ? "Restore player controls" : this.dialog === "remote" ? `${n?.name || "Kaleidescape player"} Remote` : "Choose Player"}
           </h2>
           ${L((e) => this.close(e))}
         </div>
-        ${this.acknowledge ? v`<p>
+        ${this.acknowledge ? _`<p>
                 Confirm you inspected the physical player. This permits new
                 commands and does not resend the earlier command.
-              </p>` : this.dialog === "remote" ? v`${this.searchInput ? v`<section
+              </p>` : this.dialog === "remote" ? _`${this.searchInput ? _`<section
                         class="remote-search"
                         aria-label="Player search keyboard"
                       >
@@ -7989,7 +7995,7 @@ var Mn, Nn, Pn, Fn, In = t((() => {
 				this.searchDraft = e.target.value, this.searchDirty = !0, this.scheduleSearch(), this.requestUpdate();
 			}}
                           />
-                          ${this.liveTyping ? x : v`<button
+                          ${this.liveTyping ? b : _`<button
                                   type="button"
                                   ?disabled=${!!i || !this.searchDirty}
                                   @click=${() => void this.sendSearch()}
@@ -8007,13 +8013,13 @@ var Mn, Nn, Pn, Fn, In = t((() => {
                         <p class="muted">
                           ${this.liveTyping ? "Text is sent as you type." : "Send text before selecting Done."}
                         </p>
-                      </section>` : x}${jn(!!i, !!this.status?.ready, this.status?.state.mode !== 0, this.remoteVisibility, (e) => void this.prepare(e))}${this.feedback()}` : v`
+                      </section>` : b}${Mn(!!i, !!this.status?.ready, this.status?.state.mode !== 0, this.remoteVisibility, (e) => void this.prepare(e))}${this.feedback()}` : _`
                   <p class="muted">
                     Choose where to play. This does not change the household
                     default player or Journal tracking.
                   </p>
                   <div class="player-options">
-                    ${e?.players.map((t) => v`<button
+                    ${e?.players.map((t) => _`<button
                           class="player-choice"
                           type="button"
                           aria-pressed=${t.id === this.selectedPlayer}
@@ -8025,30 +8031,30 @@ var Mn, Nn, Pn, Fn, In = t((() => {
 				})), this.refresh(), this.requestUpdate();
 			}}
                         >
-                          ${t.name}${t.model ? v`<small>${t.model}</small>` : x}${t.id === e.default_player ? v`<small>Household default</small>` : x}
+                          ${t.name}${t.model ? _`<small>${t.model}</small>` : b}${t.id === e.default_player ? _`<small>Household default</small>` : b}
                         </button>`)}
                   </div>
-                  ${e?.players.length ? x : v`<p>No players are available. Ask an administrator to discover devices in Settings.</p>`}
+                  ${e?.players.length ? b : _`<p>No players are available. Ask an administrator to discover devices in Settings.</p>`}
                 `}
-        ${this.acknowledge ? v`<div class="dialog-footer"><button type="button" class="primary" ?disabled=${this.busy} @click=${this.confirmReview}>Acknowledge review</button></div>` : x}
+        ${this.acknowledge ? _`<div class="dialog-footer"><button type="button" class="primary" ?disabled=${this.busy} @click=${this.confirmReview}>Acknowledge review</button></div>` : b}
       </dialog>
     </section>`;
 		}
-	}, customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", Bn);
+	}, customElements.get("kaleidescape-device-controls") || customElements.define("kaleidescape-device-controls", Vn);
 }));
 // src/ui/profile-controller.ts
-function Hn(e, t) {
-	e.addController(new Wn(e, t));
+function Un(e, t) {
+	e.addController(new Gn(e, t));
 }
-var Un, Wn, Gn = t((() => {
-	tt(), Un = [
+var Wn, Gn, Kn = t((() => {
+	tt(), Wn = [
 		"close",
 		"cancel",
 		"control-lock",
 		"edit-lock",
 		"scrape-lock",
 		"collection-lock"
-	], Wn = class {
+	], Gn = class {
 		constructor(e, t) {
 			this.host = e, this.change = t, this.profile = et(), this.schedule = () => {
 				this.frame === void 0 && et() !== this.profile && (this.frame = requestAnimationFrame(() => {
@@ -8060,18 +8066,68 @@ var Un, Wn, Gn = t((() => {
 		}
 		hostConnected() {
 			window.addEventListener("resize", this.schedule);
-			for (let e of Un) this.host.renderRoot.addEventListener(e, this.schedule, !0);
+			for (let e of Wn) this.host.renderRoot.addEventListener(e, this.schedule, !0);
 		}
 		hostUpdated() {
 			this.schedule();
 		}
 		hostDisconnected() {
 			window.removeEventListener("resize", this.schedule);
-			for (let e of Un) this.host.renderRoot.removeEventListener(e, this.schedule, !0);
+			for (let e of Wn) this.host.renderRoot.removeEventListener(e, this.schedule, !0);
 			this.frame !== void 0 && cancelAnimationFrame(this.frame), this.frame = void 0;
 		}
 	};
-})), q, Kn = t((() => {
+}));
+// src/ui/navigation.ts
+function qn(e, t, n, r = !0) {
+	let i = (e) => Zn.includes(e) && (t || e === "now-playing" || e === "journal" || e === "library") && (e !== "library" || n), a = r ? new URL(location.href).searchParams.get("companion_page") : null;
+	return i(a) ? a : i(e) ? e : "journal";
+}
+function K(e, t = !1) {
+	let n = new URL(location.href);
+	n.searchParams.set("companion_page", e), t ? history.pushState(history.state, "", n) : history.replaceState(history.state, "", n);
+}
+function Jn(e) {
+	try {
+		return sessionStorage.getItem(`companion:navigation:${e}`);
+	} catch {
+		return null;
+	}
+}
+function Yn(e, t) {
+	try {
+		sessionStorage.setItem(`companion:navigation:${e}`, t);
+	} catch {}
+}
+var Xn, Zn, Qn = t((() => {
+	Xn = [
+		{
+			id: "now-playing",
+			label: "Now Playing",
+			description: "See what’s playing across your system."
+		},
+		{
+			id: "library",
+			label: "Library",
+			description: "Browse movies and collections."
+		},
+		{
+			id: "journal",
+			label: "Journal",
+			description: "Explore your viewing history."
+		},
+		{
+			id: "database",
+			label: "Database",
+			description: "Inspect and manage stored history."
+		},
+		{
+			id: "settings",
+			label: "Settings",
+			description: "Configure your Companion experience."
+		}
+	], Zn = Xn.map((e) => e.id);
+})), q, $n = t((() => {
 	tt(), q = class {
 		get unsettled() {
 			return this.inflight > 0 || Object.keys(this.failed).length > 0;
@@ -8112,7 +8168,7 @@ var Un, Wn, Gn = t((() => {
 	};
 }));
 // src/library/badges.ts
-function qn(e) {
+function er(e) {
 	return e.movie_statuses ?? ([
 		"unwatched",
 		"watched",
@@ -8128,8 +8184,8 @@ function J(e, t = "modern") {
 		none: "No status"
 	}[e] ?? "Unknown";
 }
-function Jn(e, t = "modern") {
-	let n = e.is_watch_soon ?? e.collections.some((e) => e.toLowerCase().replace(/[\s_-]+/g, "") === "watchsoon"), r = qn(e);
+function tr(e, t = "modern") {
+	let n = e.is_watch_soon ?? e.collections.some((e) => e.toLowerCase().replace(/[\s_-]+/g, "") === "watchsoon"), r = er(e);
 	return [
 		...r.includes("in_progress") ? [{
 			key: "progress",
@@ -8163,7 +8219,7 @@ function Jn(e, t = "modern") {
 		}] : []
 	];
 }
-function Yn(e) {
+function nr(e) {
 	let t = (e.formats ?? [e.edition ?? ""]).map((e) => e.toLowerCase()), n = (e) => t.some((t) => e.test(t)), r = [];
 	return n(/\b8k\b/) && r.push({
 		key: "eight-k",
@@ -8200,8 +8256,8 @@ function Yn(e) {
 		label: "DTS:X"
 	}), r;
 }
-function Xn(e) {
-	let t = Yn(e);
+function rr(e) {
+	let t = nr(e);
 	return [
 		"eight-k",
 		"cinematic",
@@ -8211,18 +8267,18 @@ function Xn(e) {
 		"sd"
 	].map((e) => t.find((t) => t.key === e)).find(Boolean);
 }
-function Zn(e) {
+function ir(e) {
 	return e === "atmos" || e === "dtsx";
 }
 function Y(e, t = !1, n, r = !1, i = {
 	video: !0,
 	audio: !0
 }) {
-	let a = t ? Xn(e) : void 0;
-	return (t ? [...a ? [a] : [], ...Yn(e).filter((e) => Zn(e.key))] : Yn(e)).filter((e) => Zn(e.key) ? i.audio : i.video).map((e) => {
-		let t = e.key === "cinematic" || e.key === "hd-cinematic" ? v`<b>${e.key === "cinematic" ? "4K" : "HD"}</b
-              ><span class="cinematic-label">Cinematic</span>` : e.key === "vision" || e.key === "atmos" ? v`${ar}<span>${e.label}</span>` : e.key === "hdr10" ? v`${cr}<b>HDR10</b>` : e.label;
-		return n ? v`<button
+	let a = t ? rr(e) : void 0;
+	return (t ? [...a ? [a] : [], ...nr(e).filter((e) => ir(e.key))] : nr(e)).filter((e) => ir(e.key) ? i.audio : i.video).map((e) => {
+		let t = e.key === "cinematic" || e.key === "hd-cinematic" ? _`<b>${e.key === "cinematic" ? "4K" : "HD"}</b
+              ><span class="cinematic-label">Cinematic</span>` : e.key === "vision" || e.key === "atmos" ? _`${fr}<span>${e.label}</span>` : e.key === "hdr10" ? _`${hr}<b>HDR10</b>` : e.label;
+		return n ? _`<button
             type="button"
             class=${`format-badge format-${e.key}`}
             aria-label=${`Filter by format: ${e.label}`}
@@ -8230,48 +8286,48 @@ function Y(e, t = !1, n, r = !1, i = {
             @click=${() => n(e.label)}
           >
             ${t}
-          </button>` : v`<span
+          </button>` : _`<span
             class=${`format-badge format-${e.key}`}
             aria-label=${e.label}
             >${t}</span
           >`;
 	});
 }
-function Qn(e, t = !1, n = [], r = "modern", i = "icons") {
-	let a = Jn(e, r), o = t ? [
+function ar(e, t = !1, n = [], r = "modern", i = "icons") {
+	let a = tr(e, r), o = t ? [
 		"progress",
 		"watched",
 		"watch-soon",
 		"recent"
 	].map((e) => a.find((t) => t.key === e)).find(Boolean) : void 0;
 	if (t && i === "text") {
-		let e = o && !n.includes(o.key) ? o : void 0, t = a.find((e) => e.key === "recent"), r = e && e.key !== "recent" && t && !n.includes("recent"), i = a.find((e) => e.key === "favorite" && !n.includes("favorite")), s = (e) => v`<span
+		let e = o && !n.includes(o.key) ? o : void 0, t = a.find((e) => e.key === "recent"), r = e && e.key !== "recent" && t && !n.includes("recent"), i = a.find((e) => e.key === "favorite" && !n.includes("favorite")), s = (e) => _`<span
         class=${`cover-text-flag flag-${e.key}`}
         role="img"
         aria-label=${e.label}
         title=${e.label}
         >${e.label}</span
       >`;
-		return v`<div class="cover-text-badges">
+		return _`<div class="cover-text-badges">
       <div class="cover-text-stack">
-        ${e ? s(e) : x}${r ? s(t) : x}
+        ${e ? s(e) : b}${r ? s(t) : b}
       </div>
-      ${i ? s(i) : x}
+      ${i ? s(i) : b}
     </div>`;
 	}
 	return (t ? a.filter((e) => e === o || e.key === "favorite") : a).filter((e) => !n.includes(e.key)).map((e) => {
 		let r = t && e === o && e.key !== "recent" && !n.includes("recent") && a.some((e) => e.key === "recent");
-		return v`${r ? v`<span class="cover-recent-edge" role="img" aria-label="Recently Added" title="Recently Added"></span>` : x}<span
-          class=${t ? `cover-flag flag-${e.key}` : `status-badge collection-badge collection-${tr(e.label)}${e.key === "recent" ? " status-recent" : ""}${i === "text" ? " status-text" : ""}`}
+		return _`${r ? _`<span class="cover-recent-edge" role="img" aria-label="Recently Added" title="Recently Added"></span>` : b}<span
+          class=${t ? `cover-flag flag-${e.key}` : `status-badge collection-badge collection-${cr(e.label)}${e.key === "recent" ? " status-recent" : ""}${i === "text" ? " status-text" : ""}`}
           title=${e.label}
           aria-label=${e.label}
           role="img"
-          >${t ? v`<span class="badge-symbol" aria-hidden="true">${e.key === "watch-soon" ? or : e.key === "recent" ? sr : e.symbol}</span>` : v`${i === "icons" ? nr(e.label) : x}<span>${e.label}</span>`}</span
+          >${t ? _`<span class="badge-symbol" aria-hidden="true">${e.key === "watch-soon" ? pr : e.key === "recent" ? mr : e.symbol}</span>` : _`${i === "icons" ? lr(e.label) : b}<span>${e.label}</span>`}</span
         >`;
 	});
 }
-function $n(e, t, n = !1) {
-	if (!e?.trim()) return x;
+function or(e, t, n = !1) {
+	if (!e?.trim()) return b;
 	let r = e.trim(), i = {
 		G: "general",
 		PG: "parental",
@@ -8281,7 +8337,7 @@ function $n(e, t, n = !1) {
 		"NC-17": "adult",
 		NC17: "adult"
 	}[r.toUpperCase().replaceAll(" ", "")] ?? "unrated";
-	return t ? v`<button
+	return t ? _`<button
       type="button"
       class=${`rating-badge rating-${i}`}
       aria-label=${`Filter by rating: ${r}`}
@@ -8289,17 +8345,17 @@ function $n(e, t, n = !1) {
       @click=${() => t(r)}
     >
       ${r}
-    </button>` : v`<span
+    </button>` : _`<span
     class=${`rating-badge rating-${i}`}
     title=${`Rating: ${r}`}
     >${r}</span
   >`;
 }
-function er(e) {
+function sr(e) {
 	let t = e.toLowerCase().replace(/[\s_-]+/g, "");
 	return t === "played" ? "Watched" : t === "watchsoon" ? "Watch Soon" : e;
 }
-function tr(e) {
+function cr(e) {
 	let t = e.toLowerCase();
 	return t.replace(/[\s_-]+/g, "") === "watchsoon" ? "watch-soon" : {
 		all: "all",
@@ -8314,34 +8370,34 @@ function tr(e) {
 		"in progress": "progress"
 	}[t] ?? "all";
 }
-function nr(e) {
-	let t = tr(e), n = {
-		all: y`<path d="m2 7 10-5 10 5-10 5zM2 12l10 5 10-5M2 17l10 5 10-5"/>`,
-		new: y`<path d="m12 1 3 2 4 1 1 4 3 4-3 3-1 4-4 1-3 3-3-3-4-1-1-4-3-3 3-4 1-4 4-1z"/><text x="12" y="14.5" text-anchor="middle" fill="currentColor" stroke="none" font-size="6" font-weight="800">NEW</text>`,
-		unwatched: y`<circle cx="12" cy="12" r="10"/><path fill="currentColor" stroke="none" d="m9 6 9 6-9 6z"/>`,
-		watched: y`<circle cx="12" cy="12" r="10"/><path d="m6 12 4 4 8-8"/>`,
-		favorite: y`<path d="M12 21 3 12C-3 4 6-1 12 6c6-7 15-2 9 6z"/>`,
-		progress: y`<circle cx="12" cy="12" r="10"/><path d="M9 7v10M15 7v10"/>`,
-		"watch-soon": y`<circle cx="12" cy="12" r="10"/><path d="M12 6v6h5"/>`
+function lr(e) {
+	let t = cr(e), n = {
+		all: v`<path d="m2 7 10-5 10 5-10 5zM2 12l10 5 10-5M2 17l10 5 10-5"/>`,
+		new: v`<path d="m12 1 3 2 4 1 1 4 3 4-3 3-1 4-4 1-3 3-3-3-4-1-1-4-3-3 3-4 1-4 4-1z"/><text x="12" y="14.5" text-anchor="middle" fill="currentColor" stroke="none" font-size="6" font-weight="800">NEW</text>`,
+		unwatched: v`<circle cx="12" cy="12" r="10"/><path fill="currentColor" stroke="none" d="m9 6 9 6-9 6z"/>`,
+		watched: v`<circle cx="12" cy="12" r="10"/><path d="m6 12 4 4 8-8"/>`,
+		favorite: v`<path d="M12 21 3 12C-3 4 6-1 12 6c6-7 15-2 9 6z"/>`,
+		progress: v`<circle cx="12" cy="12" r="10"/><path d="M9 7v10M15 7v10"/>`,
+		"watch-soon": v`<circle cx="12" cy="12" r="10"/><path d="M12 6v6h5"/>`
 	};
-	return y`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${n[t]}</svg>`;
+	return v`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${n[t]}</svg>`;
 }
-function rr(e, t, n = !1, r) {
-	let i = v`${nr(e)}<span
-      >${er(e)}</span
-    >`, a = `collection-badge collection-${tr(e)}${e.toLowerCase() === "recently added" ? " status-recent" : ""}`;
-	return t ? v`<button
+function ur(e, t, n = !1, r) {
+	let i = _`${lr(e)}<span
+      >${sr(e)}</span
+    >`, a = `collection-badge collection-${cr(e)}${e.toLowerCase() === "recently added" ? " status-recent" : ""}`;
+	return t ? _`<button
         type="button"
         class=${a}
-        aria-label=${r ?? `Filter by collection: ${er(e)}`}
+        aria-label=${r ?? `Filter by collection: ${sr(e)}`}
         ?disabled=${n}
         @click=${t}
       >
         ${i}
-      </button>` : v`<span class=${a}>${i}</span>`;
+      </button>` : _`<span class=${a}>${i}</span>`;
 }
-var ir, ar, or, sr, cr, lr = t((() => {
-	C(), ir = [
+var dr, fr, pr, mr, hr, gr = t((() => {
+	C(), dr = [
 		"8K",
 		"4K Cinematic",
 		"4K",
@@ -8353,33 +8409,33 @@ var ir, ar, or, sr, cr, lr = t((() => {
 		"Dolby Vision",
 		"Dolby Atmos",
 		"DTS:X"
-	], ar = y`<svg class="dolby-symbol" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
+	], fr = v`<svg class="dolby-symbol" viewBox="0 0 24 16" aria-hidden="true" focusable="false">
   <path fill="currentColor" d="M1 1h3.1c4.1 0 7 2.9 7 7s-2.9 7-7 7H1V1Zm22 0h-3.1c-4.1 0-7 2.9-7 7s2.9 7 7 7H23V1Z" />
-</svg>`, or = y`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+</svg>`, pr = v`<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
   <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2" />
   <path d="M12 6v6h5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-</svg>`, sr = y`<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+</svg>`, mr = v`<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false">
   <path fill="currentColor" d="M13 3c.6 0 1 .4 1.2 1l1.4 5.2a5.8 5.8 0 0 0 4.1 4.1l5.2 1.4c.6.2 1 .6 1 1.2s-.4 1-1 1.2l-5.2 1.4a5.8 5.8 0 0 0-4.1 4.1l-1.4 5.2c-.2.6-.6 1-1.2 1s-1-.4-1.2-1l-1.4-5.2a5.8 5.8 0 0 0-4.1-4.1L1 17.1c-.6-.2-1-.6-1-1.2s.4-1 1-1.2l5.2-1.4a5.8 5.8 0 0 0 4.1-4.1L11.8 4c.2-.6.6-1 1.2-1Z" />
   <path fill="currentColor" d="M26 1c.5 0 .8.3.9.7l.6 2.1a2.7 2.7 0 0 0 1.9 1.9l2.1.6c.3.1.5.4.5.8s-.2.7-.5.8l-2.1.6a2.7 2.7 0 0 0-1.9 1.9l-.6 2.1c-.1.4-.4.7-.9.7s-.8-.3-.9-.7l-.6-2.1a2.7 2.7 0 0 0-1.9-1.9l-2.1-.6c-.3-.1-.5-.4-.5-.8s.2-.7.5-.8l2.1-.6a2.7 2.7 0 0 0 1.9-1.9l.6-2.1c.1-.4.4-.7.9-.7Z" />
   <path fill="currentColor" d="M5 23c.5 0 .8.3.9.7l.5 1.7a2.3 2.3 0 0 0 1.6 1.6l1.7.5c.4.1.6.4.6.8s-.2.7-.6.8l-1.7.5a2.3 2.3 0 0 0-1.6 1.6l-.5 1.7c-.1.4-.4.6-.9.6s-.8-.2-.9-.6l-.5-1.7A2.3 2.3 0 0 0 2 29.6l-1.7-.5c-.4-.1-.6-.4-.6-.8s.2-.7.6-.8L2 27a2.3 2.3 0 0 0 1.6-1.6l.5-1.7c.1-.4.4-.7.9-.7Z" />
-</svg>`, cr = y`<svg class="hdr-symbol" viewBox="0 0 27 16" aria-hidden="true" focusable="false">
+</svg>`, hr = v`<svg class="hdr-symbol" viewBox="0 0 27 16" aria-hidden="true" focusable="false">
   <path fill="#e94637" d="M1 4 7 3v10l-6-1z" />
   <path fill="#f28c28" d="M6 3 12 2v12l-6-1z" />
   <path fill="#edc13b" d="M11 2 17 1v14l-6-1z" />
   <path fill="#72ad69" d="M16 1 22 0v16l-6-1z" />
   <path fill="#298a98" d="M21 1 26 0v16l-5-1z" />
 </svg>`;
-})), X, ur, dr, fr, pr = t((() => {
-	C(), A(), P(), I(), z(), lr(), X = (e) => e.toLowerCase().replace(/[\s_-]+/g, ""), ur = (e) => ({
+})), X, _r, vr, yr, br = t((() => {
+	C(), A(), P(), I(), z(), gr(), X = (e) => e.toLowerCase().replace(/[\s_-]+/g, ""), _r = (e) => ({
 		new: "Unwatched",
 		played: "Watched",
 		paused: "In Progress",
 		watchsoon: "Watch Soon"
-	})[X(e)] ?? e, dr = (e) => [
+	})[X(e)] ?? e, vr = (e) => [
 		"queued",
 		"working",
 		"syncing"
-	].includes(e.status), fr = class extends S {
+	].includes(e.status), yr = class extends S {
 		constructor(...e) {
 			super(...e), this.revision = 0, this.enabled = !1, this.blocked = !1, this.choices = [], this.jobs = [], this.generation = 0, this.selected = "", this.busy = !1, this.refreshing = !1, this.refreshNotice = "", this.error = "";
 		}
@@ -8539,18 +8595,18 @@ var ir, ar, or, sr, cr, lr = t((() => {
 		}
 		isQueued(e) {
 			let t = X(e);
-			return this.jobs.some((e) => dr(e) && e.title_id === this.version?.id && (X(e.collection) === t || ["new", "played"].includes(X(e.collection)) && ["new", "played"].includes(t)));
+			return this.jobs.some((e) => vr(e) && e.title_id === this.version?.id && (X(e.collection) === t || ["new", "played"].includes(X(e.collection)) && ["new", "played"].includes(t)));
 		}
 		get actionLabel() {
 			return this.actionFor(this.selected);
 		}
 		actionFor(e) {
 			let t = X(e), n = this.isMember(e);
-			return t === "new" ? n ? "Move to Watched" : "Move to Unwatched" : t === "played" ? n ? "Move to Unwatched" : "Move to Watched" : `${n ? "Remove from" : "Add to"} ${ur(e)}`;
+			return t === "new" ? n ? "Move to Watched" : "Move to Unwatched" : t === "played" ? n ? "Move to Unwatched" : "Move to Watched" : `${n ? "Remove from" : "Add to"} ${_r(e)}`;
 		}
 		rowDisabled(e) {
 			let t = X(e), n = this.isMember(e);
-			return this.busy || this.refreshing || !!this.pending || this.isQueued(e) || this.jobs.filter(dr).length >= 10 || t === "paused" && !n || n && ![
+			return this.busy || this.refreshing || !!this.pending || this.isQueued(e) || this.jobs.filter(vr).length >= 10 || t === "paused" && !n || n && ![
 				"favorites",
 				"watchsoon",
 				"new",
@@ -8563,7 +8619,7 @@ var ir, ar, or, sr, cr, lr = t((() => {
 			return this.isQueued(e) ? "Change queued or being verified" : t === "paused" ? n ? "Can be removed; playback adds it again" : "Start playback to add In Progress" : ["new", "played"].includes(t) ? n ? "Currently in this status · moving changes both" : "Watched and Unwatched cannot overlap" : n && !["favorites", "watchsoon"].includes(t) ? "Custom collection removal is not yet supported" : n ? "Currently in this collection" : "Not in this collection";
 		}
 		get disabled() {
-			return !this.selected || this.busy || this.refreshing || this.queued || this.jobs.filter(dr).length >= 10 || this.selectedKey === "paused" && !this.member || this.member && ![
+			return !this.selected || this.busy || this.refreshing || this.queued || this.jobs.filter(vr).length >= 10 || this.selectedKey === "paused" && !this.member || this.member && ![
 				"favorites",
 				"watchsoon",
 				"new",
@@ -8624,7 +8680,7 @@ var ir, ar, or, sr, cr, lr = t((() => {
 			}
 		}
 		render() {
-			return !this.scope?.permissions.edit || !this.version || !this.enabled ? x : v`${yt("Collection", "collection", this.blocked || this.busy, () => this.open(), "collection-button")}
+			return !this.scope?.permissions.edit || !this.version || !this.enabled ? b : _`${yt("Collection", "collection", this.blocked || this.busy, () => this.open(), "collection-button")}
       <dialog
         data-admin-dialog
         class="database-dialog"
@@ -8635,7 +8691,7 @@ var ir, ar, or, sr, cr, lr = t((() => {
         <div class="card-head">
           <h2 id="collection-add-title">Manage collections</h2>
           <div class="actions">
-            ${yt("Refresh collections", "refresh", this.busy || this.refreshing || !!this.pending || this.jobs.some(dr), () => this.refresh(), "refresh-collections")}
+            ${yt("Refresh collections", "refresh", this.busy || this.refreshing || !!this.pending || this.jobs.some(vr), () => this.refresh(), "refresh-collections")}
             ${L((e) => this.close(e), this.busy)}
           </div>
         </div>
@@ -8649,9 +8705,9 @@ var ir, ar, or, sr, cr, lr = t((() => {
           Choose a collection. Changes run in the background and are checked
           after the Library refreshes.
         </p>
-        ${this.error ? v`<p role="alert" class="error">${this.error}</p>` : x}
-        ${this.refreshing ? v`<p role="status">Refreshing this version’s collection status…</p>` : this.refreshNotice ? v`<p role="status">${this.refreshNotice}</p>` : x}
-        ${this.pending ? v`<p class="warning">The queue response was not confirmed. Retry the same request to check safely, or close and inspect the Library status.</p>` : x}
+        ${this.error ? _`<p role="alert" class="error">${this.error}</p>` : b}
+        ${this.refreshing ? _`<p role="status">Refreshing this version’s collection status…</p>` : this.refreshNotice ? _`<p role="status">${this.refreshNotice}</p>` : b}
+        ${this.pending ? _`<p class="warning">The queue response was not confirmed. Retry the same request to check safely, or close and inspect the Library status.</p>` : b}
         <div class="collection-list" aria-label="Available collections">
           ${[...this.choices].sort((e, t) => {
 				let n = [
@@ -8664,15 +8720,15 @@ var ir, ar, or, sr, cr, lr = t((() => {
 					let t = n.indexOf(X(e));
 					return t < 0 ? n.length : t;
 				};
-				return r(e) - r(t) || ur(e).localeCompare(ur(t));
-			}).map((e) => v`<div
+				return r(e) - r(t) || _r(e).localeCompare(_r(t));
+			}).map((e) => _`<div
                   class=${`collection-row${this.isMember(e) ? " member" : ""}${this.isQueued(e) ? " pending" : ""}`}
                 >
                   <span class="collection-icon" aria-hidden="true"
-                    >${nr(ur(e))}</span
+                    >${lr(_r(e))}</span
                   >
                   <span class="collection-copy"
-                    ><strong>${ur(e)}</strong
+                    ><strong>${_r(e)}</strong
                     ><small>${this.rowHint(e)}</small></span
                   >
                   <button
@@ -8686,9 +8742,9 @@ var ir, ar, or, sr, cr, lr = t((() => {
                   </button>
                 </div>`)}
         </div>
-        ${this.jobs.filter(dr).length >= 10 ? v`<p class="warning">The queue holds up to 10 changes. Wait for an item to finish.</p>` : x}
-        ${this.choices.length ? x : v`<p>No cached collection names are available. Run a Library sync first.</p>`}
-        ${this.pending ? v`<div class="dialog-footer">
+        ${this.jobs.filter(vr).length >= 10 ? _`<p class="warning">The queue holds up to 10 changes. Wait for an item to finish.</p>` : b}
+        ${this.choices.length ? b : _`<p>No cached collection names are available. Run a Library sync first.</p>`}
+        ${this.pending ? _`<div class="dialog-footer">
                 <button
                   type="button"
                   class="primary"
@@ -8697,16 +8753,16 @@ var ir, ar, or, sr, cr, lr = t((() => {
                 >
                   ${this.busy ? "Queueing…" : this.pending ? "Retry queue request" : this.selected ? this.actionLabel : "Choose a collection"}
                 </button>
-              </div>` : x}
+              </div>` : b}
       </dialog>`;
 		}
-	}, customElements.get("kaleidescape-library-collection-add") || customElements.define("kaleidescape-library-collection-add", fr);
-})), mr, hr, gr = t((() => {
-	Ye(), tn(), fn(), mr = (e, t, n) => {
+	}, customElements.get("kaleidescape-library-collection-add") || customElements.define("kaleidescape-library-collection-add", yr);
+})), xr, Sr, Cr = t((() => {
+	Ye(), tn(), pn(), xr = (e, t, n) => {
 		let r = /* @__PURE__ */ new Map();
 		for (let i = t; i <= n; i++) r.set(e[i], i);
 		return r;
-	}, hr = $t(class extends en {
+	}, Sr = $t(class extends en {
 		constructor(e) {
 			if (super(e), e.type !== H.CHILD) throw Error("repeat() can only be used in text expressions");
 		}
@@ -8724,40 +8780,40 @@ var ir, ar, or, sr, cr, lr = t((() => {
 			return this.dt(e, t, n).values;
 		}
 		update(e, [t, n, r]) {
-			let i = un(e), { values: a, keys: o } = this.dt(t, n, r);
+			let i = dn(e), { values: a, keys: o } = this.dt(t, n, r);
 			if (!Array.isArray(i)) return this.ut = o, a;
 			let s = this.ut ??= [], c = [], l, u, d = 0, f = i.length - 1, p = 0, m = a.length - 1;
 			for (; d <= f && p <= m;) if (i[d] === null) d++;
 			else if (i[f] === null) f--;
-			else if (s[d] === o[p]) c[p] = U(i[d], a[p]), d++, p++;
-			else if (s[f] === o[m]) c[m] = U(i[f], a[m]), f--, m--;
-			else if (s[d] === o[m]) c[m] = U(i[d], a[m]), sn(e, c[m + 1], i[d]), d++, m--;
-			else if (s[f] === o[p]) c[p] = U(i[f], a[p]), sn(e, i[d], i[f]), f--, p++;
-			else if (l === void 0 && (l = mr(o, p, m), u = mr(s, d, f)), l.has(s[d])) {
+			else if (s[d] === o[p]) c[p] = cn(i[d], a[p]), d++, p++;
+			else if (s[f] === o[m]) c[m] = cn(i[f], a[m]), f--, m--;
+			else if (s[d] === o[m]) c[m] = cn(i[d], a[m]), sn(e, c[m + 1], i[d]), d++, m--;
+			else if (s[f] === o[p]) c[p] = cn(i[f], a[p]), sn(e, i[d], i[f]), f--, p++;
+			else if (l === void 0 && (l = xr(o, p, m), u = xr(s, d, f)), l.has(s[d])) {
 				if (l.has(s[f])) {
 					let t = u.get(o[p]), n = t === void 0 ? null : i[t];
 					if (n === null) {
 						let t = sn(e, i[d]);
-						U(t, a[p]), c[p] = t;
-					} else c[p] = U(n, a[p]), sn(e, i[d], n), i[t] = null;
+						cn(t, a[p]), c[p] = t;
+					} else c[p] = cn(n, a[p]), sn(e, i[d], n), i[t] = null;
 					p++;
-				} else dn(i[f]), f--;
-			} else dn(i[d]), d++;
+				} else fn(i[f]), f--;
+			} else fn(i[d]), d++;
 			for (; p <= m;) {
 				let t = sn(e, c[m + 1]);
-				U(t, a[p]), c[p++] = t;
+				cn(t, a[p]), c[p++] = t;
 			}
 			for (; d <= f;) {
 				let e = i[d++];
-				e !== null && dn(e);
+				e !== null && fn(e);
 			}
-			return this.ut = o, ln(e, c), b;
+			return this.ut = o, un(e, c), y;
 		}
 	});
-})), _r = t((() => {
-	gr();
-})), vr, yr = t((() => {
-	C(), Dn(), vr = l`
+})), wr = t((() => {
+	Cr();
+})), Tr, Er = t((() => {
+	C(), On(), Tr = l`
   :host {
     display: block;
     min-width: 0;
@@ -8898,7 +8954,7 @@ var ir, ar, or, sr, cr, lr = t((() => {
     outline: 2px solid var(--accent);
     box-shadow: 0 2px 8px #000c;
   }
-  ${En}
+  ${Dn}
   @media (prefers-reduced-motion: reduce) {
     .poster {
       transition: none;
@@ -9137,32 +9193,32 @@ var ir, ar, or, sr, cr, lr = t((() => {
 `;
 }));
 // src/ui/movie-dialog-mode.ts
-function br() {
-	return Cr;
+function Dr() {
+	return Ar;
 }
-function xr(e) {
-	if (Cr !== e) {
-		Cr = e;
-		for (let e of wr) e();
+function Or(e) {
+	if (Ar !== e) {
+		Ar = e;
+		for (let e of jr) e();
 	}
 }
-function Sr(e) {
-	return wr.add(e), () => wr.delete(e);
+function kr(e) {
+	return jr.add(e), () => jr.delete(e);
 }
-var Cr, wr, Tr = t((() => {
-	Cr = !0, wr = /* @__PURE__ */ new Set();
-})), Er = /* @__PURE__ */ n({
-	JournalCalendar: () => Ar,
-	calendarDays: () => kr,
-	calendarMonth: () => Dr,
+var Ar, jr, Mr = t((() => {
+	Ar = !0, jr = /* @__PURE__ */ new Set();
+})), Nr = /* @__PURE__ */ n({
+	JournalCalendar: () => Lr,
+	calendarDays: () => Ir,
+	calendarMonth: () => Pr,
 	dayKey: () => Z,
-	monthBounds: () => Or,
-	previewPosition: () => Sn
+	monthBounds: () => Fr,
+	previewPosition: () => Cn
 });
 function Z(e) {
 	return `${e.getFullYear()}-${String(e.getMonth() + 1).padStart(2, "0")}-${String(e.getDate()).padStart(2, "0")}`;
 }
-function Dr(e = location.search, t = /* @__PURE__ */ new Date()) {
+function Pr(e = location.search, t = /* @__PURE__ */ new Date()) {
 	let n = new URLSearchParams(e).get("companion_month") ?? "";
 	if (/^\d{4}-(0[1-9]|1[0-2])$/.test(n)) {
 		let [e, t] = n.split("-").map(Number);
@@ -9170,10 +9226,10 @@ function Dr(e = location.search, t = /* @__PURE__ */ new Date()) {
 	}
 	return new Date(t.getFullYear(), t.getMonth(), 1);
 }
-function Or(e) {
+function Fr(e) {
 	return [new Date(e.getFullYear(), e.getMonth(), 1).toISOString(), new Date(e.getFullYear(), e.getMonth() + 1, 1).toISOString()];
 }
-function kr(e) {
+function Ir(e) {
 	let t = Z(new Date(e.started_at)), n = e.ended_at ?? e.completed_at, r = e.status === "completed" && n && new Date(n) > new Date(e.started_at) ? Z(new Date(n)) : t, i = e.partial_minimum_seconds ?? 600, a = /* @__PURE__ */ new Map(), o = /* @__PURE__ */ new Map();
 	for (let t of e.sessions ?? []) {
 		if (t.watched_seconds < i) continue;
@@ -9187,10 +9243,10 @@ function kr(e) {
 		phase: e.status === "completed" && n === r ? n === t && !o.get(n) ? "single" : "completion" : n === t && !o.get(n) ? "start" : "continuation"
 	}));
 }
-var Ar, jr = t((() => {
-	C(), _r(), A(), M(), lr(), _n(), P(), yr(), Dn(), z(), gi(), Tr(), Ar = class extends S {
+var Lr, Rr = t((() => {
+	C(), wr(), A(), M(), gr(), vn(), P(), Er(), On(), z(), Ci(), Mr(), Lr = class extends S {
 		constructor(...e) {
-			super(...e), this.query = "", this.status = "", this.fuzzy = !0, this.daySize = 180, this.fitScreen = !1, this.hoverPreview = !1, this.disabled = !1, this.editable = !1, this.rememberUrl = !0, this.detailsOnly = !1, this.preserveDetailOnClose = !1, this.libraryRequest = 0, this.fittedSize = 180, this.month = Dr(), this.items = [], this.loading = !1, this.error = "", this.generation = 0, this.signature = "", this.privacy = "", this.queue = new j(), this.selectedArtwork = null, this.movie = null, this.detailRequest = 0, this.detailLoading = !1, this.detailError = "", this.previewError = "", this.previewGate = new Tn(), this.previewHovered = !1, this.previewFocused = !1, this.previewPopupHovered = !1, this.previewBlocked = !1, this.previewCache = /* @__PURE__ */ new Map(), this.activeTouches = /* @__PURE__ */ new Set(), this.swipeDragging = !1, this.swipeAnimating = !1, this.swipeMotion = 0, this.suppressSwipeClick = !1, this.previewKeydown = (e) => {
+			super(...e), this.query = "", this.status = "", this.fuzzy = !0, this.daySize = 180, this.fitScreen = !1, this.hoverPreview = !1, this.disabled = !1, this.editable = !1, this.rememberUrl = !0, this.detailsOnly = !1, this.preserveDetailOnClose = !1, this.libraryRequest = 0, this.fittedSize = 180, this.month = Pr(), this.items = [], this.loading = !1, this.error = "", this.generation = 0, this.signature = "", this.privacy = "", this.queue = new j(), this.selectedArtwork = null, this.movie = null, this.detailRequest = 0, this.detailLoading = !1, this.detailError = "", this.previewError = "", this.previewGate = new En(), this.previewHovered = !1, this.previewFocused = !1, this.previewPopupHovered = !1, this.previewBlocked = !1, this.previewCache = /* @__PURE__ */ new Map(), this.activeTouches = /* @__PURE__ */ new Set(), this.swipeDragging = !1, this.swipeAnimating = !1, this.swipeMotion = 0, this.suppressSwipeClick = !1, this.previewKeydown = (e) => {
 				e.key === "Tab" && !this.previewBlocked && (this.previewPointerAnchor = void 0), e.key === "Escape" && this.pendingHoverAnchor && (this.cancelPendingHover(), this.previewHovered = !1), e.key === "Escape" && this.previewRow && (e.stopPropagation(), this.closePreview());
 			}, this.scheduleLayout = () => {
 				this.fitScreen && this.isConnected && this.layoutFrame === void 0 && (this.layoutFrame = requestAnimationFrame(() => {
@@ -9200,7 +9256,7 @@ var Ar, jr = t((() => {
 				}));
 			}, this.positionPreview = () => {
 				let e = this.renderRoot.querySelector(".movie-preview");
-				e && this.previewAnchor && this.previewRow && wn(e, this.previewAnchor);
+				e && this.previewAnchor && this.previewRow && Tn(e, this.previewAnchor);
 			};
 		}
 		static {
@@ -9223,15 +9279,15 @@ var Ar, jr = t((() => {
 		static {
 			this.styles = [
 				N,
-				gn,
-				vr
+				_n,
+				Tr
 			];
 		}
 		connectedCallback() {
-			super.connectedCallback(), window.addEventListener("keydown", this.previewKeydown), window.addEventListener("scroll", this.positionPreview, !0), window.addEventListener("resize", this.positionPreview), window.visualViewport?.addEventListener("scroll", this.positionPreview), window.visualViewport?.addEventListener("resize", this.positionPreview), this.unwatchMovieDialog = Sr(() => {
+			super.connectedCallback(), window.addEventListener("keydown", this.previewKeydown), window.addEventListener("scroll", this.positionPreview, !0), window.addEventListener("resize", this.positionPreview), window.visualViewport?.addEventListener("scroll", this.positionPreview), window.visualViewport?.addEventListener("resize", this.positionPreview), this.unwatchMovieDialog = kr(() => {
 				if (this.requestUpdate(), !this.detailsOnly && this.selected) {
-					if (br() && this.renderRoot.querySelector(".calendar-dialog")?.open) this.openLibraryTitle(!0);
-					else if (!br() && this.linkedTitleId) {
+					if (Dr() && this.renderRoot.querySelector(".calendar-dialog")?.open) this.openLibraryTitle(!0);
+					else if (!Dr() && this.linkedTitleId) {
 						let e = this.selected;
 						this.linkedTitleId = void 0, this.openViewing(e);
 					}
@@ -9274,7 +9330,7 @@ var Ar, jr = t((() => {
 			let e = ++this.generation;
 			this.closeDayPicker(), this.closePreview(), this.previewCache.clear(), this.closeDetails(), this.items = [], this.totals = void 0, this.loading = !0, this.error = "", this.notifyStatus(), this.requestUpdate();
 			try {
-				let [t, n] = Or(this.month), r = await this.client.calendarMonth(this.scope, t, n, this.query, this.status, this.fuzzy, this.libraryTitleId);
+				let [t, n] = Fr(this.month), r = await this.client.calendarMonth(this.scope, t, n, this.query, this.status, this.fuzzy, this.libraryTitleId);
 				e === this.generation && (this.items = r.items, this.totals = r.summary);
 			} catch (t) {
 				e === this.generation && this.fail(t);
@@ -9399,7 +9455,7 @@ var Ar, jr = t((() => {
 		}
 		renderDayPicker() {
 			let e = this.dayPicker;
-			return e ? v`<dialog
+			return e ? _`<dialog
       class="day-picker"
       aria-label=${`Choose a viewing for ${e.date.toLocaleDateString()}`}
       @click=${() => this.closeDayPicker()}
@@ -9408,7 +9464,7 @@ var Ar, jr = t((() => {
 			}}
     >
       <div class="day-picker-grid">
-        ${e.rows.map((e) => v`<button
+        ${e.rows.map((e) => _`<button
               type="button"
               class="day-picker-movie"
               aria-label=${`${e.title}, ${new Date(e.started_at).toLocaleTimeString(void 0, {
@@ -9432,7 +9488,7 @@ var Ar, jr = t((() => {
               ></span>
             </button>`)}
       </div>
-    </dialog>` : x;
+    </dialog>` : b;
 		}
 		cancelPendingHover() {
 			this.previewGate.cancel(), this.pendingHoverAnchor = void 0;
@@ -9455,7 +9511,7 @@ var Ar, jr = t((() => {
 		}
 		renderPreview() {
 			let e = this.previewRow;
-			return !e || !this.hoverPreview ? x : v`<div
+			return !e || !this.hoverPreview ? b : _`<div
       id="calendar-movie-preview"
       class="movie-preview"
       role="tooltip"
@@ -9466,7 +9522,7 @@ var Ar, jr = t((() => {
 				this.previewPopupHovered = !1, this.closePreviewWhenIdle();
 			}}
     >
-      ${Cn(e.title, this.previewMovie ?? null, this.previewError, e.duration_seconds)}
+      ${wn(e.title, this.previewMovie ?? null, this.previewError, e.duration_seconds)}
     </div>`;
 		}
 		async openViewing(e, t = null) {
@@ -9474,10 +9530,10 @@ var Ar, jr = t((() => {
 			this.previewBlocked = !0, this.closeDayPicker(), this.closePreview();
 			let n = this.generation, r = ++this.detailRequest;
 			if (this.selected = e, this.selectedArtwork = t, this.movie = null, this.detailLoading = !0, this.detailError = "", this.requestUpdate(), await this.updateComplete, n === this.generation && r === this.detailRequest && this.isConnected) {
-				if (br() && !this.detailsOnly && this.scope.library_enabled) try {
+				if (Dr() && !this.detailsOnly && this.scope.library_enabled) try {
 					let t = await this.client.viewingLibrary(this.scope, e.id);
 					if (n !== this.generation || r !== this.detailRequest || !this.isConnected) return;
-					if (t.library && br()) {
+					if (t.library && Dr()) {
 						this.linkedTitleId = t.library.title_id, this.detailLoading = !1, this.requestUpdate();
 						return;
 					}
@@ -9505,7 +9561,7 @@ var Ar, jr = t((() => {
 			let t = this.generation, n = ++this.libraryRequest;
 			try {
 				let r = await this.client.viewingLibrary(this.scope, this.selected.id);
-				if (t !== this.generation || n !== this.libraryRequest || !this.isConnected || e && !br()) return;
+				if (t !== this.generation || n !== this.libraryRequest || !this.isConnected || e && !Dr()) return;
 				if (r.library) {
 					if (e) {
 						let e = this.renderRoot.querySelector(".calendar-dialog");
@@ -9538,7 +9594,7 @@ var Ar, jr = t((() => {
 			})), this.requestUpdate();
 		}
 		detailLink(e, t) {
-			return this.detailsOnly ? t : v`<button
+			return this.detailsOnly ? t : _`<button
       type="button"
       class="link detail-link"
       @click=${() => this.browse(e, e === "query" ? JSON.stringify(t) : t)}
@@ -9548,7 +9604,7 @@ var Ar, jr = t((() => {
 		}
 		renderDetails() {
 			let e = this.selected, t = this.movie, n = e ? new Date(e.started_at) : null, r = e?.ended_at ?? e?.completed_at, i = r ? new Date(r) : null, a = n && i && Z(n) !== Z(i), o = t?.duration_seconds ?? e?.duration_seconds;
-			return v`<dialog
+			return _`<dialog
         class="database-dialog calendar-dialog"
         aria-labelledby="calendar-movie-title"
         @click=${R}
@@ -9564,13 +9620,13 @@ var Ar, jr = t((() => {
       >
         <div class="card-head">
           <h2 id="calendar-movie-title">
-            ${e && t && !this.detailsOnly ? v`<button type="button" class="link detail-link" @click=${() => void this.openLibraryTitle()}>${e.title}</button>` : e?.title ?? "Viewing details"}
+            ${e && t && !this.detailsOnly ? _`<button type="button" class="link detail-link" @click=${() => void this.openLibraryTitle()}>${e.title}</button>` : e?.title ?? "Viewing details"}
           </h2>
           ${L(() => {
 				this.closeDetails(), this.requestUpdate();
 			})}
         </div>
-        ${e ? v`<div class="movie-detail">
+        ${e ? _`<div class="movie-detail">
                 <kaleidescape-library-cover
                   .client=${this.client}
                   .scope=${this.scope}
@@ -9580,23 +9636,23 @@ var Ar, jr = t((() => {
                   @access-denied=${() => this.fail({ code: "unauthorized" })}
                 ></kaleidescape-library-cover>
                 <div>
-                  ${this.detailLoading ? v`<p role="status">Loading movie details…</p>` : x}
-                  ${this.detailError ? v`<p class="error" role="alert">${this.detailError} <button @click=${() => this.openViewing(e, this.selectedArtwork)}>Retry details</button></p>` : x}
-                  ${t ? v`<div class="detail-badges">
-                            ${Y(t, !1, this.detailsOnly ? void 0 : (e) => this.browse("format", e))}${$n(t.rating ?? "", this.detailsOnly ? void 0 : (e) => this.browse("rating", e))}
+                  ${this.detailLoading ? _`<p role="status">Loading movie details…</p>` : b}
+                  ${this.detailError ? _`<p class="error" role="alert">${this.detailError} <button @click=${() => this.openViewing(e, this.selectedArtwork)}>Retry details</button></p>` : b}
+                  ${t ? _`<div class="detail-badges">
+                            ${Y(t, !1, this.detailsOnly ? void 0 : (e) => this.browse("format", e))}${or(t.rating ?? "", this.detailsOnly ? void 0 : (e) => this.browse("rating", e))}
                           </div>
-                          ${t.year ? v`<p><strong>Year:</strong> ${this.detailLink("year", String(t.year))}</p>` : x}
+                          ${t.year ? _`<p><strong>Year:</strong> ${this.detailLink("year", String(t.year))}</p>` : b}
                           ${[
 				["Cast", t.actors],
 				["Directors", t.directors],
 				["Genres", t.genres]
-			].map(([e, t]) => t?.length ? v`<p>
+			].map(([e, t]) => t?.length ? _`<p>
                                   <strong>${e}:</strong>
-                                  ${t.map((t, n) => v`${n ? ", " : ""}${this.detailLink(e === "Genres" ? "genre" : "query", t)}`)}
-                                </p>` : x)}` : !this.detailLoading && !this.detailError ? v`<p class="muted">
+                                  ${t.map((t, n) => _`${n ? ", " : ""}${this.detailLink(e === "Genres" ? "genre" : "query", t)}`)}
+                                </p>` : b)}` : !this.detailLoading && !this.detailError ? _`<p class="muted">
                             No linked Library metadata is available.
-                          </p>` : x}
-                  ${o == null ? x : v`<p><strong>Runtime:</strong> ${(o / 60).toFixed(2)} min</p>`}
+                          </p>` : b}
+                  ${o == null ? b : _`<p><strong>Runtime:</strong> ${(o / 60).toFixed(2)} min</p>`}
                   <p>
                     <strong
                       >${a ? "Viewing dates" : "Viewing date"}:</strong
@@ -9609,8 +9665,8 @@ var Ar, jr = t((() => {
                     ${e.status === "completed" ? "Completed" : "Partial"}
                   </p>
                 </div>
-              </div>` : x}
-        ${e && this.editable && this.scope?.permissions.edit ? v`<div class="dialog-footer">
+              </div>` : b}
+        ${e && this.editable && this.scope?.permissions.edit ? _`<div class="dialog-footer">
                 <button
                   class="primary"
                   ?disabled=${this.disabled || this.detailLoading}
@@ -9618,9 +9674,9 @@ var Ar, jr = t((() => {
                 >
                   Edit viewing
                 </button>
-              </div>` : x}
+              </div>` : b}
       </dialog>
-      ${this.linkedTitleId && !this.detailsOnly ? v`<kaleidescape-library
+      ${this.linkedTitleId && !this.detailsOnly ? _`<kaleidescape-library
               .client=${this.client}
               .scope=${this.scope}
               .dialogOnly=${!0}
@@ -9632,16 +9688,16 @@ var Ar, jr = t((() => {
               @title-dialog-error=${(e) => {
 				this.previewBlocked = !1, this.closePreview(), this.linkedTitleId = void 0, this.detailError = e.detail, this.requestUpdate();
 			}}
-            ></kaleidescape-library>` : x}`;
+            ></kaleidescape-library>` : b}`;
 		}
 		render() {
 			if (this.detailsOnly) return this.renderDetails();
 			let e = this.month.getFullYear(), t = this.month.getMonth(), n = new Date(e, t, 1), r = new Date(e, t + 1, 0).getDate(), i = Math.ceil((n.getDay() + r) / 7) * 7, a = Array.from({ length: i }, (r, i) => new Date(e, t, i - n.getDay() + 1)), o = /* @__PURE__ */ new Map();
-			for (let e of this.items) for (let { day: t, phase: n } of kr(e)) o.set(t, [...o.get(t) ?? [], {
+			for (let e of this.items) for (let { day: t, phase: n } of Ir(e)) o.set(t, [...o.get(t) ?? [], {
 				row: e,
 				phase: n
 			}]);
-			return v`<div class="month-bar">
+			return _`<div class="month-bar">
         <button
           aria-label="Previous month"
           ?disabled=${this.disabled || e <= 100 && t === 0}
@@ -9705,10 +9761,10 @@ var Ar, jr = t((() => {
           aria-label="Viewing calendar"
           aria-busy=${this.loading}
         >
-          ${Array.from({ length: 7 }, (e, t) => v`<div class="weekday">${new Date(2023, 0, 1 + t).toLocaleDateString(void 0, { weekday: "short" })}</div>`)}
+          ${Array.from({ length: 7 }, (e, t) => _`<div class="weekday">${new Date(2023, 0, 1 + t).toLocaleDateString(void 0, { weekday: "short" })}</div>`)}
           ${a.map((e) => {
 				let n = Z(e), r = o.get(n) ?? [];
-				return v`<section
+				return _`<section
               class=${`day${e.getMonth() === t ? "" : " other-month"}${n === Z(/* @__PURE__ */ new Date()) ? " today" : ""}`}
               aria-label=${e.toLocaleDateString()}
               @click=${(t) => {
@@ -9717,19 +9773,19 @@ var Ar, jr = t((() => {
             >
               <time
                 datetime=${n}
-                aria-current=${n === Z(/* @__PURE__ */ new Date()) ? "date" : x}
+                aria-current=${n === Z(/* @__PURE__ */ new Date()) ? "date" : b}
                 >${e.getDate()}</time
               >
-              ${r.length ? v`<div
+              ${r.length ? _`<div
                       class="cover-stack"
                       style=${`--spread:${1 + (r.length - 1) * .15}`}
                     >
-                      ${hr(r, ({ row: e }) => e.id, ({ row: t, phase: n }, i) => v`<button
+                      ${Sr(r, ({ row: e }) => e.id, ({ row: t, phase: n }, i) => _`<button
                             class=${`poster poster-${n}`}
                             style=${`--index:${i};--layer:${i + 1}`}
                             aria-label=${`${t.title} · ${n === "start" ? "Started; incomplete on this day" : n === "continuation" ? "Continued; incomplete on this day" : n === "completion" ? "Completed; started on another day" : "Completed"}`}
-                            title=${this.hoverPreview ? x : t.title}
-                            aria-describedby=${this.previewRow?.id === t.id && this.previewAnchor ? "calendar-movie-preview" : x}
+                            title=${this.hoverPreview ? b : t.title}
+                            aria-describedby=${this.previewRow?.id === t.id && this.previewAnchor ? "calendar-movie-preview" : b}
                             ?disabled=${this.disabled}
                             @pointerenter=${(e) => {
 					if (e.pointerType === "touch" || this.previewBlocked || !this.hoverPreview) return;
@@ -9761,20 +9817,20 @@ var Ar, jr = t((() => {
                                 .title=${t.title}
                                 @access-denied=${() => this.fail({ code: "unauthorized" })}
                               ></kaleidescape-library-cover>
-                              ${t.artwork_key ? x : v`<span class="poster-title">${t.title}</span>`}</span
+                              ${t.artwork_key ? b : _`<span class="poster-title">${t.title}</span>`}</span
                             >
                           </button>`)}
-                    </div>` : x}
+                    </div>` : b}
             </section>`;
 			})}
         </div>
       </div>
       ${this.renderPreview()} ${this.renderDetails()} ${this.renderDayPicker()}`;
 		}
-	}, customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", Ar);
+	}, customElements.get("kaleidescape-journal-calendar") || customElements.define("kaleidescape-journal-calendar", Lr);
 }));
 // src/library/library-journal.ts
-function Mr(e) {
+function zr(e) {
 	return `${e.toLocaleDateString("en-US", {
 		month: "2-digit",
 		day: "2-digit",
@@ -9784,7 +9840,7 @@ function Mr(e) {
 		minute: "2-digit"
 	})}`;
 }
-function Nr(e) {
+function Br(e) {
 	let t = new Date(e.started_at), n = e.ended_at ?? e.completed_at, r = n ? new Date(n) : null;
 	return e.status === "completed" && r !== null && r > t && t.toDateString() !== r.toDateString() ? [{
 		label: "Started",
@@ -9800,11 +9856,11 @@ function Nr(e) {
 		datetime: e.started_at
 	}];
 }
-function Pr(e) {
-	return Nr(e).map(({ label: e, date: t }) => `${e}: ${Mr(t)}`).join(" · ");
+function Vr(e) {
+	return Br(e).map(({ label: e, date: t }) => `${e}: ${zr(t)}`).join(" · ");
 }
-var Fr, Ir = t((() => {
-	C(), A(), P(), Fr = class extends S {
+var Hr, Ur = t((() => {
+	C(), A(), P(), Hr = class extends S {
 		constructor(...e) {
 			super(...e), this.titleId = "", this.editable = !1, this.unified = !1, this.bound = "", this.generation = 0, this.items = [], this.cursor = null, this.loading = !1, this.error = "", this.dialogReady = !1, this.detailRequest = 0, this.editChooser = !1;
 		}
@@ -9934,29 +9990,29 @@ var Fr, Ir = t((() => {
 		}
 		async openViewing(e) {
 			let t = this.generation, n = ++this.detailRequest;
-			if (await Promise.resolve().then(() => (jr(), Er)), t !== this.generation || n !== this.detailRequest || !this.isConnected || (this.dialogReady = !0, this.requestUpdate(), await this.updateComplete, t !== this.generation || n !== this.detailRequest || !this.isConnected)) return;
+			if (await Promise.resolve().then(() => (Rr(), Nr)), t !== this.generation || n !== this.detailRequest || !this.isConnected || (this.dialogReady = !0, this.requestUpdate(), await this.updateComplete, t !== this.generation || n !== this.detailRequest || !this.isConnected)) return;
 			let r = this.renderRoot.querySelector("kaleidescape-journal-calendar");
 			r && (await r.updateComplete, t === this.generation && n === this.detailRequest && r.openViewing(e));
 		}
 		render() {
-			return !this.items.length && !this.error ? x : v`
-      ${this.items.length ? v`<details
+			return !this.items.length && !this.error ? b : _`
+      ${this.items.length ? _`<details
               @toggle=${(e) => {
 				e.currentTarget.open && this.cursor && !this.loading && this.load(!0);
 			}}
             >
               <summary>
                 Journal
-                ${this.editable && this.scope?.permissions.edit ? v`<button type="button" class="link summary-edit" @click=${this.chooseEdit}>edit</button>` : x}
+                ${this.editable && this.scope?.permissions.edit ? _`<button type="button" class="link summary-edit" @click=${this.chooseEdit}>edit</button>` : b}
               </summary>
               <ul>
-                ${this.items.map((e, t) => v`<li>
-                      ${t ? v`<hr class="viewing-separator" />` : x}
+                ${this.items.map((e, t) => _`<li>
+                      ${t ? _`<hr class="viewing-separator" />` : b}
                       <div class="viewing">
                         <div class="viewing-dates">
-                          ${Nr(e).map(({ label: e, date: t, datetime: n }) => v`<time datetime=${n}>${e}: ${Mr(t)}</time>`)}
+                          ${Br(e).map(({ label: e, date: t, datetime: n }) => _`<time datetime=${n}>${e}: ${zr(t)}</time>`)}
                         </div>
-                        ${this.unified ? x : v`<button
+                        ${this.unified ? b : _`<button
                                 type="button"
                                 class="link"
                                 @click=${() => void this.openViewing(e)}
@@ -9966,10 +10022,10 @@ var Fr, Ir = t((() => {
                       </div>
                     </li>`)}
               </ul>
-              ${this.loading ? v`<p role="status">Loading viewings…</p>` : x}
-            </details>` : x}
-      ${this.error ? v`<p class="error" role="alert">${this.error} <button @click=${() => void this.load(!!this.cursor)}>Retry viewing history</button></p>` : x}
-      ${this.editChooser ? v`<dialog
+              ${this.loading ? _`<p role="status">Loading viewings…</p>` : b}
+            </details>` : b}
+      ${this.error ? _`<p class="error" role="alert">${this.error} <button @click=${() => void this.load(!!this.cursor)}>Retry viewing history</button></p>` : b}
+      ${this.editChooser ? _`<dialog
               class="journal-edit-chooser"
               aria-label="Edit journal entry"
               @cancel=${() => {
@@ -9979,7 +10035,7 @@ var Fr, Ir = t((() => {
               <h2>Edit journal entry</h2>
               <p>Choose a viewing to edit.</p>
               <ul>
-                ${this.items.map((e) => v`<li><button type="button" class="link" @click=${() => this.edit(e)}>${Pr(e)}</button></li>`)}
+                ${this.items.map((e) => _`<li><button type="button" class="link" @click=${() => this.edit(e)}>${Vr(e)}</button></li>`)}
               </ul>
               <button
                 type="button"
@@ -9989,14 +10045,14 @@ var Fr, Ir = t((() => {
               >
                 Cancel
               </button>
-            </dialog>` : x}
-      ${this.dialogReady ? v`<kaleidescape-journal-calendar .client=${this.client} .scope=${this.scope} .detailsOnly=${!0}></kaleidescape-journal-calendar>` : x}
+            </dialog>` : b}
+      ${this.dialogReady ? _`<kaleidescape-journal-calendar .client=${this.client} .scope=${this.scope} .detailsOnly=${!0}></kaleidescape-journal-calendar>` : b}
     `;
 		}
-	}, customElements.get("kaleidescape-library-journal") || customElements.define("kaleidescape-library-journal", Fr);
+	}, customElements.get("kaleidescape-library-journal") || customElements.define("kaleidescape-library-journal", Hr);
 }));
 // src/library/text-diff.ts
-function Lr(e, t) {
+function Wr(e, t) {
 	let n = (e) => e.match(/\s+|[\p{L}\p{N}_]+|[^\s\p{L}\p{N}_]/gu) ?? [], r = n(e), i = n(t), a = [], o = [], s = (e, t, n) => {
 		let r = e.at(-1);
 		r && r.changed === n ? r.text += t : e.push({
@@ -10024,8 +10080,8 @@ function Lr(e, t) {
 		current: o
 	};
 }
-var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
-	C(), A(), P(), I(), z(), V(), lr(), Rr(), zr = [
+var Gr = t((() => {})), Kr, qr, Jr, Yr, Xr = t((() => {
+	C(), A(), P(), I(), z(), V(), gr(), Gr(), Kr = [
 		["title", "Display title"],
 		["sort_title", "Sort title (blank uses display title)"],
 		["year", "Year"],
@@ -10037,18 +10093,18 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
 		["producers", "Producers"],
 		["studios", "Studios"],
 		["genres", "Genres"]
-	], Br = [
+	], qr = [
 		["purchased_on", "Purchase date"],
 		["purchase_price", "Purchase price"],
 		["retail_price", "Retail price"]
-	], Vr = /* @__PURE__ */ new Set([
+	], Jr = /* @__PURE__ */ new Set([
 		"actors",
 		"directors",
 		"writers",
 		"producers",
 		"studios",
 		"genres"
-	]), Hr = class extends S {
+	]), Yr = class extends S {
 		constructor(...e) {
 			super(...e), this.versionId = "", this.blocked = !1, this.purchaseOnly = !1, this.dateOnly = !1, this.optionsOnly = !1, this.draft = {}, this.busy = !1, this.opened = !1, this.restoring = !1, this.reviewingEdits = !1, this.restoredFields = /* @__PURE__ */ new Map(), this.formatMode = "auto", this.formatBadges = [], this.error = "", this.generation = 0;
 		}
@@ -10203,7 +10259,7 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
 					this.error = "Purchase records changed. Close and reopen the movie details to edit the receipt.";
 					return;
 				}
-				this.review = t, this.formatMode = t.format_mode ?? "auto", this.formatBadges = ir.filter((e) => t.format_badges?.includes(e)), this.draft = Object.fromEntries(Object.entries(t.values).map(([e, t]) => [e, Array.isArray(t) ? t.join("\n") : String(t ?? "")]));
+				this.review = t, this.formatMode = t.format_mode ?? "auto", this.formatBadges = dr.filter((e) => t.format_badges?.includes(e)), this.draft = Object.fromEntries(Object.entries(t.values).map(([e, t]) => [e, Array.isArray(t) ? t.join("\n") : String(t ?? "")]));
 			} catch (t) {
 				e === this.generation && this.report(t);
 			} finally {
@@ -10211,19 +10267,19 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
 			}
 		}
 		fields() {
-			return this.purchaseOnly ? this.optionsOnly ? [] : this.dateOnly ? Br.filter(([e]) => e === "purchased_on") : Br : zr;
+			return this.purchaseOnly ? this.optionsOnly ? [] : this.dateOnly ? qr.filter(([e]) => e === "purchased_on") : qr : Kr;
 		}
 		patch() {
 			let e = {};
 			for (let [t] of this.fields()) {
 				if (this.restoredFields.has(t)) continue;
-				let n = this.draft[t] ?? "", r = Vr.has(t) ? n.split("\n").map((e) => e.trim()).filter(Boolean) : t === "year" ? n.trim() ? Number(n) : null : [
+				let n = this.draft[t] ?? "", r = Jr.has(t) ? n.split("\n").map((e) => e.trim()).filter(Boolean) : t === "year" ? n.trim() ? Number(n) : null : [
 					"sort_title",
 					"purchased_on",
 					"purchase_price",
 					"retail_price"
 				].includes(t) ? n.trim() || null : n;
-				JSON.stringify(r) !== JSON.stringify(this.review.values[t] ?? (Vr.has(t) ? [] : [
+				JSON.stringify(r) !== JSON.stringify(this.review.values[t] ?? (Jr.has(t) ? [] : [
 					"sort_title",
 					"year",
 					"purchased_on",
@@ -10234,7 +10290,7 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
 			this.restoredFields.size && (e.restore_fields = [...this.restoredFields.keys()]);
 			let t = this.draft.purchase_information_unavailable === "true";
 			if (this.purchaseOnly && t !== !!this.review.values.purchase_information_unavailable && (e.purchase_information_unavailable = t), !this.purchaseOnly && this.review) {
-				let t = ir.filter((e) => this.review?.format_badges?.includes(e));
+				let t = dr.filter((e) => this.review?.format_badges?.includes(e));
 				(this.formatMode !== (this.review.format_mode ?? "auto") || JSON.stringify(this.formatBadges) !== JSON.stringify(t)) && (e.format_override = this.formatMode === "custom" ? {
 					mode: "custom",
 					badges: this.formatBadges
@@ -10268,7 +10324,7 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
 		editedFields() {
 			if (!this.review || this.purchaseOnly) return [];
 			let e = new Set(this.review.edited_fields ?? []), t = this.patch();
-			return zr.filter(([n]) => e.has(n) || n in t);
+			return Kr.filter(([n]) => e.has(n) || n in t);
 		}
 		restoreField(e) {
 			if (!(!this.review || this.busy || this.pending)) {
@@ -10286,7 +10342,7 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
 		}
 		renderEdits() {
 			let e = this.editedFields();
-			return v`<p class="muted">
+			return _`<p class="muted">
         Compare the original scanned metadata with the current values, including
         unsaved changes. Fields are included when a manual edit was recorded;
         older edits may not have recorded provenance. Restore changes are
@@ -10296,8 +10352,8 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
         <span>Original scanned</span><span>Current</span>
       </div>
       ${e.length ? e.map(([e, t]) => {
-				let n = this.review?.original_values?.[e], r = Lr(Array.isArray(n) ? n.join("\n") : String(n ?? ""), this.draft[e] ?? "");
-				return v`<section class="diff-field">
+				let n = this.review?.original_values?.[e], r = Wr(Array.isArray(n) ? n.join("\n") : String(n ?? ""), this.draft[e] ?? "");
+				return _`<section class="diff-field">
                 <h3>
                   ${t} <span aria-hidden="true">·</span>
                   <button
@@ -10312,17 +10368,17 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
                 </h3>
                 <div class="diff-values">
                   ${[[r.original, "diff-removed"], [r.current, "diff-added"]].map(([e, t]) => {
-					let n = e.length ? e.map((e) => v`<span class=${e.changed ? t : ""}
+					let n = e.length ? e.map((e) => _`<span class=${e.changed ? t : ""}
                               >${e.text}</span
-                            >`) : v`<span class="diff-empty">Empty</span>`;
-					return v`<div class="diff-value">${n}</div>`;
+                            >`) : _`<span class="diff-empty">Empty</span>`;
+					return _`<div class="diff-value">${n}</div>`;
 				})}
                 </div>
               </section>`;
-			}) : v`<p class="muted">No edited fields.</p>`}`;
+			}) : _`<p class="muted">No edited fields.</p>`}`;
 		}
 		render() {
-			return this.scope?.permissions.edit ? v`${this.purchaseOnly ? v`<button type="button" class="link purchase-edit-link" ?disabled=${this.blocked || this.busy || !!this.pending} @click=${this.open}>edit</button>` : yt("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
+			return this.scope?.permissions.edit ? _`${this.purchaseOnly ? _`<button type="button" class="link purchase-edit-link" ?disabled=${this.blocked || this.busy || !!this.pending} @click=${this.open}>edit</button>` : yt("Edit details", "edit", this.blocked || this.busy || !!this.pending, () => this.open())}
       <dialog
         data-admin-dialog
         class="inset-dialog"
@@ -10338,31 +10394,31 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
           </h2>
           ${L(() => this.close())}
         </div>
-        ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-        ${this.busy ? v`<p role="status">${this.pending ? "Saving changes…" : "Loading details…"}</p>` : x}
-        ${this.review && this.reviewingEdits ? this.renderEdits() : this.review && this.restoring ? v`<p class="warning">
+        ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+        ${this.busy ? _`<p role="status">${this.pending ? "Saving changes…" : "Loading details…"}</p>` : b}
+        ${this.review && this.reviewingEdits ? this.renderEdits() : this.review && this.restoring ? _`<p class="warning">
                     Restore scanned metadata for every matching version,
                     including unavailable versions. This clears saved edit
                     history, metadata selections and other fields listed below
                     from the local database.
                   </p>
-                  ${this.review.restore_summary ? v`
+                  ${this.review.restore_summary ? _`
                           <p>
                             The following fields will be cleared on each
                             version:
                           </p>
-                          ${this.review.restore_summary.versions.map((e, t) => v`
+                          ${this.review.restore_summary.versions.map((e, t) => _`
                               <section class="restore-version">
                                 <h3>
                                   Version ${t + 1}:
                                   ${e.edition}${e.available ? "" : " (unavailable)"}
                                 </h3>
-                                ${e.removed_fields.length ? v`<ul>
-                                        ${e.removed_fields.map((e) => v`<li>${e}</li>`)}
-                                      </ul>` : v`<p class="muted">
+                                ${e.removed_fields.length ? _`<ul>
+                                        ${e.removed_fields.map((e) => _`<li>${e}</li>`)}
+                                      </ul>` : _`<p class="muted">
                                         No fields to clear.
                                       </p>`}
-                                ${e.pause_scraping ? v`<p>Background scraping will be paused for this version.</p>` : v`<p>Background scraping is already paused.</p>`}
+                                ${e.pause_scraping ? _`<p>Background scraping will be paused for this version.</p>` : _`<p>Background scraping is already paused.</p>`}
                               </section>
                             `)}
                           <p>
@@ -10376,22 +10432,22 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
                             retained. Background scraping stays paused until you
                             explicitly scrape and apply data again.
                           </p>
-                        ` : v`<p class="error">
+                        ` : _`<p class="error">
                           The restore summary is unavailable. Reload details
                           before restoring.
-                        </p>`}` : this.review ? v`<p class="muted">
-                      ${this.purchaseOnly ? "Saved purchase details appear for the whole movie group." : v`Display details apply to ${B(this.review.version_count, "version")}; format badges apply only to the selected version. Changes survive scans. Source IDs, runtime, purchases and viewing records are protected. Enter one name per line for credits and genres.`}
+                        </p>`}` : this.review ? _`<p class="muted">
+                      ${this.purchaseOnly ? "Saved purchase details appear for the whole movie group." : _`Display details apply to ${B(this.review.version_count, "version")}; format badges apply only to the selected version. Changes survive scans. Source IDs, runtime, purchases and viewing records are protected. Enter one name per line for credits and genres.`}
                     </p>
                     <div class="edit-fields">
-                      ${this.fields().map(([e, t]) => v`<label
-                            >${t}${this.editedFields().some(([t]) => t === e) ? v` <span class="edited-note">(edited)</span>` : x}${Vr.has(e) || e === "synopsis" ? v`<textarea
+                      ${this.fields().map(([e, t]) => _`<label
+                            >${t}${this.editedFields().some(([t]) => t === e) ? _` <span class="edited-note">(edited)</span>` : b}${Jr.has(e) || e === "synopsis" ? _`<textarea
                                     name=${e}
                                     .value=${this.draft[e] ?? ""}
                                     ?disabled=${!!this.pending || this.busy}
                                     @input=${(t) => {
 				this.restoredFields.delete(e), this.draft[e] = t.target.value, this.requestUpdate();
 			}}
-                                  ></textarea>` : v`<input
+                                  ></textarea>` : _`<input
                                     name=${e}
                                     type=${e === "year" ? "number" : e === "purchased_on" ? "date" : "text"}
                                     .value=${this.draft[e] ?? ""}
@@ -10401,7 +10457,7 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
 			}}
                                   />`}</label
                           >`)}
-                      ${this.purchaseOnly ? x : v`<fieldset>
+                      ${this.purchaseOnly ? b : _`<fieldset>
                               <legend>Format badges · selected version</legend>
                               <p class="muted">
                                 Choose the badges shown for this version.
@@ -10410,7 +10466,7 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
                                 listing.
                               </p>
                               <div class="format-options">
-                                ${ir.map((e) => v`<label>
+                                ${dr.map((e) => _`<label>
                                       <input
                                         type="checkbox"
                                         name="format_badge"
@@ -10419,7 +10475,7 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
                                         ?disabled=${!!this.pending || this.busy}
                                         @change=${(t) => {
 				let n = t.target.checked;
-				this.formatBadges = ir.filter((t) => t === e ? n : this.formatBadges.includes(t)), this.formatMode = "custom", this.requestUpdate();
+				this.formatBadges = dr.filter((t) => t === e ? n : this.formatBadges.includes(t)), this.formatMode = "custom", this.requestUpdate();
 			}}
                                       />
                                       ${Y({ formats: [e] })}
@@ -10434,7 +10490,7 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
                                   type="button"
                                   ?disabled=${!!this.pending || this.busy}
                                   @click=${() => {
-				this.formatMode = "original", this.formatBadges = ir.filter((e) => this.review?.scanned_format_badges?.includes(e)), this.requestUpdate();
+				this.formatMode = "original", this.formatBadges = dr.filter((e) => this.review?.scanned_format_badges?.includes(e)), this.requestUpdate();
 			}}
                                 >
                                   Restore server formats
@@ -10443,7 +10499,7 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
                                   type="button"
                                   ?disabled=${!!this.pending || this.busy}
                                   @click=${() => {
-				this.formatMode = "auto", this.formatBadges = ir.filter((e) => this.review?.automatic_format_badges?.includes(e)), this.requestUpdate();
+				this.formatMode = "auto", this.formatBadges = dr.filter((e) => this.review?.automatic_format_badges?.includes(e)), this.requestUpdate();
 			}}
                                 >
                                   Use automatic matches
@@ -10454,7 +10510,7 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
                                 source.
                               </p>
                             </fieldset>`}
-                      ${this.purchaseOnly ? v`
+                      ${this.purchaseOnly ? _`
                               <label class="check"
                                 ><input
                                   name="purchase_information_unavailable"
@@ -10470,13 +10526,13 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
                                 These details appear for the movie group. The
                                 unavailable option applies to the whole movie.
                               </p>
-                            ` : x}
-                    </div>` : x}
+                            ` : b}
+                    </div>` : b}
         <div class="dialog-footer">
           <button ?disabled=${this.busy || !!this.pending} @click=${this.close}>
             Cancel
           </button>
-          ${this.review && !this.purchaseOnly && !this.restoring && !this.reviewingEdits && !this.pending ? v`<button
+          ${this.review && !this.purchaseOnly && !this.restoring && !this.reviewingEdits && !this.pending ? _`<button
                   class="danger"
                   ?disabled=${this.busy}
                   @click=${() => {
@@ -10484,16 +10540,16 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
 			}}
                 >
                   Restore original metadata…
-                </button>` : x}
-          ${this.restoring && !this.pending ? v`<button
+                </button>` : b}
+          ${this.restoring && !this.pending ? _`<button
                   ?disabled=${this.busy}
                   @click=${() => {
 				this.restoring = !1, this.requestUpdate();
 			}}
                 >
                   Keep metadata
-                </button>` : x}
-          ${this.review && !this.purchaseOnly && !this.restoring ? v`<button
+                </button>` : b}
+          ${this.review && !this.purchaseOnly && !this.restoring ? _`<button
                   type="button"
                   ?disabled=${this.busy || !!this.pending}
                   @click=${() => {
@@ -10501,8 +10557,8 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
 			}}
                 >
                   ${this.reviewingEdits ? "Back to editing" : "Review Edits"}
-                </button>` : x}
-          ${this.error && !this.pending ? v`<button ?disabled=${this.busy} @click=${this.open}>Reload details</button>` : x}
+                </button>` : b}
+          ${this.error && !this.pending ? _`<button ?disabled=${this.busy} @click=${this.open}>Reload details</button>` : b}
           <button
             class=${this.restoring ? "danger" : "primary"}
             ?disabled=${this.busy || !this.review || this.restoring && !this.review.restore_summary || !this.pending && !this.restoring && !Object.keys(this.patch()).length}
@@ -10511,18 +10567,18 @@ var Rr = t((() => {})), zr, Br, Vr, Hr, Ur = t((() => {
             ${this.pending ? "Retry exact save" : this.restoring ? "Restore original metadata" : "Save changes"}
           </button>
         </div>
-      </dialog>` : x;
+      </dialog>` : b;
 		}
-	}, customElements.get("kaleidescape-title-edit") || customElements.define("kaleidescape-title-edit", Hr);
+	}, customElements.get("kaleidescape-title-edit") || customElements.define("kaleidescape-title-edit", Yr);
 }));
 // src/library/purchase-details.ts
-function Wr(e, t, n = 0) {
-	return Gr(e, t, n).values;
+function Zr(e, t, n = 0) {
+	return Qr(e, t, n).values;
 }
-function Gr(e, t, n = 0) {
+function Qr(e, t, n = 0) {
 	let r = e[n], i = /* @__PURE__ */ new Set(), a = /* @__PURE__ */ new Set();
 	return {
-		values: Object.fromEntries(qr.map((n) => {
+		values: Object.fromEntries(ei.map((n) => {
 			if (r?.[n] != null) return [n, r[n]];
 			let o = [...new Set(e.map((e) => e[n]).filter((e) => e != null))];
 			if (o.length > 1) return a.add(n), [n, null];
@@ -10534,7 +10590,7 @@ function Gr(e, t, n = 0) {
 		conflicts: a
 	};
 }
-function Kr(e) {
+function $r(e) {
 	if (!(!e || e.includes("\\") || [...e].some((e) => e.charCodeAt(0) <= 32)) && (/^https?:\/\//i.test(e) || /^\/?movie-store\//.test(e))) try {
 		let t = new URL(e, "https://www.kaleidescape.com/");
 		return !["www.kaleidescape.com", "store.kaleidescape.com"].includes(t.hostname) || !["http:", "https:"].includes(t.protocol) || t.username || t.password || t.port || !t.pathname.startsWith("/movie-store/") ? void 0 : (t.protocol = "https:", t.href);
@@ -10542,23 +10598,23 @@ function Kr(e) {
 		return;
 	}
 }
-var qr, Jr = t((() => {
-	qr = [
+var ei, ti = t((() => {
+	ei = [
 		"purchased_on",
 		"purchase_price",
 		"retail_price",
 		"order_id",
 		"href"
 	];
-})), Yr, Xr, Zr = t((() => {
-	C(), A(), z(), P(), Jr(), Yr = {
+})), ni, ri, ii = t((() => {
+	C(), A(), z(), P(), ti(), ni = {
 		title: "Receipt title",
 		purchased_on: "Purchase date",
 		purchase_price: "Purchase price",
 		retail_price: "Retail price",
 		order_id: "Order ID",
 		href: "Store link"
-	}, Xr = class extends S {
+	}, ri = class extends S {
 		constructor(...e) {
 			super(...e), this.titleId = "", this.index = 0, this.draft = {}, this.unavailable = !1, this.busy = !1, this.error = "", this.stale = !1, this.generation = 0;
 		}
@@ -10591,7 +10647,7 @@ var qr, Jr = t((() => {
 		}
 		initial(e = this.index) {
 			return this.review ? {
-				...Wr(this.review.records, this.review.manual, e),
+				...Zr(this.review.records, this.review.manual, e),
 				...this.review.records[e] ? { title: this.review.records[e].title } : {}
 			} : {};
 		}
@@ -10685,8 +10741,8 @@ var qr, Jr = t((() => {
 			}
 		}
 		render() {
-			let e = this.review?.records[this.index] ? ["title", ...qr] : [...qr], t = this.review ? Gr(this.review.records, this.review.manual, this.index) : void 0;
-			return v`<dialog
+			let e = this.review?.records[this.index] ? ["title", ...ei] : [...ei], t = this.review ? Qr(this.review.records, this.review.manual, this.index) : void 0;
+			return _`<dialog
       aria-labelledby="purchase-edit-title"
       @cancel=${this.close}
       @click=${R}
@@ -10695,9 +10751,9 @@ var qr, Jr = t((() => {
         <h2 id="purchase-edit-title">Edit purchase details</h2>
         ${L((e) => this.close(e), this.busy || !!this.pending)}
       </div>
-      ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-      ${this.busy ? v`<p role="status">${this.pending ? "Saving purchase details…" : "Loading purchase details…"}</p>` : x}
-      ${this.review ? v`
+      ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+      ${this.busy ? _`<p role="status">${this.pending ? "Saving purchase details…" : "Loading purchase details…"}</p>` : b}
+      ${this.review ? _`
               <label class="check"
                 ><input
                   name="purchase_information_unavailable"
@@ -10709,24 +10765,24 @@ var qr, Jr = t((() => {
 			}}
                 />Purchase information unavailable</label
               >
-              ${this.unavailable ? x : v`
-                      ${this.review.records.length > 1 ? v`<label
+              ${this.unavailable ? b : _`
+                      ${this.review.records.length > 1 ? _`<label
                                 >Purchase record<select
                                   name="purchase_record"
                                   .value=${String(this.index)}
                                   ?disabled=${this.busy || !!this.pending}
                                   @change=${this.selectReceipt}
                                 >
-                                  ${this.review.records.map((e, t) => v`<option value=${t}>${e.purchased_on ?? "Date unknown"} · ${e.title}${e.order_id ? ` · ${e.order_id}` : ""}</option>`)}
+                                  ${this.review.records.map((e, t) => _`<option value=${t}>${e.purchased_on ?? "Date unknown"} · ${e.title}${e.order_id ? ` · ${e.order_id}` : ""}</option>`)}
                                 </select></label
                               >
                               <p class="muted">
                                 Separate receipts remain separate. Select the
                                 purchase to edit.
-                              </p>` : x}
+                              </p>` : b}
                       <div class="purchase-fields">
-                        ${e.map((e) => v`<label
-                              >${Yr[e]}<input
+                        ${e.map((e) => _`<label
+                              >${ni[e]}<input
                                 name=${e}
                                 type=${e === "purchased_on" ? "date" : "text"}
                                 .value=${this.draft[e] ?? ""}
@@ -10734,12 +10790,12 @@ var qr, Jr = t((() => {
                                 @input=${(t) => {
 				this.draft[e] = t.target.value, this.requestUpdate();
 			}}
-                              />${t?.foreign.has(e) ? v`<small>Select the purchase record containing this value to edit it.</small>` : x}</label
+                              />${t?.foreign.has(e) ? _`<small>Select the purchase record containing this value to edit it.</small>` : b}</label
                             >`)}
                       </div>
-                      ${t?.conflicts.size ? v`<p class="warning">Some saved purchase values differ. Review the original records in Database.</p>` : x}
+                      ${t?.conflicts.size ? _`<p class="warning">Some saved purchase values differ. Review the original records in Database.</p>` : b}
                     `}
-            ` : x}
+            ` : b}
       <div class="dialog-footer">
         <button
           type="button"
@@ -10748,79 +10804,71 @@ var qr, Jr = t((() => {
         >
           Cancel
         </button>
-        ${this.stale ? v`<button
+        ${this.stale ? _`<button
                 type="button"
                 @click=${() => {
 				this.confirmNavigation() && this.load();
 			}}
               >
                 Reload details
-              </button>` : x}
-        ${this.review && !this.stale ? v`<button type="button" class="primary" ?disabled=${this.busy} @click=${this.save}>${this.pending ? "Retry exact save" : "Save changes"}</button>` : x}
+              </button>` : b}
+        ${this.review && !this.stale ? _`<button type="button" class="primary" ?disabled=${this.busy} @click=${this.save}>${this.pending ? "Retry exact save" : "Save changes"}</button>` : b}
       </div>
     </dialog>`;
 		}
-	}, customElements.get("kaleidescape-group-purchase-edit") || customElements.define("kaleidescape-group-purchase-edit", Xr);
+	}, customElements.get("kaleidescape-group-purchase-edit") || customElements.define("kaleidescape-group-purchase-edit", ri);
 }));
 // src/library/url-filters.ts
-function Qr() {
+function ai() {
 	return {
 		query: "",
 		missing_metadata_artwork: !1,
 		missing_purchase_information: !1,
 		recently_added: !1,
 		system_filters: [],
-		...Object.fromEntries(ni.map((e) => [e, []]))
+		...Object.fromEntries(li.map((e) => [e, []]))
 	};
 }
-function $r(e = new URL(location.href)) {
+function oi(e = new URL(location.href)) {
 	return /^\/kaleidescape-companion\/?$/.test(e.pathname) && e.searchParams.get("companion_page") === "library";
 }
-function ei(e = new URL(location.href), t = !1) {
-	if (!$r(e)) return null;
-	let n = e.searchParams;
-	if (![
-		"filters",
-		"query",
-		"system_filters",
-		...ni,
-		...ri
-	].some((e) => n.has(`library_${e}`))) return null;
-	let r = n.get("library_query") ?? "", i = {
+function si(e = new URL(location.href), t = !1) {
+	if (!oi(e)) return null;
+	let n = e.searchParams, r = n.get("library_query") ?? "", i = {
 		query: r.length <= 500 && !r.includes("\0") ? r : "",
 		missing_metadata_artwork: t && n.get("library_missing_metadata_artwork") === "1",
 		missing_purchase_information: t && n.get("library_missing_purchase_information") === "1",
 		recently_added: !1,
-		system_filters: t ? [...new Set(n.getAll("library_system_filters").filter((e) => bn.some(([t]) => t === e)))] : []
+		system_filters: t ? [...new Set(n.getAll("library_system_filters").filter((e) => xn.some(([t]) => t === e)))] : []
 	};
-	for (let e of ni) {
+	for (let e of li) {
 		let t = n.getAll(`library_${e}`);
-		i[e] = t.length <= 100 ? [...new Set(t.filter((t) => t.length > 0 && t.length <= 500 && !t.includes("\0") && (e !== "status" || ii.has(t))))] : [];
+		i[e] = t.length <= 100 ? [...new Set(t.filter((t) => t.length > 0 && t.length <= 500 && !t.includes("\0") && (e !== "status" || di.has(t))))] : [];
 	}
 	return i;
 }
-function ti(e) {
+function ci(e) {
 	let t = new URL(location.href);
-	if (!$r(t)) return;
+	if (!oi(t)) return;
 	let n = t.searchParams;
 	for (let e of [
 		"filters",
 		"query",
 		"system_filters",
-		...ni,
-		...ri
+		...li,
+		...ui
 	]) n.delete(`library_${e}`);
-	n.set("library_filters", "1"), typeof e.query == "string" && e.query && n.set("library_query", e.query);
-	for (let t of ni) {
+	typeof e.query == "string" && e.query && n.set("library_query", e.query);
+	for (let t of li) {
 		let r = e[t];
 		if (Array.isArray(r)) for (let e of r) n.append(`library_${t}`, e);
 	}
 	if (Array.isArray(e.system_filters)) for (let t of e.system_filters) n.append("library_system_filters", t);
-	for (let t of ri) e[t] === !0 && n.set(`library_${t}`, "1");
+	for (let t of ui) e[t] === !0 && n.set(`library_${t}`, "1");
 	history.replaceState(history.state, "", t);
 }
-var ni, ri, ii, ai = t((() => {
-	xn(), ni = [
+var li, ui, di, fi = t((() => {
+	Sn(), li = [
 		"collection",
 		"actor",
 		"director",
@@ -10829,7 +10877,7 @@ var ni, ri, ii, ai = t((() => {
 		"year",
 		"format",
 		"status"
-	], ri = ["missing_metadata_artwork", "missing_purchase_information"], ii = /* @__PURE__ */ new Set([
+	], ui = ["missing_metadata_artwork", "missing_purchase_information"], di = /* @__PURE__ */ new Set([
 		"watched",
 		"unwatched",
 		"in_progress",
@@ -10839,11 +10887,11 @@ var ni, ri, ii, ai = t((() => {
 	]);
 }));
 // src/library/library.ts
-function oi(e) {
-	let t = Array.isArray(e.collection) ? e.collection : [], n = t.map(fi).filter((e) => !!e), r = Array.isArray(e.status) ? e.status : [];
+function pi(e) {
+	let t = Array.isArray(e.collection) ? e.collection : [], n = t.map(yi).filter((e) => !!e), r = Array.isArray(e.status) ? e.status : [];
 	return {
 		...e,
-		collection: t.filter((e) => !pi(e)),
+		collection: t.filter((e) => !bi(e)),
 		status: [.../* @__PURE__ */ new Set([...r, ...n])],
 		genre: Array.isArray(e.genre) ? [...new Set(e.genre.map((e) => [
 			"sci-fi",
@@ -10852,8 +10900,8 @@ function oi(e) {
 		].includes(e.trim().toLowerCase()) ? "Science Fiction" : e))] : []
 	};
 }
-var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
-	Vt(), qt(), Qt(), V(), C(), hn(), A(), P(), _n(), z(), I(), yn(), xn(), Dn(), Vn(), M(), Gn(), Kn(), lr(), pr(), Ir(), Ur(), Zr(), Jr(), ai(), si = [
+var mi, hi, gi, _i, vi, yi, bi, xi, Si, Ci = t((() => {
+	Vt(), qt(), Qt(), V(), C(), gn(), A(), P(), vn(), z(), I(), bn(), Sn(), On(), Hn(), M(), Kn(), Qn(), $n(), gr(), br(), Ur(), Xr(), ii(), ti(), fi(), mi = [
 		[
 			"collection",
 			"Collection",
@@ -10889,7 +10937,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 			"Viewing format",
 			"format"
 		]
-	], ci = [
+	], hi = [
 		["name", "Title"],
 		["year", "Year"],
 		["collection", "Collection"],
@@ -10897,25 +10945,25 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 		["watched", "Status"],
 		["added", "Added on"],
 		["random", "Random"]
-	], li = [
+	], gi = [
 		["show_titles", "Show titles on covers"],
 		["show_format", "Show video format badges"],
 		["show_audio_format", "Show audio format badges"],
 		["show_badges", "Show library badges"],
 		["show_rating", "Show rating badges"],
 		["show_library_cost", "Show total library cost in footer"]
-	], ui = [
+	], _i = [
 		"watched",
 		"unwatched",
 		"in_progress",
 		"favorite",
 		"watch_soon",
 		"recently_added"
-	], di = (e, t) => ({
+	], vi = (e, t) => ({
 		favorite: "Favorites",
 		watch_soon: "Watch Soon",
 		recently_added: "Recently Added"
-	})[e] ?? J(e, t), fi = (e) => {
+	})[e] ?? J(e, t), yi = (e) => {
 		let t = e.toLowerCase().trim();
 		return t.replace(/[\s_-]+/g, "") === "watchsoon" ? "watch_soon" : {
 			new: "unwatched",
@@ -10923,13 +10971,13 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 			paused: "in_progress",
 			favorites: "favorite"
 		}[t];
-	}, pi = (e) => e.toLowerCase().trim() === "all" || !!fi(e), mi = (e) => [
+	}, bi = (e) => e.toLowerCase().trim() === "all" || !!yi(e), xi = (e) => [
 		"new",
 		"played",
 		"paused"
-	].includes(e.trim().toLowerCase()), hi = class extends S {
+	].includes(e.trim().toLowerCase()), Si = class extends S {
 		constructor() {
-			super(), this.dialogOnly = !1, this.advanced = !1, this.cachedUnverified = !1, this.coverCacheMode = "balanced", this.clearingCovers = !1, this.coverCacheMessage = "", this.bound = "", this.generation = 0, this.listRequest = 0, this.statusRequest = 0, this.purchaseLoading = !1, this.purchaseReload = !1, this.purchaseError = "", this.versionRequest = 0, this.versionsLoading = !1, this.versionsError = "", this.widths = [
+			super(), this.dialogOnly = !1, this.advanced = !1, this.cachedUnverified = !1, this.coverCacheMode = this.readCoverCacheMode(), this.clearingCovers = !1, this.coverCacheMessage = "", this.bound = "", this.generation = 0, this.listRequest = 0, this.statusRequest = 0, this.purchaseLoading = !1, this.purchaseReload = !1, this.purchaseError = "", this.versionRequest = 0, this.versionsLoading = !1, this.versionsError = "", this.widths = [
 				360,
 				90,
 				260,
@@ -10947,21 +10995,21 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				show_badges: !0,
 				show_rating: !1,
 				show_library_cost: !1
-			}, this.entriesPerPage = 100, this.preferencesReady = !1, this.preferenceError = "", this.coverColumns = 1, this.gridWidth = 0, this.requestLimit = 50, this.requestedOffset = 0, this.previewGate = new Tn(), this.previewCache = /* @__PURE__ */ new Map(), this.previewError = "", this.previewHovered = !1, this.previewFocused = !1, this.popupHovered = !1, this.positionPreview = () => {
+			}, this.entriesPerPage = 100, this.preferencesReady = !1, this.preferenceError = "", this.coverColumns = 1, this.gridWidth = 0, this.requestLimit = 50, this.requestedOffset = 0, this.previewGate = new En(), this.previewCache = /* @__PURE__ */ new Map(), this.previewError = "", this.previewHovered = !1, this.previewFocused = !1, this.popupHovered = !1, this.positionPreview = () => {
 				let e = this.renderRoot.querySelector(".movie-preview");
-				e && this.previewAnchor && this.previewItem && wn(e, this.previewAnchor);
+				e && this.previewAnchor && this.previewItem && Tn(e, this.previewAnchor);
 			}, this.previewKeydown = (e) => {
 				e.key === "Tab" && (this.previewPointerAnchor = void 0), e.key === "Escape" && (this.previewItem || this.pendingPreviewAnchor) && (this.previewItem && e.stopPropagation(), this.closePreview());
 			}, this.draft = {}, this.facetChoices = {}, this.visibility = () => {
 				clearTimeout(this.timer), document.hidden ? (this.stopCoverPrefetch(), this.closePreview(), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0) : (this.refreshStatus(), this.scheduleLayoutPage(), this.startCoverPrefetch());
 			}, this.locationChanged = () => {
-				if (this.dashboard || this.dialogOnly || !this.preferencesReady || !$r()) return;
-				let e = oi(this.readViewFilters() ?? Qr()), t = {
+				if (this.dashboard || this.dialogOnly || !this.preferencesReady || !oi()) return;
+				let e = pi(this.readViewFilters() ?? ai()), t = {
 					...this.applied,
 					...e
 				};
 				JSON.stringify(t) === JSON.stringify(this.applied) ? this.clearHiddenMaintenanceFilter(e) : this.confirmNavigation() && (this.clearHiddenMaintenanceFilter(e), clearTimeout(this.searchTimer), this.applied = t, this.filters = structuredClone(this.applied), this.draft = structuredClone(this.applied), this.selected && this.closeDialog("title-dialog"), this.load());
-			}, Hn(this, () => !this.preferencesReady || this.preferences?.unsettled || this.loading || this.detailsLocked || this.resize || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.initializePreferences(), this.refreshStatus(), !0));
+			}, Un(this, () => !this.preferencesReady || this.preferences?.unsettled || this.loading || this.detailsLocked || this.resize || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.initializePreferences(), this.refreshStatus(), !0));
 		}
 		static {
 			this.properties = {
@@ -10980,8 +11028,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 		static {
 			this.styles = [
 				N,
-				gn,
-				En
+				_n,
+				Dn
 			];
 		}
 		get detailsLocked() {
@@ -11007,7 +11055,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 			}, n);
 		}
 		renderPreview() {
-			return this.previewItem ? v`<div
+			return this.previewItem ? _`<div
       id="library-movie-preview"
       class="movie-preview"
       role="tooltip"
@@ -11018,18 +11066,18 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				this.popupHovered = !1, this.closePreviewWhenIdle();
 			}}
     >
-      ${Cn(this.previewItem.title, this.previewMovie ?? null, this.previewError, this.previewItem.duration_seconds)}
-    </div>` : x;
+      ${wn(this.previewItem.title, this.previewMovie ?? null, this.previewError, this.previewItem.duration_seconds)}
+    </div>` : b;
 		}
 		readViewFilters() {
-			return ei(void 0, this.advanced && !!this.scope?.permissions.edit);
+			return si(void 0, this.advanced && !!this.scope?.permissions.edit);
 		}
 		clearHiddenMaintenanceFilter(e) {
 			!(this.advanced && this.scope?.permissions.edit) && [
 				"library_missing_metadata_artwork",
 				"library_missing_purchase_information",
 				"library_system_filters"
-			].some((e) => new URL(location.href).searchParams.has(e)) && ti(e);
+			].some((e) => new URL(location.href).searchParams.has(e)) && ci(e);
 		}
 		connectedCallback() {
 			super.connectedCallback(), window.addEventListener("keydown", this.previewKeydown), window.addEventListener("scroll", this.positionPreview, !0), window.addEventListener("resize", this.positionPreview), window.visualViewport?.addEventListener("scroll", this.positionPreview), window.visualViewport?.addEventListener("resize", this.positionPreview), document.addEventListener("visibilitychange", this.visibility), window.addEventListener("location-changed", this.locationChanged), window.addEventListener("popstate", this.locationChanged), this.requestUpdate("client"), this.requestUpdate("scope");
@@ -11095,17 +11143,17 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 					query: "",
 					sort: "name",
 					descending: !1,
-					...Object.fromEntries([...si.map(([e]) => e), "status"].map((e) => [e, []])),
+					...Object.fromEntries([...mi.map(([e]) => e), "status"].map((e) => [e, []])),
 					missing_metadata_artwork: !1,
 					missing_purchase_information: !1,
 					recently_added: !1
 				} : t;
-				this.dashboard && (this.preferences?.dispose(), this.preferences = void 0, this.coverColumns = this.dashboard.columns), this.fuzzySearch = this.scope.ui_defaults?.fuzzy_search !== !1, this.mode = n.view, this.entriesPerPage = n.page_size, this.coverSize = n.cover_size, this.coverCacheMode = n.cover_cache === "session" || n.cover_cache === "persistent" ? n.cover_cache : "balanced", this.configureCoverCache(), this.movieStatusLabels = n.movie_status_labels === "kaleidescape" ? "kaleidescape" : "modern", this.libraryBadgeStyle = n.library_badge_style === "text" ? "text" : "icons", this.castLimit = Number.isInteger(n.cast_limit) ? n.cast_limit : 8, this.display = Object.fromEntries(li.map(([e]) => [e, e === "show_audio_format" && typeof n[e] != "boolean" ? n.show_format : n[e]])), this.scope?.permissions.edit && this.display.show_library_cost && this.loadPurchaseTotals(), this.widths = [...n.widths], this.applied = Object.fromEntries([
+				this.dashboard && (this.preferences?.dispose(), this.preferences = void 0, this.coverColumns = this.dashboard.columns), this.fuzzySearch = this.scope.ui_defaults?.fuzzy_search !== !1, this.mode = n.view, this.entriesPerPage = n.page_size, this.coverSize = n.cover_size, this.configureCoverCache(), this.movieStatusLabels = n.movie_status_labels === "kaleidescape" ? "kaleidescape" : "modern", this.libraryBadgeStyle = n.library_badge_style === "text" ? "text" : "icons", this.castLimit = Number.isInteger(n.cast_limit) ? n.cast_limit : 8, this.display = Object.fromEntries(gi.map(([e]) => [e, e === "show_audio_format" && typeof n[e] != "boolean" ? n.show_format : n[e]])), this.scope?.permissions.edit && this.display.show_library_cost && this.loadPurchaseTotals(), this.widths = [...n.widths], this.applied = Object.fromEntries([
 					"query",
 					"sort",
 					"random_seed",
 					"descending",
-					...si.map(([e]) => e),
+					...mi.map(([e]) => e),
 					"status",
 					"missing_metadata_artwork",
 					"missing_purchase_information",
@@ -11114,8 +11162,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				let r = this.dashboard ? null : this.readViewFilters();
 				this.applied = {
 					...this.applied,
-					...oi(r ?? Qr())
-				}, this.scope?.permissions.edit || (this.applied.missing_purchase_information = !1), r && this.clearHiddenMaintenanceFilter(r), this.filters = structuredClone(this.applied), this.preferencesReady = !0, this.openCriterion ? this.fromDetails(this.openCriterion.key, this.openCriterion.value) : await this.load(), this.openTitleId && e === this.generation && this.openLinkedTitle(this.openTitleId);
+					...pi(r ?? ai())
+				}, this.scope?.permissions.edit || (this.applied.missing_purchase_information = !1), r && this.clearHiddenMaintenanceFilter(r), this.filters = structuredClone(this.applied), this.preferencesReady = !0, this.openCriterion ? this.fromDetails(this.openCriterion.key, this.openCriterion.value) : await this.load(this.readNavigationOffset()), this.openTitleId && e === this.generation && this.openLinkedTitle(this.openTitleId);
 			} catch (t) {
 				e === this.generation && this.fail(t);
 			}
@@ -11137,6 +11185,14 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				this.scope.dataset_id
 			]) : void 0;
 		}
+		readCoverCacheMode() {
+			try {
+				let e = localStorage.getItem("kaleidescape-companion:cover-cache-mode");
+				return e === "session" || e === "persistent" ? e : "balanced";
+			} catch {
+				return "balanced";
+			}
+		}
 		configureCoverCache() {
 			let e = (this.coverQueue ?? this.covers).cache;
 			e.setUnlimited(this.coverCacheMode === "session");
@@ -11157,7 +11213,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 			}
 		}
 		saveFilters() {
-			!this.dashboard && !this.dialogOnly && ti(this.applied);
+			!this.dashboard && !this.dialogOnly && ci(this.applied);
 		}
 		finishColumnResize() {
 			this.resize && (this.resize = void 0, this.preferences?.set({ widths: [...this.widths] }));
@@ -11240,6 +11296,24 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				composed: !0
 			})), this.requestUpdate();
 		}
+		navigationOffsetKey() {
+			if (!this.cacheUser || !this.scope || this.dashboard || this.dialogOnly) return;
+			let e = JSON.stringify([
+				this.scope.entry_id,
+				this.scope.dataset_id,
+				this.cacheUser,
+				this.applied,
+				this.mode,
+				this.entriesPerPage,
+				this.pageSize
+			]), t = 2166136261;
+			for (let n = 0; n < e.length; n++) t = Math.imul(t ^ e.charCodeAt(n), 16777619);
+			return `library-offset:${(t >>> 0).toString(36)}`;
+		}
+		readNavigationOffset() {
+			let e = this.navigationOffsetKey(), t = e ? Jn(e) : null, n = t === null ? 0 : Number(t);
+			return Number.isSafeInteger(n) && n >= 0 && n <= 1e6 ? n : 0;
+		}
 		async load(e = 0, t = !1) {
 			if (this.detailsLocked || (this.closePreview(), !this.client || !this.scope?.library_enabled)) return;
 			this.stopCoverPrefetch(), this.saveFilters(), clearTimeout(this.layoutTimer), this.layoutTimer = void 0, this.pendingLimit = void 0;
@@ -11287,7 +11361,9 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 					this.load(0, t);
 					return;
 				}
-				if (this.page && (this.page.revision !== l.revision || this.page.preferences_key !== l.preferences_key) && this.previewCache.clear(), this.page = l, this.cachedUnverified = !1, s && typeof l.cache_revision == "number" && typeof l.cache_context == "string" && (this.applied.sort !== "random" || typeof l.random_seed == "string")) {
+				this.page && (this.page.revision !== l.revision || this.page.preferences_key !== l.preferences_key) && this.previewCache.clear(), this.page = l;
+				let u = this.navigationOffsetKey();
+				if (u && Yn(u, String(l.offset)), this.cachedUnverified = !1, s && typeof l.cache_revision == "number" && typeof l.cache_context == "string" && (this.applied.sort !== "random" || typeof l.random_seed == "string")) {
 					let e = this.applied.sort === "random" ? {
 						...this.applied,
 						random_seed: l.random_seed ?? ""
@@ -11463,7 +11539,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 		}
 		applyFilterChanges() {
 			let e = { ...this.applied };
-			for (let t of [...si.map(([e]) => e), "status"]) e[t] = this.draft[t] ?? [];
+			for (let t of [...mi.map(([e]) => e), "status"]) e[t] = this.draft[t] ?? [];
 			e.system_filters = this.advanced && this.scope?.permissions.edit ? this.draft.system_filters ?? [] : [], e.missing_metadata_artwork = !!(this.advanced && this.scope?.permissions.edit && this.draft.missing_metadata_artwork), e.missing_purchase_information = !!(this.scope?.permissions.edit && this.draft.missing_purchase_information), e.recently_added = !1, this.applied = e, this.load();
 		}
 		clearFilters() {
@@ -11478,10 +11554,10 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 			if (this.detailsLocked || this.checkingCollection) return;
 			let n = e === "collection" && t.toLowerCase().trim() === "all";
 			if (e === "collection") {
-				let n = fi(t);
+				let n = yi(t);
 				n && (e = "status", t = n);
 			}
-			(e !== "status" || ui.includes(t)) && (this.dialogOnly ? (this.dispatchEvent(new CustomEvent("browse-library", {
+			(e !== "status" || _i.includes(t)) && (this.dialogOnly ? (this.dispatchEvent(new CustomEvent("browse-library", {
 				detail: {
 					key: e,
 					value: t
@@ -11497,7 +11573,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 			}, this.applied = structuredClone(this.filters), this.draft = {}, this.saveFilters(), this.closeDialog("title-dialog"), this.load(), this.updateComplete.then(() => this.renderRoot.querySelector("[name=\"library_query\"]")?.focus())));
 		}
 		detailLink(e, t, n = t) {
-			return e === "collection" && t.toLowerCase().trim() === "all" ? v`${n}` : v`<button
+			return e === "collection" && t.toLowerCase().trim() === "all" ? _`${n}` : _`<button
       type="button"
       class="link detail-link"
       ?disabled=${this.detailsLocked || this.checkingCollection}
@@ -11516,7 +11592,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 			}, this.load();
 		}
 		choices(e, t) {
-			let n = e === "status" ? [...ui] : this.page?.facets[t] ?? [], r = [.../* @__PURE__ */ new Set([
+			let n = e === "status" ? [..._i] : this.page?.facets[t] ?? [], r = [.../* @__PURE__ */ new Set([
 				...this.facetChoices[t] ?? [],
 				...n,
 				...this.draft[e] ?? []
@@ -11535,10 +11611,10 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				};
 				r.sort((t, n) => (e[t.toUpperCase()] ?? 3) - (e[n.toUpperCase()] ?? 3) || t.localeCompare(n));
 			}
-			return r.filter((t) => (e !== "collection" || !pi(t)) && (e !== "status" || ui.includes(t)));
+			return r.filter((t) => (e !== "collection" || !bi(t)) && (e !== "status" || _i.includes(t)));
 		}
 		cover(e, t = e.artwork_key) {
-			return v`<kaleidescape-library-cover
+			return _`<kaleidescape-library-cover
       .client=${this.client}
       .scope=${this.scope}
       .queue=${this.coverQueue ?? this.covers}
@@ -11597,7 +11673,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 			return this.purchaseTotals ? this.purchaseTotals.purchase_count ? this.purchaseTotals.currencies.map((t) => t[e]).filter((e) => e !== null).join(" · ") || "Not available" : "No recorded purchases" : this.purchaseError ? "Unavailable" : "Loading…";
 		}
 		renderOptionsDialog() {
-			return v`<dialog
+			return _`<dialog
       id="library-options"
       class="database-dialog library-options"
       aria-labelledby="library-options-title"
@@ -11618,12 +11694,12 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
             .value=${String(this.applied.sort)}
             @change=${(e) => this.sort(e.target.value)}
           >
-            ${ci.map(([e, t]) => v`<option value=${e} ?selected=${e === this.applied.sort}>${t}</option>`)}
+            ${hi.map(([e, t]) => _`<option value=${e} ?selected=${e === this.applied.sort}>${t}</option>`)}
           </select></label
         >
         <fieldset class="view-options">
           <legend>View type</legend>
-          ${["list", "covers"].map((e) => v`<label class="check"><input type="radio" name="library_view" value=${e} .checked=${this.mode === e} @change=${() => this.setMode(e)} />${e === "list" ? "List" : "Cover"}</label>`)}
+          ${["list", "covers"].map((e) => _`<label class="check"><input type="radio" name="library_view" value=${e} .checked=${this.mode === e} @change=${() => this.setMode(e)} />${e === "list" ? "List" : "Cover"}</label>`)}
         </fieldset>
         <label
           >Library badge style<select
@@ -11683,7 +11759,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				100,
 				1e3,
 				"all"
-			].map((e) => v`<option value=${e} ?selected=${e === this.entriesPerPage}>${e === "all" ? "All" : e}</option>`)}
+			].map((e) => _`<option value=${e} ?selected=${e === this.entriesPerPage}>${e === "all" ? "All" : e}</option>`)}
           </select></label
         >
         <label
@@ -11692,21 +11768,30 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
             .value=${this.coverCacheMode}
             @change=${(e) => {
 				let t = e.target.value;
-				(t === "balanced" || t === "session" || t === "persistent") && (this.coverCacheMode = t, this.configureCoverCache(), this.preferences?.set({ cover_cache: t }), this.requestUpdate());
+				if (t === "balanced" || t === "session" || t === "persistent") {
+					this.coverCacheMode = t, this.configureCoverCache();
+					try {
+						localStorage.setItem("kaleidescape-companion:cover-cache-mode", t), this.coverCacheMessage = "";
+					} catch {
+						this.coverCacheMessage = "This browser could not save the cache choice; it applies until the panel closes.";
+					}
+					this.requestUpdate();
+				}
 			}}
           >
             <option value="balanced">Balanced</option>
-            <option value="session">Keep for panel session</option>
+            <option value="session">Keep for session</option>
             <option value="persistent" ?disabled=${!this.cacheUser}>
               Keep across restarts
             </option>
           </select></label
         >
         <small
-          >Balanced limits memory. Session retains all loaded covers in memory
-          until the panel closes. Across restarts also saves Library results and
-          covers in this browser; browser storage can be cleared or evicted. The
-          server artwork cache has a separate limit.</small
+          >Balanced limits memory. Keep for session retains loaded covers in
+          memory until the panel closes and can use substantial memory. Keep
+          across restarts saves Library results and covers in this browser.
+          Changing modes does not clear saved data. The server artwork cache has
+          a separate limit.</small
         >
         <button
           type="button"
@@ -11715,8 +11800,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
         >
           Clear Library and cover cache
         </button>
-        ${this.coverCacheMessage ? v`<small role="status">${this.coverCacheMessage}</small>` : x}
-        ${this.mode === "covers" ? v`<label
+        ${this.coverCacheMessage ? _`<small role="status">${this.coverCacheMessage}</small>` : b}
+        ${this.mode === "covers" ? _`<label
                 >Cover-art size<input
                   type="range"
                   name="cover_size"
@@ -11728,8 +11813,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                   @input=${(e) => {
 				this.coverSize = Number(e.target.value), this.fitGrid(this.gridWidth), this.requestUpdate();
 			}}
-              /></label>` : x}
-        ${li.filter(([e]) => e !== "show_library_cost" || this.scope?.permissions.edit).map(([e, t]) => v`<label class="check"
+              /></label>` : b}
+        ${gi.filter(([e]) => e !== "show_library_cost" || this.scope?.permissions.edit).map(([e, t]) => _`<label class="check"
               ><input
                 type="checkbox"
                 name=${e}
@@ -11747,7 +11832,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
     </dialog>`;
 		}
 		renderSystemFilterSection() {
-			return this.advanced && this.scope?.permissions.edit ? v`<fieldset class="system-filter-section">
+			return this.advanced && this.scope?.permissions.edit ? _`<fieldset class="system-filter-section">
           <legend>
             <span class="facet-heading"
               ><span>System Filters</span
@@ -11772,7 +11857,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
             >
           </legend>
           <div class="facet-options">
-            ${[["missing_metadata_artwork", "Missing metadata or artwork (legacy)"], ["missing_purchase_information", "Missing purchase information (legacy)"]].map(([e, t]) => this.draft[e] ? v`<div class="system-filter-option">
+            ${[["missing_metadata_artwork", "Missing metadata or artwork (legacy)"], ["missing_purchase_information", "Missing purchase information (legacy)"]].map(([e, t]) => this.draft[e] ? _`<div class="system-filter-option">
                     <label class="check">
                       <input
                         type="checkbox"
@@ -11784,9 +11869,9 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				}, this.applyFilterChanges();
 			}}
                       />${t}</label
-                    >${W(t, "This filter came from an older link. Clear it to use the System Filters above.")}
-                  </div>` : x)}
-            ${bn.map(([e, t, n]) => v`<div class="system-filter-option">
+                    >${U(t, "This filter came from an older link. Clear it to use the System Filters above.")}
+                  </div>` : b)}
+            ${xn.map(([e, t, n]) => _`<div class="system-filter-option">
                   <label class="check"
                     ><input
                       type="checkbox"
@@ -11801,22 +11886,22 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				}, this.applyFilterChanges();
 			}}
                     />${t}</label
-                  >${W(t, n)}
+                  >${U(t, n)}
                 </div>`)}
           </div>
-        </fieldset>` : x;
+        </fieldset>` : b;
 		}
 		renderFilterDialog() {
 			let e = [[
 				"status",
 				"Movie status",
 				"status"
-			], ...si.filter(([e]) => e !== "actor" && e !== "director")].filter(([e, , t]) => e !== "collection" || this.choices(e, t).some((e) => !pi(e)) || (this.draft[e] ?? []).some((e) => !pi(e)));
+			], ...mi.filter(([e]) => e !== "actor" && e !== "director")].filter(([e, , t]) => e !== "collection" || this.choices(e, t).some((e) => !bi(e)) || (this.draft[e] ?? []).some((e) => !bi(e)));
 			return e.splice(5, 0, [
 				"system",
 				"System Filters",
 				"system"
-			]), v`<dialog
+			]), _`<dialog
       id="filter-dialog"
       @click=${R}
       class="database-dialog library-dialog"
@@ -11834,7 +11919,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
         ${e.map(([e, t, n]) => {
 				if (e === "system") return this.renderSystemFilterSection();
 				let r = this.draft[e] ?? [], i = this.choices(e, n);
-				return v`<fieldset>
+				return _`<fieldset>
             <legend>
               <span class="facet-heading">
                 <span>${t}</span>
@@ -11860,7 +11945,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
               </span>
             </legend>
             <div class="facet-options">
-              ${i.length ? i.map((t) => v`<label class="check"
+              ${i.length ? i.map((t) => _`<label class="check"
                           ><input
                             type="checkbox"
                             name=${e}
@@ -11874,15 +11959,15 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 						[e]: n.target.checked ? [...r, t] : r.filter((e) => e !== t)
 					}, this.applyFilterChanges();
 				}}
-                          />${e === "status" ? rr(di(t, this.movieStatusLabels)) : e === "rating" ? $n(t) : e === "collection" ? rr(t) : e === "format" && Yn({ formats: [t] }).length === 1 ? Y({ formats: [t] }) : t}</label
-                        >`) : v`<p class="muted">No matching options</p>`}
+                          />${e === "status" ? ur(vi(t, this.movieStatusLabels)) : e === "rating" ? or(t) : e === "collection" ? ur(t) : e === "format" && nr({ formats: [t] }).length === 1 ? Y({ formats: [t] }) : t}</label
+                        >`) : _`<p class="muted">No matching options</p>`}
             </div>
           </fieldset>`;
 			})}
       </div>
       ${["actor", "director"].map((e) => {
 				let t = this.draft[e] ?? [];
-				return t.map((n) => v`<button
+				return t.map((n) => _`<button
               type="button"
               class="person-chip"
               aria-label=${`Remove ${n}`}
@@ -11899,7 +11984,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
     </dialog>`;
 		}
 		renderCollectionAction(e) {
-			return this.scope?.permissions.edit ? v`<kaleidescape-library-collection-add
+			return this.scope?.permissions.edit ? _`<kaleidescape-library-collection-add
         slot="collection"
         .client=${this.client}
         .scope=${this.scope}
@@ -11918,12 +12003,12 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				}, 5e3), this.refreshStatus();
 			}}
       ></kaleidescape-library-collection-add>
-      ${(this.info?.pending_adds ?? []).map((e) => v`<div slot="collection" class="warning" role="status">
+      ${(this.info?.pending_adds ?? []).map((e) => _`<div slot="collection" class="warning" role="status">
             Collection changes are paused while an earlier change for
             <strong>${e.title}</strong> is unconfirmed. Check membership
             without sending another change, or inspect the server and
             acknowledge it.
-            ${this.collectionRecoveryNotice ? v`<p>${this.collectionRecoveryNotice}</p>` : x}
+            ${this.collectionRecoveryNotice ? _`<p>${this.collectionRecoveryNotice}</p>` : b}
             <div class="actions">
               <button
                 ?disabled=${this.checkingCollection}
@@ -11938,7 +12023,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                 Acknowledge unconfirmed change
               </button>
             </div>
-          </div>`)}` : x;
+          </div>`)}` : b;
 		}
 		pendingCollection(e) {
 			return this.info?.collection_jobs?.find((t) => t.group_id === e.id && [
@@ -11949,18 +12034,18 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 		}
 		pendingCollectionBadge(e) {
 			let t = this.pendingCollection(e);
-			if (!t) return x;
+			if (!t) return b;
 			let n = {
 				new: "Unwatched",
 				played: "Watched",
 				paused: "In Progress",
 				watchsoon: "Watch Soon"
 			}[t.collection.toLowerCase().replace(/[\s_-]+/g, "")] ?? t.collection;
-			return v`<span
+			return _`<span
       class="pending-collection-badge"
       role="status"
       aria-label=${`Collection change in progress: ${n}`}
-      >${nr(n)}<span>${n}</span
+      >${lr(n)}<span>${n}</span
       ><span class="collection-spinner" aria-hidden="true"></span
     ></span>`;
 		}
@@ -11974,16 +12059,16 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 		}
 		conflictIcon(e) {
 			let t = this.warningMessage(e);
-			return t ? v`<span
+			return t ? _`<span
           class="scraper-conflict-icon"
           role="img"
           aria-label=${t}
           title=${t}
           >⚠</span
-        >` : x;
+        >` : b;
 		}
 		renderScrapeAction(e) {
-			return v`<kaleidescape-title-scrape
+			return _`<kaleidescape-title-scrape
       slot="collection"
       .client=${this.client}
       .scope=${this.scope}
@@ -12013,7 +12098,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
     ></kaleidescape-title-scrape>`;
 		}
 		renderMovieJournal(e) {
-			return v`<kaleidescape-library-journal
+			return _`<kaleidescape-library-journal
       class="movie-journal"
       .client=${this.client}
       .scope=${this.scope}
@@ -12034,9 +12119,9 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 			this.purchaseManagerOpen = !1, this.purchaseRepairBusy = !1, this.repairLock(!1), this.versions = void 0, this.requestUpdate(), await this.load(this.page?.offset ?? 0, !0), await this.loadVersions(e), this.refreshStatus();
 		}
 		renderMoviePurchases() {
-			if (!this.advanced || !this.scope?.permissions.edit) return x;
+			if (!this.advanced || !this.scope?.permissions.edit) return b;
 			let e = this.versions?.group_purchase_details;
-			return e ? v`<details class="movie-purchases">
+			return e ? _`<details class="movie-purchases">
       <summary>
         Purchase details
         <button
@@ -12049,24 +12134,24 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
           edit
         </button>
       </summary>
-      ${e.unavailable ? v`<p>Purchase information unavailable.</p>` : (e.records.length || e.manual.length ? [e.records[0]] : []).map((t, n) => {
-				let r = Wr(e.records, e.manual, n), i = Kr(r.href);
-				return v`<p>
-                ${r.purchased_on ? this.date(r.purchased_on) : "Date not imported"}${t ? v` · ${t.title}` : x}<br />
+      ${e.unavailable ? _`<p>Purchase information unavailable.</p>` : (e.records.length || e.manual.length ? [e.records[0]] : []).map((t, n) => {
+				let r = Zr(e.records, e.manual, n), i = $r(r.href);
+				return _`<p>
+                ${r.purchased_on ? this.date(r.purchased_on) : "Date not imported"}${t ? _` · ${t.title}` : b}<br />
                 Paid: ${r.purchase_price ?? "Unknown"} · Retail:
                 ${r.retail_price ?? "Unknown"}<br />
                 Order: ${r.order_id ?? "Unknown"}
-                ${i ? v`<br /><a href=${i} target="_blank" rel="noopener noreferrer">store link</a>` : x}
+                ${i ? _`<br /><a href=${i} target="_blank" rel="noopener noreferrer">store link</a>` : b}
               </p>`;
 			})}
-      ${!e.unavailable && e.records.length > 1 ? v`<p class="muted">Multiple purchase records are saved for this movie.</p>` : x}
-      ${!e.unavailable && !e.records.length && !e.manual.length ? v`<p>No purchase details saved.</p>` : x}
-      ${e.truncated ? v`<p class="warning">Additional purchase details are available in Database.</p>` : x}
-    </details>` : x;
+      ${!e.unavailable && e.records.length > 1 ? _`<p class="muted">Multiple purchase records are saved for this movie.</p>` : b}
+      ${!e.unavailable && !e.records.length && !e.manual.length ? _`<p>No purchase details saved.</p>` : b}
+      ${e.truncated ? _`<p class="warning">Additional purchase details are available in Database.</p>` : b}
+    </details>` : b;
 		}
 		renderTitleDialog() {
 			let e = this.selected, t = this.activeVersion, n = (this.versions?.total ?? e?.version_count ?? 1) > 1, r = this.scope?.permissions.edit, i = this.detailsLocked || this.checkingCollection, a = e?.content_ratings ?? [...new Set([e?.rating, ...(this.versions?.items ?? []).map((e) => e.rating)].filter((e) => !!e?.trim()))], o = t && "backdrop_key" in t ? t.backdrop_key : t?.enrichment?.tmdb?.backdrop_key;
-			return v`<dialog
+			return _`<dialog
         id="title-dialog"
         @cancel=${(e) => {
 				e.preventDefault(), this.closeDialog("title-dialog");
@@ -12081,12 +12166,12 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				})), this.requestUpdate();
 			}}
       >
-        ${e ? v`
+        ${e ? _`
                 <div class="movie-close">
                   ${L(() => this.closeDialog("title-dialog"))}
                 </div>
                 <div class="movie-intro">
-                  ${o && t ? v`<div class="movie-hero" aria-hidden="true">${this.cover(t, o)}</div>` : x}
+                  ${o && t ? _`<div class="movie-hero" aria-hidden="true">${this.cover(t, o)}</div>` : b}
                   <div class="movie-heading">
                     <h2 id="library-title">
                       ${this.detailLink("query", e.title)}
@@ -12096,26 +12181,26 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                     ${t?.year ?? e.year ? this.detailLink("year", String(t?.year ?? e.year)) : "Year unknown"}
                     ·
                     ${this.compactRuntime(t?.duration_seconds ?? e.duration_seconds)}
-                    ${t?.genres.length ? v` · ${t.genres.map((e, t) => v`${t ? ", " : ""}${this.detailLink("genre", e)}`)}` : x}
+                    ${t?.genres.length ? _` · ${t.genres.map((e, t) => _`${t ? ", " : ""}${this.detailLink("genre", e)}`)}` : b}
                   </p>
                   <div class="detail-badges movie-heading-badges">
                     ${Y(n ? e : t ?? e, !1, (e) => this.fromDetails("format", e), i)}
-                    ${a.map((e) => $n(e, (e) => this.fromDetails("rating", e), i))}
-                    ${qn(e).map((e) => v`<button
-                          class=${`movie-status collection-badge collection-${tr(J(e, this.movieStatusLabels))}`}
+                    ${a.map((e) => or(e, (e) => this.fromDetails("rating", e), i))}
+                    ${er(e).map((e) => _`<button
+                          class=${`movie-status collection-badge collection-${cr(J(e, this.movieStatusLabels))}`}
                           ?disabled=${i}
                           @click=${() => this.fromDetails("status", e)}
                         >
-                          ${nr(J(e, this.movieStatusLabels))}
+                          ${lr(J(e, this.movieStatusLabels))}
                           <span
                             >${J(e, this.movieStatusLabels)}</span
                           >
                         </button>`)}
-                    ${e.is_recently_added ? rr("Recently Added", () => this.fromDetails("status", "recently_added"), i, "Filter by movie status: Recently Added") : x}
-                    ${e.is_favorite ? rr("Favorites", () => this.fromDetails("status", "favorite"), i) : x}
-                    ${e.collections.filter((e) => !mi(e) && fi(e) !== "favorite").map((e) => rr(e, () => this.fromDetails("collection", e), i, e.toLowerCase().trim() === "all" ? "Show all movies" : void 0))}
+                    ${e.is_recently_added ? ur("Recently Added", () => this.fromDetails("status", "recently_added"), i, "Filter by movie status: Recently Added") : b}
+                    ${e.is_favorite ? ur("Favorites", () => this.fromDetails("status", "favorite"), i) : b}
+                    ${e.collections.filter((e) => !xi(e) && yi(e) !== "favorite").map((e) => ur(e, () => this.fromDetails("collection", e), i, e.toLowerCase().trim() === "all" ? "Show all movies" : void 0))}
                   </div>
-                  ${t ? v`<kaleidescape-device-controls
+                  ${t ? _`<kaleidescape-device-controls
                           .client=${this.client}
                           .scope=${this.scope}
                           .versionId=${t.id}
@@ -12123,7 +12208,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                           @control-lock=${(e) => {
 				e.detail !== this.controlLocked && (this.controlLocked = e.detail, this.requestUpdate());
 			}}
-                          >${this.renderCollectionAction(t)}${r ? v`<kaleidescape-title-edit
+                          >${this.renderCollectionAction(t)}${r ? _`<kaleidescape-title-edit
                                     slot="collection"
                                     .client=${this.client}
                                     .scope=${this.scope}
@@ -12136,10 +12221,10 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				this.editLocked = !1, this.versions = void 0, await this.load(this.page?.offset ?? 0, !0), await this.loadVersions(), this.refreshStatus();
 			}}
                                   ></kaleidescape-title-edit>
-                                  ${this.renderScrapeAction(t)}` : x}${Bt(t)}</kaleidescape-device-controls
-                        >` : x}
-                  ${this.versionsLoading ? v`<p role="status">Loading individual versions…</p>` : x}
-                  ${this.versionsError ? v`<p class="error" role="alert">
+                                  ${this.renderScrapeAction(t)}` : b}${Bt(t)}</kaleidescape-device-controls
+                        >` : b}
+                  ${this.versionsLoading ? _`<p role="status">Loading individual versions…</p>` : b}
+                  ${this.versionsError ? _`<p class="error" role="alert">
                             ${this.versionsError}
                           </p>
                           <button
@@ -12148,15 +12233,15 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 			}}
                           >
                             Refresh title details
-                          </button>` : x}
-                  ${this.versions && this.versions.total > 1 ? v`
+                          </button>` : b}
+                  ${this.versions && this.versions.total > 1 ? _`
                           <div
                             class="page-tabs version-tabs"
                             role="tablist"
                             aria-label="Title versions"
                             @keydown=${this.versionKey}
                           >
-                            ${this.versions.items.map((e, n) => v`<button
+                            ${this.versions.items.map((e, n) => _`<button
                                   ?disabled=${this.detailsLocked}
                                   role="tab"
                                   id=${`version-${n}`}
@@ -12170,28 +12255,28 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                                   Version ${this.versions.offset + n + 1}
                                 </button>`)}
                           </div>
-                          ${this.versions.total > 50 ? v`<div class="actions"><button ?disabled=${!this.versions.offset || this.versionsLoading || this.detailsLocked} @click=${() => this.loadVersions(Math.max(0, this.versions.offset - 50))}>Previous versions</button><button ?disabled=${!this.versions.has_more || this.versionsLoading || this.detailsLocked} @click=${() => this.loadVersions(this.versions.offset + 50)}>Next versions</button></div>` : x}
-                        ` : x}
+                          ${this.versions.total > 50 ? _`<div class="actions"><button ?disabled=${!this.versions.offset || this.versionsLoading || this.detailsLocked} @click=${() => this.loadVersions(Math.max(0, this.versions.offset - 50))}>Previous versions</button><button ?disabled=${!this.versions.has_more || this.versionsLoading || this.detailsLocked} @click=${() => this.loadVersions(this.versions.offset + 50)}>Next versions</button></div>` : b}
+                        ` : b}
                 </div>
-                ${t ? v`<div
+                ${t ? _`<div
                         class="playback-layout movie-body"
                         id="version-details"
                         role=${(this.versions?.total ?? 1) > 1 ? "tabpanel" : "region"}
-                        aria-label=${(this.versions?.total ?? 1) === 1 ? "Version details" : x}
-                        aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((e) => e.id === t.id) ?? 0}` : x}
+                        aria-label=${(this.versions?.total ?? 1) === 1 ? "Version details" : b}
+                        aria-labelledby=${(this.versions?.total ?? 1) > 1 ? `version-${this.versions?.items.findIndex((e) => e.id === t.id) ?? 0}` : b}
                       >
                         <div class="movie-aside">
                           <div class="cover movie-poster">
                             ${this.cover(t)}
                           </div>
-                          ${n ? v`<div class="detail-badges version-format-badges">${Y(t, !1, (e) => this.fromDetails("format", e), i)}</div>` : x}
+                          ${n ? _`<div class="detail-badges version-format-badges">${Y(t, !1, (e) => this.fromDetails("format", e), i)}</div>` : b}
                           <details class="movie-record-details">
                             <summary>Library details</summary>
                             <p class="muted">
-                              ${x}First
+                              ${b}First
                               detected ${this.date(t.first_seen)}.
                             </p>
-                            ${x}
+                            ${b}
                           </details>
                           ${this.renderMovieJournal(e.id)}
                           ${this.renderMoviePurchases()}
@@ -12221,23 +12306,23 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 				],
 				[
 					"Collections",
-					t.collections.filter((e) => !mi(e)),
+					t.collections.filter((e) => !xi(e)),
 					"collection"
 				]
-			].map(([e, t, n]) => t.length ? v`<div>
+			].map(([e, t, n]) => t.length ? _`<div>
                                     <dt>${e}</dt>
                                     <dd>
-                                      ${t.map((t, r, i) => v`<span class="credit-name">${this.detailLink(n, t, (e === "Collections" ? er(t) : t) + (r < i.length - 1 ? "," : ""))}</span>${r < i.length - 1 ? " " : ""}`)}
+                                      ${t.map((t, r, i) => _`<span class="credit-name">${this.detailLink(n, t, (e === "Collections" ? sr(t) : t) + (r < i.length - 1 ? "," : ""))}</span>${r < i.length - 1 ? " " : ""}`)}
                                     </dd>
-                                  </div>` : x)}
+                                  </div>` : b)}
                           </dl>
                           ${Kt(t, (e, t) => this.detailLink("query", e, t), this.castLimit)}
-                          ${x}
+                          ${b}
                         </div>
-                      </div>` : x}
-              ` : x}
+                      </div>` : b}
+              ` : b}
       </dialog>
-      ${this.purchaseManagerOpen && t && this.advanced && this.scope?.permissions.edit ? v`<kaleidescape-group-purchase-edit
+      ${this.purchaseManagerOpen && t && this.advanced && this.scope?.permissions.edit ? _`<kaleidescape-group-purchase-edit
               .client=${this.client}
               .scope=${this.scope}
               .titleId=${t.id}
@@ -12249,24 +12334,24 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
 			}}
               @purchase-complete=${() => void this.refreshPurchaseDetails()}
               @access-denied=${() => this.fail(new D("unauthorized"))}
-            ></kaleidescape-group-purchase-edit>` : x}`;
+            ></kaleidescape-group-purchase-edit>` : b}`;
 		}
 		render() {
-			if (this.dialogOnly) return v`${this.error ? v`<p role="alert" class="error">${this.error}</p>` : x}${this.renderTitleDialog()}`;
-			if (!this.preferencesReady) return v`<p role="status">
+			if (this.dialogOnly) return _`${this.error ? _`<p role="alert" class="error">${this.error}</p>` : b}${this.renderTitleDialog()}`;
+			if (!this.preferencesReady) return _`<p role="status">
           ${this.error || "Loading Library preferences…"}
         </p>
-        ${this.error ? v`<button @click=${this.initializePreferences}>Retry Library</button>` : x}`;
-			let e = this.page?.limit ?? this.requestLimit, t = this.loading || !!this.layoutTimer, n = this.page?.items ?? [], r = this.mode === "covers" && !this.dashboard && this.page?.has_more && n.length >= this.coverColumns ? n.slice(0, n.length - n.length % this.coverColumns) : n, i = this.scope?.permissions.edit, a = [...si.map(([e]) => e), "status"].reduce((e, t) => e + (this.applied[t]?.length ?? 0), (this.applied.system_filters?.length ?? 0) + Number(!!this.applied.missing_metadata_artwork) + Number(!!this.applied.missing_purchase_information) + Number(!!this.applied.recently_added));
-			return v`<section
+        ${this.error ? _`<button @click=${this.initializePreferences}>Retry Library</button>` : b}`;
+			let e = this.page?.limit ?? this.requestLimit, t = this.loading || !!this.layoutTimer, n = this.page?.items ?? [], r = this.mode === "covers" && !this.dashboard && this.page?.has_more && n.length >= this.coverColumns ? n.slice(0, n.length - n.length % this.coverColumns) : n, i = this.scope?.permissions.edit, a = [...mi.map(([e]) => e), "status"].reduce((e, t) => e + (this.applied[t]?.length ?? 0), (this.applied.system_filters?.length ?? 0) + Number(!!this.applied.missing_metadata_artwork) + Number(!!this.applied.missing_purchase_information) + Number(!!this.applied.recently_added));
+			return _`<section
       class="library-page"
       @access-denied=${(e) => {
 				e.stopPropagation(), this.fail(new D("unauthorized"));
 			}}
     >
       <div class="library-notifications" aria-label="Library notifications">
-        ${this.cachedUnverified ? v`<p role="status">${this.loading ? "Checking cached Library…" : "Cached Library could not be refreshed. Use Refresh cached data to retry."}</p>` : x}
-        ${this.preferenceError ? v`<div
+        ${this.cachedUnverified ? _`<p role="status">${this.loading ? "Checking cached Library…" : "Cached Library could not be refreshed. Use Refresh cached data to retry."}</p>` : b}
+        ${this.preferenceError ? _`<div
                 class="warning library-notification notification-error"
                 role="alert"
               >
@@ -12278,8 +12363,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                 >
                   Retry saving preferences
                 </button>
-              </div>` : x}
-        ${i && this.info?.error && !this.dismissedLibraryErrors.has(this.info.error) ? v`<div
+              </div>` : b}
+        ${i && this.info?.error && !this.dismissedLibraryErrors.has(this.info.error) ? _`<div
                 class="warning library-notification notification-error"
                 role="status"
               >
@@ -12292,8 +12377,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                 >
                   ${F("clear")}
                 </button>
-              </div>` : x}
-        ${this.error ? v`<div
+              </div>` : b}
+        ${this.error ? _`<div
                 class="error library-notification notification-error"
                 role="alert"
               >
@@ -12310,8 +12395,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                 >
                   ${F("clear")}
                 </button>
-              </div>` : x}
-        ${this.notice ? v`<div
+              </div>` : b}
+        ${this.notice ? _`<div
                 class=${`notice library-notification notification-${this.noticeSeverity}`}
                 role="status"
               >
@@ -12324,8 +12409,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                 >
                   ${F("clear")}
                 </button>
-              </div>` : x}
-        ${this.collectionToast ? v`<div
+              </div>` : b}
+        ${this.collectionToast ? _`<div
                 class=${`collection-toast library-notification notification-${this.collectionToastSeverity}`}
                 role="status"
               >
@@ -12338,8 +12423,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                 >
                   ${F("clear")}
                 </button>
-              </div>` : x}
-        ${i ? (this.info?.collection_jobs ?? []).filter((e) => ["failed", "interrupted"].includes(e.status) && e.error !== "acknowledged").slice(0, 3).map((e) => v`<div
+              </div>` : b}
+        ${i ? (this.info?.collection_jobs ?? []).filter((e) => ["failed", "interrupted"].includes(e.status) && e.error !== "acknowledged").slice(0, 3).map((e) => _`<div
                       class=${`warning library-notification notification-${e.status === "failed" ? "error" : "warning"}`}
                       role="status"
                     >
@@ -12352,8 +12437,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                       >
                         ${F("clear")}
                       </button>
-                    </div>`) : x}
-        ${i ? (this.info?.pending_adds ?? []).filter((e) => !this.dismissedPending.has(e.request_id)).map((e) => v`<div
+                    </div>`) : b}
+        ${i ? (this.info?.pending_adds ?? []).filter((e) => !this.dismissedPending.has(e.request_id)).map((e) => _`<div
                       class="warning library-notification notification-warning"
                       role="status"
                     >
@@ -12382,9 +12467,9 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                           Acknowledge unconfirmed change
                         </button>
                       </div>
-                    </div>`) : x}
+                    </div>`) : b}
       </div>
-      ${i && this.info?.phase && this.info.phase !== "idle" ? v`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : x}
+      ${i && this.info?.phase && this.info.phase !== "idle" ? _`<p role="status">Syncing… ${this.info.processed ?? 0}/${this.info.total ?? "?"}</p>` : b}
       <section class="card library-results">
         <div
           class=${`library-toolbar${this.dashboard?.search_position === "bottom" ? " toolbar-bottom" : ""}`}
@@ -12450,7 +12535,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                 name="library_query"
                 type="search"
                 maxlength="500"
-                .value=${pn(String(this.filters.query ?? ""))}
+                .value=${mn(String(this.filters.query ?? ""))}
                 @input=${(e) => {
 				this.filters.query = e.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
 			}}
@@ -12477,7 +12562,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                 .value=${String(this.applied.sort)}
                 @change=${(e) => this.sort(e.target.value)}
               >
-                ${ci.map(([e, t]) => v`<option value=${e}>${t}</option>`)}
+                ${hi.map(([e, t]) => _`<option value=${e}>${t}</option>`)}
               </select></label
             >
             <button
@@ -12497,15 +12582,15 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
             Options
           </button>
         </div>
-        ${this.mode === "covers" ? v`<div
+        ${this.mode === "covers" ? _`<div
                 class="cover-grid"
                 style=${`--cover-size: ${this.coverSize}px; --cover-columns: ${this.coverColumns}`}
               >
-                ${r.map((e) => v`<button
+                ${r.map((e) => _`<button
                       ?disabled=${this.cachedUnverified}
                       class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && e.rating ? " has-rating" : ""}`}
                       aria-label=${`Details for ${e.title}${e.year ? ` (${e.year})` : ""}${this.warningMessage(e) ? `; ${this.warningMessage(e)}` : ""}`}
-                      aria-describedby=${this.previewItem?.id === e.id && this.previewAnchor ? "library-movie-preview" : x}
+                      aria-describedby=${this.previewItem?.id === e.id && this.previewAnchor ? "library-movie-preview" : b}
                       @pointerenter=${(t) => {
 				if (t.pointerType === "touch") return;
 				let n = t.currentTarget;
@@ -12526,26 +12611,26 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                       @click=${() => this.select(e)}
                     >
                       <div class="cover-image">${this.cover(e)}</div>
-                      ${this.display.show_badges || this.pendingCollection(e) ? v`<div class=${`cover-flags${this.pendingCollection(e) ? " collection-pending" : ""}`}>${this.display.show_badges ? Qn(e, !0, ["unwatched"], this.movieStatusLabels, this.libraryBadgeStyle) : x}${this.pendingCollectionBadge(e)}</div>` : x}
-                      ${this.display.show_format || this.display.show_audio_format ? v`<div class="cover-formats">${Y(e, !0, void 0, !1, {
+                      ${this.display.show_badges || this.pendingCollection(e) ? _`<div class=${`cover-flags${this.pendingCollection(e) ? " collection-pending" : ""}`}>${this.display.show_badges ? ar(e, !0, ["unwatched"], this.movieStatusLabels, this.libraryBadgeStyle) : b}${this.pendingCollectionBadge(e)}</div>` : b}
+                      ${this.display.show_format || this.display.show_audio_format ? _`<div class="cover-formats">${Y(e, !0, void 0, !1, {
 				video: this.display.show_format,
 				audio: this.display.show_audio_format
-			})}</div>` : x}
-                      ${this.display.show_rating ? v`<div class="cover-rating">${$n(e.rating)}</div>` : x}
+			})}</div>` : b}
+                      ${this.display.show_rating ? _`<div class="cover-rating">${or(e.rating)}</div>` : b}
                       ${this.conflictIcon(e)}
-                      ${this.display.show_titles ? v`<span class="cover-caption">${e.title}${e.year ? ` (${e.year})` : ""}</span>` : x}
+                      ${this.display.show_titles ? _`<span class="cover-caption">${e.title}${e.year ? ` (${e.year})` : ""}</span>` : b}
                     </button>`)}
-              </div>` : v`<div class="table-wrap">
+              </div>` : _`<div class="table-wrap">
                 <table
                   class="library-table"
                   style=${`--library-width: ${this.widths.reduce((e, t) => e + t, 0)}px`}
                 >
                   <colgroup>
-                    ${this.widths.map((e) => v`<col style=${`width: ${e}px`} />`)}
+                    ${this.widths.map((e) => _`<col style=${`width: ${e}px`} />`)}
                   </colgroup>
                   <thead>
                     <tr>
-                      ${ci.filter(([e]) => e !== "random").map(([e, t], n) => v`<th
+                      ${hi.filter(([e]) => e !== "random").map(([e, t], n) => _`<th
                             aria-sort=${!this.applied.query && this.applied.sort === e ? this.applied.descending ? "descending" : "ascending" : "none"}
                           >
                             <button
@@ -12586,7 +12671,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                     </tr>
                   </thead>
                   <tbody>
-                    ${(this.page?.items ?? []).map((e) => v`<tr>
+                    ${(this.page?.items ?? []).map((e) => _`<tr>
                           <td>
                             <button
                               class="link"
@@ -12600,27 +12685,27 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                               class=${`library-summary-line${this.pendingCollection(e) ? " collection-pending" : ""}`}
                               title=${this.format(e)}
                             >
-                              ${this.display.show_badges ? Qn(e, !1, [], this.movieStatusLabels, this.libraryBadgeStyle) : x}
+                              ${this.display.show_badges ? ar(e, !1, [], this.movieStatusLabels, this.libraryBadgeStyle) : b}
                               ${this.pendingCollectionBadge(e)}
                               ${this.display.show_format || this.display.show_audio_format ? Y(e, !1, void 0, !1, {
 				video: this.display.show_format,
 				audio: this.display.show_audio_format
-			}) : x}
-                              ${this.display.show_format && !Yn(e).length ? v`<small>${this.format(e)}</small>` : x}
-                              ${(e.version_count ?? 1) > 1 ? v`<small>${B(e.version_count, "version")}</small>` : x}
+			}) : b}
+                              ${this.display.show_format && !nr(e).length ? _`<small>${this.format(e)}</small>` : b}
+                              ${(e.version_count ?? 1) > 1 ? _`<small>${B(e.version_count, "version")}</small>` : b}
                             </div>
                           </td>
                           <td title=${this.years(e)}>${this.years(e)}</td>
                           <td>
                             <span
                               class="collection-cell"
-                              title=${e.collections.filter((e) => !mi(e)).map(er).join(", ")}
-                              >${e.collections.filter((e) => !mi(e)).map(er).join(", ") || "—"}</span
+                              title=${e.collections.filter((e) => !xi(e)).map(sr).join(", ")}
+                              >${e.collections.filter((e) => !xi(e)).map(sr).join(", ") || "—"}</span
                             >
                           </td>
                           <td>${this.runtime(e)}</td>
                           <td>
-                            ${(qn(e).length ? qn(e) : [e.watched_status === "unknown" ? "unknown" : "none"]).map((e) => J(e, this.movieStatusLabels)).join(", ")}
+                            ${(er(e).length ? er(e) : [e.watched_status === "unknown" ? "unknown" : "none"]).map((e) => J(e, this.movieStatusLabels)).join(", ")}
                           </td>
                           <td
                             title=${e.purchased_on ? "Imported purchase date" : "First detected by Companion"}
@@ -12631,7 +12716,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                   </tbody>
                 </table>
               </div>`}
-        ${this.page?.items.length ? x : v`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>`}
+        ${this.page?.items.length ? b : _`<p class="empty" role="status">${this.loading ? "Loading library…" : "No cached titles match. Adjust your filters or wait for a library sync."}</p>`}
       </section>
       <footer
         class=${`library-footer${this.dashboard?.search_position === "off" ? "" : " has-mobile-search"}`}
@@ -12644,8 +12729,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
           ?hidden=${this.dashboard?.show_stats === !1}
         >
           <span class="footer-desktop-summary">
-            ${String(this.applied.query ?? "").trim() || a ? v`<strong class="match-count">Matches ${this.page?.total ?? 0}</strong> · ` : x}
-            ${this.applied.query ? v`Relevance order · ` : x}
+            ${String(this.applied.query ?? "").trim() || a ? _`<strong class="match-count">Matches ${this.page?.total ?? 0}</strong> · ` : b}
+            ${this.applied.query ? _`Relevance order · ` : b}
             ${`Total ${this.info?.group_count ?? 0}`} ·
             ${J("unwatched", this.movieStatusLabels)}
             ${this.info?.status_counts?.unwatched ?? 0} ·
@@ -12657,19 +12742,19 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
           <span class="footer-mobile-summary"
             >${String(this.applied.query ?? "").trim() || a ? `Matches ${this.page?.total ?? 0}` : `Total ${this.info?.group_count ?? 0}`}</span
           >
-          ${i && this.info ? v`<span class="footer-admin">${B(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : x}
-          ${i && this.info?.metadata ? v`<span class="scraper-status footer-admin">${this.scraperSummary()}</span>` : x}
+          ${i && this.info ? _`<span class="footer-admin">${B(this.info.collection_count, "collection")}${this.info.artwork_enabled ? ` · Artwork ${((this.info.artwork_bytes ?? 0) / 1048576).toFixed(1)} MiB` : ""}${this.display.show_library_cost ? ` · Library cost ${this.purchaseAmount("library_cost")}` : ""} · Synced ${this.date(this.info.last_synced_at)}</span>` : b}
+          ${i && this.info?.metadata ? _`<span class="scraper-status footer-admin">${this.scraperSummary()}</span>` : b}
           ${i && (this.info?.collection_jobs ?? []).some((e) => [
 				"queued",
 				"working",
 				"syncing"
-			].includes(e.status)) ? v`<span class="collection-queue-status">Collection changes: ${this.info?.collection_jobs?.filter((e) => e.status === "queued").length ?? 0} queued · ${this.info?.collection_jobs?.filter((e) => ["working", "syncing"].includes(e.status)).length ?? 0} in progress</span>` : x}
+			].includes(e.status)) ? _`<span class="collection-queue-status">Collection changes: ${this.info?.collection_jobs?.filter((e) => e.status === "queued").length ?? 0} queued · ${this.info?.collection_jobs?.filter((e) => ["working", "syncing"].includes(e.status)).length ?? 0} in progress</span>` : b}
         </div>
         <div
           class="footer-actions actions"
           ?hidden=${!!this.dashboard && (!this.page || !this.page.offset && !this.page.has_more)}
         >
-          ${this.dashboard ? x : v`<button
+          ${this.dashboard ? b : _`<button
                     type="button"
                     class="footer-maintenance"
                     aria-label="Refresh cached data"
@@ -12679,8 +12764,8 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                   >
                     Refresh<span class="footer-cache-label"> cached data</span>
                   </button>
-                  ${i ? v`<button type="button" class="footer-maintenance" title="Sync now" ?disabled=${this.requesting || !!this.info?.phase && this.info.phase !== "idle"} @click=${this.sync}>Sync now</button>` : x}`}
-          ${this.page && (this.page.offset > 0 || this.page.has_more) ? v` <button
+                  ${i ? _`<button type="button" class="footer-maintenance" title="Sync now" ?disabled=${this.requesting || !!this.info?.phase && this.info.phase !== "idle"} @click=${this.sync}>Sync now</button>` : b}`}
+          ${this.page && (this.page.offset > 0 || this.page.has_more) ? _` <button
                     aria-label="First page"
                     ?disabled=${t || !this.page.offset}
                     @click=${() => this.load()}
@@ -12703,7 +12788,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
                   >
                     <span class="paging-label">Next</span
                     ><span class="paging-icon">${F("next")}</span>
-                  </button>` : x}
+                  </button>` : b}
         </div>
       </footer>
       <form
@@ -12719,7 +12804,7 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
           aria-label="Search Library"
           placeholder="Search titles, actors or directors"
           maxlength="500"
-          .value=${pn(String(this.filters.query ?? ""))}
+          .value=${mn(String(this.filters.query ?? ""))}
           @input=${(e) => {
 				this.filters.query = e.target.value, clearTimeout(this.searchTimer), this.searchTimer = setTimeout(() => this.applySearch(), 300);
 			}}
@@ -12736,25 +12821,25 @@ var si, ci, li, ui, di, fi, pi, mi, hi, gi = t((() => {
       ${this.renderFilterDialog()} ${this.renderTitleDialog()}
     </section>`;
 		}
-	}, customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", hi);
+	}, customElements.get("kaleidescape-library") || customElements.define("kaleidescape-library", Si);
 }));
-V(), C(), A(), P(), Vn(), I(), Kn(), z(), In();
-var _i = {
+V(), C(), A(), P(), Hn(), I(), $n(), z(), Ln();
+var wi = {
 	playing: "Playing",
 	paused: "Paused",
 	forward: "Scanning forward",
 	reverse: "Scanning backward",
 	stopped: "Stopped",
 	none: "Stopped"
-}, vi = {
+}, Ti = {
 	content: "Main content",
 	credits: "Credits",
 	intermission: "Intermission",
 	disc_menu: "Disc menu",
 	none: "No active content"
-}, yi = class extends S {
+}, Ei = class extends S {
 	constructor(...e) {
-		super(...e), this.playerId = "", this.compact = !1, this.showControls = !0, this.liveTyping = !1, this.remoteVisibility = { ...Nn }, this.preferenceError = "", this.remoteAvailable = !1, this.boundScope = "", this.generation = 0, this.player = null, this.loading = !1, this.denied = !1, this.error = "", this.image = "", this.imageKey = "", this.visibility = () => {
+		super(...e), this.playerId = "", this.compact = !1, this.showControls = !0, this.liveTyping = !1, this.remoteVisibility = { ...Pn }, this.preferenceError = "", this.remoteAvailable = !1, this.boundScope = "", this.generation = 0, this.player = null, this.loading = !1, this.denied = !1, this.error = "", this.image = "", this.imageKey = "", this.visibility = () => {
 			this.reset(), document.hidden || this.refresh();
 		};
 	}
@@ -12889,14 +12974,14 @@ var _i = {
     `];
 	}
 	async loadPreferences() {
-		if (this.preferences?.dispose(), this.preferences = void 0, this.liveTyping = !1, this.remoteVisibility = { ...Nn }, !this.client || !this.scope?.permissions.read) return;
+		if (this.preferences?.dispose(), this.preferences = void 0, this.liveTyping = !1, this.remoteVisibility = { ...Pn }, !this.client || !this.scope?.permissions.read) return;
 		let e = new q(this.client, this.scope, !1, (t) => {
 			e === this.preferences && (this.preferenceError = t ? "Could not save Now Playing options." : "", this.requestUpdate());
 		}, "interface");
 		this.preferences = e;
 		try {
 			let t = await e.load();
-			e === this.preferences && (this.liveTyping = t.live_search_input === !0, this.remoteVisibility = Object.fromEntries(Mn.map(([e]) => [e, t[e] !== !1])));
+			e === this.preferences && (this.liveTyping = t.live_search_input === !0, this.remoteVisibility = Object.fromEntries(Nn.map(([e]) => [e, t[e] !== !1])));
 		} catch {
 			e === this.preferences && (this.preferenceError = "Could not load Now Playing options.");
 		}
@@ -12956,11 +13041,11 @@ var _i = {
 	}
 	render() {
 		let e = this.player, t = e?.available && !["stopped", "none"].includes(e.play_status);
-		return v`<section class="card now-playing" aria-label="Now Playing">
+		return _`<section class="card now-playing" aria-label="Now Playing">
       <div class="card-head">
         <h2>Now Playing</h2>
         <div class="player-actions">
-          ${this.showControls ? v`<button
+          ${this.showControls ? _`<button
                   class="refresh-button"
                   type="button"
                   aria-label="Open remote"
@@ -12979,7 +13064,7 @@ var _i = {
                     <circle cx="12" cy="8" r="2" />
                     <path d="M10 14h4M10 17h4" />
                   </svg>
-                </button>` : x}
+                </button>` : b}
           <button
             class="refresh-button"
             type="button"
@@ -12992,7 +13077,7 @@ var _i = {
           >
             ${F("refresh")}
           </button>
-          ${this.showControls ? v`<button
+          ${this.showControls ? _`<button
                   type="button"
                   class="now-options-button"
                   aria-label="Now Playing options"
@@ -13005,28 +13090,28 @@ var _i = {
                   <span class="now-options-icon" aria-hidden="true"
                     >${F("options")}</span
                   >
-                </button>` : x}
+                </button>` : b}
         </div>
       </div>
-      ${this.error ? v`<p class="playback-message" role="alert">${this.error}</p>` : e ? v`<div class="playback-layout">
+      ${this.error ? _`<p class="playback-message" role="alert">${this.error}</p>` : e ? _`<div class="playback-layout">
                 <div class="cover">
-                  ${this.image ? v`<img
+                  ${this.image ? _`<img
                           src=${this.image}
                           alt="Current movie cover"
                           @error=${() => {
 			let e = this.imageKey;
 			this.clearImage(), this.imageKey = e, this.requestUpdate();
 		}}
-                        />` : v`<span>No artwork available</span>`}
+                        />` : _`<span>No artwork available</span>`}
                 </div>
                 <div class="playback-detail">
                   <small>${e.name ?? "Configured player"}</small>
                   <h3>
                     ${e.available ? t ? e.title ?? "Unknown title" : "No movie playing" : "Player unavailable"}
                   </h3>
-                  ${e.available ? v`<p>${_i[e.play_status] ?? "Unknown playback state"} · ${vi[e.location] ?? "Unknown location"}</p>` : x}
-                  ${t && e.duration_seconds != null ? v`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : x}
-                  ${this.scope?.permissions.edit && t && e.session ? v`<p>
+                  ${e.available ? _`<p>${wi[e.play_status] ?? "Unknown playback state"} · ${Ti[e.location] ?? "Unknown location"}</p>` : b}
+                  ${t && e.duration_seconds != null ? _`<p>Runtime · ${(e.duration_seconds / 60).toFixed(2)} min</p>` : b}
+                  ${this.scope?.permissions.edit && t && e.session ? _`<p>
                             This session ·
                             ${(e.session.watched_seconds / 60).toFixed(2)}
                             min counted
@@ -13034,21 +13119,21 @@ var _i = {
                           <small
                             >Pauses and scans are excluded.
                             ${e.session.credits_confirmed ? "Credits confirmed; journal completion also requires the configured watch threshold." : "Credits not yet confirmed."}
-                            ${e.session.gap_count ? v` ${B(e.session.gap_count, "timing gap")}.` : x}</small
-                          >` : x}
-                  ${this.scope?.permissions.edit && e.recording_paused !== void 0 ? v`<p role="status">
+                            ${e.session.gap_count ? _` ${B(e.session.gap_count, "timing gap")}.` : b}</small
+                          >` : b}
+                  ${this.scope?.permissions.edit && e.recording_paused !== void 0 ? _`<p role="status">
                           ${this.recordingStatus(e, !!t)}
-                          ${e.buffered_observations ? v` ${B(e.buffered_observations, "update")} buffered.` : x}
-                        </p>` : x}
+                          ${e.buffered_observations ? _` ${B(e.buffered_observations, "update")} buffered.` : b}
+                        </p>` : b}
                   <small
                     >Live snapshot refreshes about every 5 seconds while
                     visible.</small
                   >
                 </div>
-              </div>` : v`<p class="playback-message" role="status">
+              </div>` : _`<p class="playback-message" role="status">
                 ${this.loading ? "Loading playback…" : "Automatic tracking is off. Configure a player in the integration options to show Now Playing."}
               </p>`}
-      ${this.showControls ? v` <kaleidescape-device-controls
+      ${this.showControls ? _` <kaleidescape-device-controls
               .client=${this.client}
               .scope=${this.scope}
               .playerId=${this.playerId}
@@ -13062,8 +13147,8 @@ var _i = {
               @player-changed=${(e) => {
 			this.playerId = e.detail;
 		}}
-            ></kaleidescape-device-controls>` : x}
-      ${this.showControls ? v`<dialog
+            ></kaleidescape-device-controls>` : b}
+      ${this.showControls ? _`<dialog
               id="now-playing-options"
               class="database-dialog"
               aria-labelledby="now-playing-options-title"
@@ -13089,7 +13174,7 @@ var _i = {
               >
               <fieldset>
                 <legend>Remote controls</legend>
-                ${Mn.map(([e, t]) => v`<label class="check">
+                ${Nn.map(([e, t]) => _`<label class="check">
                       <input
                         type="checkbox"
                         name=${e}
@@ -13104,14 +13189,14 @@ var _i = {
                       />${t}
                     </label>`)}
               </fieldset>
-              ${this.preferenceError ? v`<p role="alert">${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry</button></p>` : x}
-            </dialog>` : x}
+              ${this.preferenceError ? _`<p role="alert">${this.preferenceError} <button @click=${() => this.preferences?.retry()}>Retry</button></p>` : b}
+            </dialog>` : b}
     </section>`;
 	}
 };
 // src/cards/config.ts
-customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", yi), jr();
-var bi = [
+customElements.get("kaleidescape-now-playing") || customElements.define("kaleidescape-now-playing", Ei), Rr();
+var Di = [
 	"remote",
 	"now-playing",
 	"library-covers",
@@ -13119,7 +13204,7 @@ var bi = [
 	"library",
 	"journal-calendar"
 ];
-function xi(e, t) {
+function Oi(e, t) {
 	let n = {
 		title: "",
 		entry_id: "",
@@ -13190,7 +13275,7 @@ function xi(e, t) {
 		show_sort: !1
 	}), n;
 }
-function Si(e) {
+function ki(e) {
 	let t = (e) => ({
 		name: e,
 		selector: { text: {} }
@@ -13205,7 +13290,7 @@ function Si(e) {
 			step: 1,
 			mode: "box"
 		} }
-	}), i = e === "library" || e === "library-covers", a = xi({ type: `custom:kaleidescape-${e}-card` }, e);
+	}), i = e === "library" || e === "library-covers", a = Oi({ type: `custom:kaleidescape-${e}-card` }, e);
 	return {
 		schema: [
 			t("title"),
@@ -13254,8 +13339,8 @@ function Si(e) {
 		computeHelper: (e) => e.name === "entry_id" ? "Leave blank for the loaded Companion integration." : e.name === "channel" ? "Search and Library cards with the same channel work together on this dashboard." : void 0
 	};
 }
-C(), A(), P(), z(), gi(), Vn();
-var Ci = "kaleidescape-companion-card-search", wi = class extends S {
+C(), A(), P(), z(), Ci(), Hn();
+var Ai = "kaleidescape-companion-card-search", ji = class extends S {
 	constructor(...e) {
 		super(...e), this.identity = "", this.generation = 0, this.error = "", this.query = "", this.locked = !1, this.visibility = () => {
 			clearTimeout(this.timer), !document.hidden && this.api && this.refresh();
@@ -13346,7 +13431,7 @@ var Ci = "kaleidescape-companion-card-search", wi = class extends S {
 		return { channel: "main" };
 	}
 	static getConfigForm() {
-		return Si(this.kind);
+		return ki(this.kind);
 	}
 	getCardSize() {
 		return this.kind === "library-search" ? 2 : this.kind === "remote" ? 9 : 7;
@@ -13361,13 +13446,13 @@ var Ci = "kaleidescape-companion-card-search", wi = class extends S {
 	setConfig(e) {
 		if (this.locked) throw Error("Finish the pending player command before reconfiguring this card.");
 		if (!e || typeof e != "object") throw Error("Card configuration is required");
-		this.config = xi(e, this.kind), this.reset(), this.requestUpdate("hass");
+		this.config = Oi(e, this.kind), this.reset(), this.requestUpdate("hass");
 	}
 	connectedCallback() {
-		super.connectedCallback(), window.addEventListener(Ci, this.receiveSearch), document.addEventListener("visibilitychange", this.visibility), this.requestUpdate("hass");
+		super.connectedCallback(), window.addEventListener(Ai, this.receiveSearch), document.addEventListener("visibilitychange", this.visibility), this.requestUpdate("hass");
 	}
 	disconnectedCallback() {
-		super.disconnectedCallback(), window.removeEventListener(Ci, this.receiveSearch), document.removeEventListener("visibilitychange", this.visibility), this.reset();
+		super.disconnectedCallback(), window.removeEventListener(Ai, this.receiveSearch), document.removeEventListener("visibilitychange", this.visibility), this.reset();
 	}
 	reset() {
 		this.generation++, clearTimeout(this.timer), this.api = void 0, this.scope = void 0, this.identity = "", this.boundConnection = void 0, this.criterion = this.popupCriterion = void 0, this.calendarStatus = void 0, this.query = this.error = "", this.locked = !1, this.renderRoot?.querySelector("dialog")?.close();
@@ -13408,7 +13493,7 @@ var Ci = "kaleidescape-companion-card-search", wi = class extends S {
 		this.reset(), this.error = "Access to Companion is unavailable. Check your HA account and integration.", this.requestUpdate();
 	}
 	search(e) {
-		e.preventDefault(), this.scope && this.config && window.dispatchEvent(new CustomEvent(Ci, { detail: {
+		e.preventDefault(), this.scope && this.config && window.dispatchEvent(new CustomEvent(Ai, { detail: {
 			entry: this.scope.entry_id,
 			dataset: this.scope.dataset_id,
 			channel: this.config.channel,
@@ -13423,16 +13508,16 @@ var Ci = "kaleidescape-companion-card-search", wi = class extends S {
 		this.locked || !(t?.querySelector("kaleidescape-library")?.confirmNavigation() ?? !0) ? e?.preventDefault() : t?.close();
 	}
 	render() {
-		if (!this.config) return x;
+		if (!this.config) return b;
 		let e = this.config;
-		return v`<ha-card
+		return _`<ha-card
       @access-denied=${this.deny}
       @control-lock=${(e) => {
 			this.locked !== e.detail && (this.locked = e.detail, this.requestUpdate());
 		}}
     >
-      ${e.title ? v`<h2 class="card-title">${e.title}</h2>` : x}
-      ${this.error ? v`<p class="message error" role="alert">
+      ${e.title ? _`<h2 class="card-title">${e.title}</h2>` : b}
+      ${this.error ? _`<p class="message error" role="alert">
               ${this.error}
               <button
                 @click=${() => {
@@ -13441,20 +13526,20 @@ var Ci = "kaleidescape-companion-card-search", wi = class extends S {
               >
                 Retry
               </button>
-            </p>` : this.scope ? this.kind === "remote" ? v`<div class="remote">
+            </p>` : this.scope ? this.kind === "remote" ? _`<div class="remote">
                   <kaleidescape-device-controls
                     .client=${this.api}
                     .scope=${this.scope}
                     .playerId=${e.player_id}
                     .inlineRemote=${!0}
                   ></kaleidescape-device-controls>
-                </div>` : this.kind === "now-playing" ? v`<kaleidescape-now-playing
+                </div>` : this.kind === "now-playing" ? _`<kaleidescape-now-playing
                     .client=${this.api}
                     .scope=${this.scope}
                     .playerId=${e.player_id}
                     .compact=${!0}
                     .showControls=${e.show_controls}
-                  ></kaleidescape-now-playing>` : this.kind === "library-search" ? v`<form class="search" @submit=${this.search}>
+                  ></kaleidescape-now-playing>` : this.kind === "library-search" ? _`<form class="search" @submit=${this.search}>
                       <label
                         >Search titles, actors or directors<input
                           type="search"
@@ -13472,7 +13557,7 @@ var Ci = "kaleidescape-companion-card-search", wi = class extends S {
                       >
                         Clear
                       </button>
-                    </form>` : this.kind === "journal-calendar" ? v`<kaleidescape-journal-calendar
+                    </form>` : this.kind === "journal-calendar" ? _`<kaleidescape-journal-calendar
                           .client=${this.api}
                           .scope=${this.scope}
                           .daySize=${e.calendar_size}
@@ -13487,18 +13572,18 @@ var Ci = "kaleidescape-companion-card-search", wi = class extends S {
                           <span
                             >${wt(this.scope, this.calendarStatus, !0)}</span
                           >${Et(this.calendarStatus, () => void this.renderRoot.querySelector("kaleidescape-journal-calendar")?.refresh())}
-                        </footer>` : this.scope.library_enabled ? v`<kaleidescape-library
+                        </footer>` : this.scope.library_enabled ? _`<kaleidescape-library
         .client=${this.api}
         .scope=${this.scope}
         .dashboard=${e}
         .openCriterion=${this.criterion}
-      ></kaleidescape-library>` : v`<p class="message">
+      ></kaleidescape-library>` : _`<p class="message">
                           Library is disabled. An administrator can enable it in
                           Companion settings.
-                        </p>` : v`<p class="message" role="status">
+                        </p>` : _`<p class="message" role="status">
                 ${this.hass?.user ? "Loading Companion…" : "Sign in to Home Assistant to use this card."}
               </p>`}
-      ${this.popupCriterion && this.scope?.library_enabled ? v`<dialog @click=${R} @cancel=${this.closePopup}>
+      ${this.popupCriterion && this.scope?.library_enabled ? _`<dialog @click=${R} @cancel=${this.closePopup}>
               <div class="card-head">
                 <h2>Library</h2>
                 ${L((e) => this.closePopup(e), this.locked)}
@@ -13509,37 +13594,37 @@ var Ci = "kaleidescape-companion-card-search", wi = class extends S {
                 .dashboard=${e}
                 .openCriterion=${this.popupCriterion}
               ></kaleidescape-library>
-            </dialog>` : x}
+            </dialog>` : b}
     </ha-card>`;
 	}
-}, Ti = {
+}, Mi = {
 	remote: "Theater remote",
 	"now-playing": "Now Playing",
 	"library-covers": "Library covers",
 	"library-search": "Library search",
 	library: "Full Library",
 	"journal-calendar": "Journal calendar"
-}, Ei = window;
-Ei.customCards ??= [];
-for (let e of bi) {
+}, Ni = window;
+Ni.customCards ??= [];
+for (let e of Di) {
 	let t = `kaleidescape-${e}-card`;
 	if (!customElements.get(t)) {
-		class n extends wi {
+		class n extends ji {
 			static {
 				this.kind = e;
 			}
 		}
 		customElements.define(t, n);
 	}
-	Ei.customCards.some((e) => e.type === t) || Ei.customCards.push({
+	Ni.customCards.some((e) => e.type === t) || Ni.customCards.push({
 		type: t,
-		name: `Kaleidescape · ${Ti[e]}`,
-		description: Ti[e],
+		name: `Kaleidescape · ${Mi[e]}`,
+		description: Mi[e],
 		preview: !0
 	});
 }
 // src/ui/viewport.ts
-var Di = class {
+var Pi = class {
 	constructor(e, t) {
 		this.host = e, this.resized = t, this.observed = [], this.containers = [], this.schedule = () => {
 			this.frame === void 0 && this.host.isConnected && (this.frame = requestAnimationFrame(() => {
@@ -13577,11 +13662,11 @@ var Di = class {
 		window.removeEventListener("resize", this.schedule), this.viewport?.removeEventListener("resize", this.schedule), this.viewport?.removeEventListener("scroll", this.schedule), this.viewport = void 0, this.observer?.disconnect(), this.observer = void 0, this.observed = [], this.containers = [], this.frame !== void 0 && cancelAnimationFrame(this.frame), this.frame = void 0;
 	}
 };
-function Oi(e, t) {
-	e.addController(new Di(e, t));
+function Fi(e, t) {
+	e.addController(new Pi(e, t));
 }
-C(), A(), M(), P(), gi();
-var ki = class extends S {
+C(), A(), M(), P(), Ci();
+var Ii = class extends S {
 	constructor(...e) {
 		super(...e), this.viewingId = "", this.disabled = !1, this.advanced = !1, this.queue = new j(), this.error = "", this.generation = 0, this.bound = "";
 	}
@@ -13668,9 +13753,9 @@ var ki = class extends S {
 		this.link && !this.disabled && (this.openTitleId = this.link.title_id, this.requestUpdate());
 	}
 	render() {
-		return v` ${this.error ? v`<p class="error" role="alert">${this.error} <button @click=${this.load}>Retry Library link</button></p>` : x}
-    ${this.scope?.library_enabled && this.link === null ? v`<p class="muted">No linked Library entry is available.</p>` : x}
-    ${this.link ? v`<div class="linked-movie">
+		return _` ${this.error ? _`<p class="error" role="alert">${this.error} <button @click=${this.load}>Retry Library link</button></p>` : b}
+    ${this.scope?.library_enabled && this.link === null ? _`<p class="muted">No linked Library entry is available.</p>` : b}
+    ${this.link ? _`<div class="linked-movie">
             <kaleidescape-library-cover
               .client=${this.client}
               .scope=${this.scope}
@@ -13684,8 +13769,8 @@ var ki = class extends S {
 			}));
 		}}
             ></kaleidescape-library-cover>
-          </div>` : x}
-    ${this.openTitleId ? v`<kaleidescape-library
+          </div>` : b}
+    ${this.openTitleId ? _`<kaleidescape-library
             .client=${this.client}
             .scope=${this.scope}
             .dialogOnly=${!0}
@@ -13697,42 +13782,42 @@ var ki = class extends S {
             @title-dialog-error=${(e) => {
 			this.openTitleId = void 0, this.error = e.detail, this.requestUpdate();
 		}}
-          ></kaleidescape-library>` : x}`;
+          ></kaleidescape-library>` : b}`;
 	}
 };
 // node_modules/lit-html/static.js
-customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", ki), Ye();
-var Ai = Symbol.for(""), ji = (e) => {
-	if (e?.r === Ai) return e?._$litStatic$;
-}, Mi = (e, ...t) => ({
+customElements.get("kaleidescape-viewing-library") || customElements.define("kaleidescape-viewing-library", Ii), Ye();
+var Li = Symbol.for(""), Ri = (e) => {
+	if (e?.r === Li) return e?._$litStatic$;
+}, zi = (e, ...t) => ({
 	_$litStatic$: t.reduce((t, n, r) => t + ((e) => {
 		if (e._$litStatic$ !== void 0) return e._$litStatic$;
 		throw Error(`Value passed to 'literal' function must be a 'literal' result: ${e}. Use 'unsafeStatic' to pass non-literal values, but\n            take care to ensure page security.`);
 	})(n) + e[r + 1], e[0]),
-	r: Ai
-}), Ni = /* @__PURE__ */ new Map(), Pi = ((e) => (t, ...n) => {
+	r: Li
+}), Bi = /* @__PURE__ */ new Map(), Vi = ((e) => (t, ...n) => {
 	let r = n.length, i, a, o = [], s = [], c, l = 0, u = !1;
 	for (; l < r;) {
-		for (c = t[l]; l < r && (a = n[l], (i = ji(a)) !== void 0);) c += i + t[++l], u = !0;
+		for (c = t[l]; l < r && (a = n[l], (i = Ri(a)) !== void 0);) c += i + t[++l], u = !0;
 		l !== r && s.push(a), o.push(c), l++;
 	}
 	if (l === r && o.push(t[r]), u) {
 		let e = o.join("$$lit$$");
-		(t = Ni.get(e)) === void 0 && (o.raw = o, Ni.set(e, t = o)), n = s;
+		(t = Bi.get(e)) === void 0 && (o.raw = o, Bi.set(e, t = o)), n = s;
 	}
 	return e(t, ...n);
-})(v);
+})(_);
 // src/ui/editor.ts
 C();
-function Fi(e) {
+function Hi(e) {
 	let t = new Date(e);
 	return (/* @__PURE__ */ new Date(t.getTime() - t.getTimezoneOffset() * 6e4)).toISOString().slice(0, 19);
 }
-function Ii(e) {
+function Ui(e) {
 	return {
 		title: e?.title ?? "",
-		started_at: Fi(e?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
-		ended_at: e?.ended_at ? Fi(e.ended_at) : "",
+		started_at: Hi(e?.started_at ?? (/* @__PURE__ */ new Date()).toISOString()),
+		ended_at: e?.ended_at ? Hi(e.ended_at) : "",
 		duration_seconds: e?.duration_seconds == null ? "" : (e.duration_seconds / 60).toFixed(2),
 		watched_seconds: ((e?.watched_seconds ?? 0) / 60).toFixed(2),
 		status: e?.status ?? "partial",
@@ -13742,7 +13827,7 @@ function Ii(e) {
 		raw_content_id: e?.raw_content_id ?? ""
 	};
 }
-function Li(e, t, n, r = e) {
+function Wi(e, t, n, r = e) {
 	let i = {
 		...e,
 		[t]: n
@@ -13753,11 +13838,11 @@ function Li(e, t, n, r = e) {
 			e,
 			t,
 			a
-		].every(Number.isFinite) && (i.ended_at = Fi(new Date(e + a - t).toISOString()));
+		].every(Number.isFinite) && (i.ended_at = Hi(new Date(e + a - t).toISOString()));
 	}
 	return i;
 }
-function Ri(e, t) {
+function Gi(e, t) {
 	let n = {};
 	for (let [r, i] of Object.entries(e)) t && i === t[r] || (n[r] = r === "started_at" || r === "ended_at" ? i ? new Date(i).toISOString() : null : r === "duration_seconds" || r === "watched_seconds" ? i === "" ? null : Number(i) * 60 : [
 		"source_id",
@@ -13766,23 +13851,23 @@ function Ri(e, t) {
 	].includes(r) && i === "" ? null : i);
 	return n;
 }
-function zi(e, t, n) {
+function Ki(e, t, n) {
 	function r(n, r, i = "text", a = !1, o) {
-		return v`<label
+		return _`<label
       >${r}<input
         id=${n === "title" ? "title" : n}
         name=${n}
         type=${i}
         .value=${e[n]}
         ?required=${a}
-        maxlength=${o ?? x}
-        min=${i === "number" ? "0" : x}
-        max=${i === "number" ? "16666666.666666666" : x}
-        step=${i === "datetime-local" ? "1" : i === "number" ? "0.01" : x}
+        maxlength=${o ?? b}
+        min=${i === "number" ? "0" : b}
+        max=${i === "number" ? "16666666.666666666" : b}
+        step=${i === "datetime-local" ? "1" : i === "number" ? "0.01" : b}
         @input=${(e) => t(n, e)}
     /></label>`;
 	}
-	return v`
+	return _`
     <div class="grid">
       <div class="full">
         ${n ?? r("title", "Title", "text", !0, 500)}
@@ -13826,8 +13911,8 @@ function zi(e, t, n) {
     </details>
   `;
 }
-C(), A(), P(), _n(), lr();
-var Bi = class extends S {
+C(), A(), P(), vn(), gr();
+var qi = class extends S {
 	constructor(...e) {
 		super(...e), this.value = "", this.initialTitle = "", this.requireRuntime = !0, this.disabled = !1, this.fuzzySearch = !0, this.query = "", this.items = [], this.open = !1, this.active = 0, this.error = "", this.request = 0, this.bound = "";
 	}
@@ -13843,7 +13928,7 @@ var Bi = class extends S {
 		};
 	}
 	static {
-		this.styles = [N, gn];
+		this.styles = [N, _n];
 	}
 	willUpdate(e) {
 		let t = !1;
@@ -13889,7 +13974,7 @@ var Bi = class extends S {
 		this.disabled || this.requireRuntime && !e.duration_seconds || (this.selected = e, this.query = e.title, this.open = !1, this.items = [], this.change(), this.requestUpdate());
 	}
 	render() {
-		return v`<fieldset ?disabled=${this.disabled}>
+		return _`<fieldset ?disabled=${this.disabled}>
       <div class="manual-picker">
         <label
           >Movie from Library<input
@@ -13901,7 +13986,7 @@ var Bi = class extends S {
             aria-autocomplete="list"
             aria-expanded=${this.open && !!this.items.length}
             aria-controls="movie-suggestions"
-            aria-activedescendant=${this.open && this.items[this.active] ? `movie-option-${this.active}` : x}
+            aria-activedescendant=${this.open && this.items[this.active] ? `movie-option-${this.active}` : b}
             .value=${this.query}
             @input=${(e) => this.search(e.target.value)}
             @focus=${() => {
@@ -13914,16 +13999,16 @@ var Bi = class extends S {
 			e.key === "Escape" ? (this.open = !1, this.requestUpdate()) : ["ArrowDown", "ArrowUp"].includes(e.key) && this.items.length ? (e.preventDefault(), this.active = (this.active + (e.key === "ArrowDown" ? 1 : -1) + this.items.length) % this.items.length, this.open = !0, this.requestUpdate()) : ["Enter", "Tab"].includes(e.key) && this.open && this.items[this.active] && (e.preventDefault(), this.choose(this.items[this.active]));
 		}}
         /></label>
-        ${this.open ? v`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => v`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${this.requireRuntime && !e.duration_seconds} @pointerdown=${(e) => e.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats?.length ? e.formats : [e.edition]).filter(Boolean).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime unknown"}</button>`)}${this.items.length ? x : v`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : x}
+        ${this.open ? _`<div class="movie-suggestions" id="movie-suggestions" role="listbox">${this.items.map((e, t) => _`<button type="button" role="option" id=${`movie-option-${t}`} aria-selected=${this.active === t} ?disabled=${this.requireRuntime && !e.duration_seconds} @pointerdown=${(e) => e.preventDefault()} @click=${() => this.choose(e)}><strong>${e.title}</strong> · ${e.year ?? "Year unknown"} · ${(e.formats?.length ? e.formats : [e.edition]).filter(Boolean).join(", ")} · ${e.duration_seconds ? `${(e.duration_seconds / 60).toFixed(2)} min` : "Runtime unknown"}</button>`)}${this.items.length ? b : _`<small>Type a title; only cached Library movies can be selected.</small>`}</div>` : b}
       </div>
-      ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-      ${this.selected ? v`<p class="manual-metadata">${this.selected.year ?? ""} ${Y(this.selected)} ${$n(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : x}
+      ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+      ${this.selected ? _`<p class="manual-metadata">${this.selected.year ?? ""} ${Y(this.selected)} ${or(this.selected.rating)} · ${((this.selected.duration_seconds ?? 0) / 60).toFixed(2)} min</p>` : b}
     </fieldset>`;
 	}
 };
-customElements.get("kaleidescape-library-title-picker") || customElements.define("kaleidescape-library-title-picker", Bi), C(), P(), _n();
-function Vi() {
-	let e = Fi((/* @__PURE__ */ new Date()).toISOString());
+customElements.get("kaleidescape-library-title-picker") || customElements.define("kaleidescape-library-title-picker", qi), C(), P(), vn();
+function Ji() {
+	let e = Hi((/* @__PURE__ */ new Date()).toISOString());
 	return {
 		library_title_id: "",
 		date: e.slice(0, 10),
@@ -13933,7 +14018,7 @@ function Vi() {
 		notes: ""
 	};
 }
-function Hi(e) {
+function Yi(e) {
 	if (!/^[a-f0-9]{64}$/.test(e.library_title_id)) throw Error("Select a Library movie from the suggestions.");
 	let t = e.time.trim().match(/^(\d{1,2})(?::?(\d{2}))?\s*(am|pm)?$/i);
 	if (!t || !/^\d{4}-\d{2}-\d{2}$/.test(e.date)) throw Error("Enter a date and time such as 19:30 or 7:30 PM.");
@@ -13941,7 +14026,7 @@ function Hi(e) {
 	if (r > 59 || n > (i ? 12 : 23) || i && n < 1) throw Error("Enter a valid local time.");
 	i && (n = n % 12 + (i === "pm" ? 12 : 0));
 	let a = `${e.date}T${String(n).padStart(2, "0")}:${String(r).padStart(2, "0")}:00`, o = new Date(a);
-	if (!Number.isFinite(o.getTime()) || Fi(o.toISOString()) !== a) throw Error("That local date/time does not exist. Check the date or daylight-saving transition.");
+	if (!Number.isFinite(o.getTime()) || Hi(o.toISOString()) !== a) throw Error("That local date/time does not exist. Check the date or daylight-saving transition.");
 	let s = Number(e.watched_minutes) * 60;
 	if (e.status === "partial" && (!e.watched_minutes.trim() || !Number.isFinite(s) || s <= 0)) throw Error("Enter positive watched minutes for a partial viewing.");
 	return {
@@ -13952,9 +14037,9 @@ function Hi(e) {
 		...e.status === "partial" ? { watched_seconds: s } : {}
 	};
 }
-var Ui = class extends S {
+var Xi = class extends S {
 	constructor(...e) {
-		super(...e), this.draft = Vi(), this.disabled = !1, this.fuzzySearch = !0, this.runtime = null;
+		super(...e), this.draft = Ji(), this.disabled = !1, this.fuzzySearch = !0, this.runtime = null;
 	}
 	static {
 		this.properties = {
@@ -13966,7 +14051,7 @@ var Ui = class extends S {
 		};
 	}
 	static {
-		this.styles = [N, gn];
+		this.styles = [N, _n];
 	}
 	change(e) {
 		this.dispatchEvent(new CustomEvent("draft-change", {
@@ -13979,7 +14064,7 @@ var Ui = class extends S {
 		}));
 	}
 	render() {
-		return v`<fieldset ?disabled=${this.disabled}>
+		return _`<fieldset ?disabled=${this.disabled}>
       <kaleidescape-library-title-picker
         .client=${this.client}
         .scope=${this.scope}
@@ -14017,7 +14102,7 @@ var Ui = class extends S {
             <option value="partial">Partial</option>
           </select></label
         >
-        ${this.draft.status === "partial" ? v`<label>Watched minutes<input name="watched_minutes" type="number" min="0.01" step="0.01" max=${(this.runtime ?? 1e9) / 60} .value=${this.draft.watched_minutes} @input=${(e) => this.change({ watched_minutes: e.target.value })} /></label>` : x}
+        ${this.draft.status === "partial" ? _`<label>Watched minutes<input name="watched_minutes" type="number" min="0.01" step="0.01" max=${(this.runtime ?? 1e9) / 60} .value=${this.draft.watched_minutes} @input=${(e) => this.change({ watched_minutes: e.target.value })} /></label>` : b}
         <label class="full"
           >Notes<textarea
             name="notes"
@@ -14035,8 +14120,8 @@ var Ui = class extends S {
 	}
 };
 // src/ui/entry-layout.styles.ts
-customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", Ui), C();
-var Wi = l`
+customElements.get("kaleidescape-manual-viewing") || customElements.define("kaleidescape-manual-viewing", Xi), C();
+var Zi = l`
   .entries-header {
     position: sticky;
     top: var(--companion-sticky-top, 0px);
@@ -14173,49 +14258,73 @@ var Wi = l`
       padding: 8px;
     }
   }
-`, Gi = [
-	{
-		id: "now-playing",
-		label: "Now Playing",
-		description: "See what’s playing across your system."
-	},
-	{
-		id: "library",
-		label: "Library",
-		description: "Browse movies and collections."
-	},
-	{
-		id: "journal",
-		label: "Journal",
-		description: "Explore your viewing history."
-	},
-	{
-		id: "database",
-		label: "Database",
-		description: "Inspect and manage stored history."
-	},
-	{
-		id: "settings",
-		label: "Settings",
-		description: "Configure your Companion experience."
+`;
+// src/ui/navigation-scroll.ts
+Qn();
+var Qi = class {
+	constructor(e, t) {
+		this.host = e, this.key = t, this.cancel = () => this.stop();
 	}
-], Ki = Gi.map((e) => e.id);
-function qi(e, t, n, r = !0) {
-	let i = (e) => Ki.includes(e) && (t || e === "now-playing" || e === "journal" || e === "library") && (e !== "library" || n), a = r ? new URL(location.href).searchParams.get("companion_page") : null;
-	return i(a) ? a : i(e) ? e : "journal";
-}
-function Ji(e) {
-	let t = new URL(location.href);
-	t.searchParams.set("companion_page", e), e !== "journal" && t.searchParams.delete("companion_month"), history.replaceState(history.state, "", t);
-}
-Gn(), C(), A(), Kn(), P(), z(), Tr();
-var Yi = class extends S {
+	container() {
+		let e = this.host;
+		for (; e;) {
+			let t = e.parentElement ?? e.getRootNode().host ?? null;
+			if (t instanceof HTMLElement && /(auto|scroll)/.test(getComputedStyle(t).overflowY) && t.scrollHeight > t.clientHeight) return t;
+			e = t;
+		}
+		return document.scrollingElement ?? document.documentElement;
+	}
+	list() {
+		let e = this.host.shadowRoot, t = e?.querySelector("kaleidescape-library,kaleidescape-database,kaleidescape-reader");
+		return e?.querySelector(".entry-list") ?? t?.shadowRoot?.querySelector(".entry-list") ?? null;
+	}
+	save(e) {
+		this.stop();
+		let t = [this.container().scrollTop, this.list()?.scrollTop ?? 0];
+		Yn(`scroll:${this.key()}:${e}`, JSON.stringify(t));
+	}
+	restore(e) {
+		this.stop();
+		let t;
+		try {
+			t = JSON.parse(Jn(`scroll:${this.key()}:${e}`) ?? "[0,0]");
+		} catch {
+			t = [0, 0];
+		}
+		if (!Array.isArray(t) || t.length !== 2 || t.some((e) => typeof e != "number" || !Number.isFinite(e) || e < 0 || e > 1e7)) return;
+		let [n, r] = t, i = 0, a = () => {
+			if (!this.host.isConnected) return this.stop();
+			let e = this.container(), t = this.list();
+			if (e.scrollTop = n, t && (t.scrollTop = r), ++i >= 30 || e.scrollTop >= n && (!r || t && t.scrollTop >= r)) return this.stop();
+			this.timer = setTimeout(a, 100);
+		};
+		for (let e of [
+			"wheel",
+			"touchstart",
+			"keydown"
+		]) window.addEventListener(e, this.cancel, {
+			once: !0,
+			passive: !0
+		});
+		this.timer = setTimeout(a, 0);
+	}
+	stop() {
+		clearTimeout(this.timer), this.timer = void 0;
+		for (let e of [
+			"wheel",
+			"touchstart",
+			"keydown"
+		]) window.removeEventListener(e, this.cancel);
+	}
+};
+Kn(), C(), A(), $n(), P(), z(), Mr();
+var $i = class extends S {
 	constructor() {
 		super(), this.disabled = !1, this.mobileCompact = !1, this.listStatus = "", this.listSort = "completed_at", this.listDescending = !0, this.showListFilters = !1, this.view = "list", this.pageSize = 25, this.calendarSize = 180, this.calendarFit = !1, this.hoverPreview = !1, this.calendarTotals = {
 			calendar_show_month: !0,
 			calendar_show_year: !0,
 			calendar_show_total: !0
-		}, this.movieDetails = "full", this.bound = "", this.generation = 0, this.ready = !1, this.fuzzy = !0, this.error = "", Hn(this, () => !this.ready || this.viewStore?.unsettled || this.disabled || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.load(), !0));
+		}, this.movieDetails = "full", this.bound = "", this.generation = 0, this.ready = !1, this.fuzzy = !0, this.error = "", Un(this, () => !this.ready || this.viewStore?.unsettled || this.disabled || this.renderRoot.querySelector("dialog[open]") ? !1 : (this.clear(), this.load(), !0));
 	}
 	static {
 		this.properties = {
@@ -14343,7 +14452,7 @@ var Yi = class extends S {
 				calendar_show_month: t.calendar_show_month !== !1,
 				calendar_show_year: t.calendar_show_year !== !1,
 				calendar_show_total: t.calendar_show_total !== !1
-			}, this.movieDetails = t.movie_details === "compact" ? "compact" : "full", xr(this.movieDetails === "full"), this.ready = !0, this.error = "", this.notify(), this.requestUpdate();
+			}, this.movieDetails = t.movie_details === "compact" ? "compact" : "full", Or(this.movieDetails === "full"), this.ready = !0, this.error = "", this.notify(), this.requestUpdate();
 		} catch (t) {
 			e === this.generation && this.fail(t);
 		}
@@ -14356,7 +14465,7 @@ var Yi = class extends S {
 		this.ready && !this.disabled && this.renderRoot.querySelector("dialog")?.showModal();
 	}
 	render() {
-		return v`<button
+		return _`<button
         type="button"
         class=${this.mobileCompact ? "desktop-options" : ""}
         ?disabled=${!this.ready || this.disabled}
@@ -14364,7 +14473,7 @@ var Yi = class extends S {
       >
         Options
       </button>
-      ${this.error ? v`<span class="error" role="alert">${this.error}<button @click=${this.retry}>Retry Journal options</button></span>` : x}
+      ${this.error ? _`<span class="error" role="alert">${this.error}<button @click=${this.retry}>Retry Journal options</button></span>` : b}
       <dialog
         class="database-dialog"
         aria-labelledby="journal-options-title"
@@ -14376,7 +14485,7 @@ var Yi = class extends S {
         </div>
         <fieldset class="view-options">
           <legend>View type</legend>
-          ${["list", "calendar"].map((e) => v`<label class="check"
+          ${["list", "calendar"].map((e) => _`<label class="check"
                 ><input
                   type="radio"
                   name="journal_view"
@@ -14392,7 +14501,7 @@ var Yi = class extends S {
           Changes save automatically for your HA user’s
           ${this.viewStore?.profile} layout.
         </p>
-        ${this.showListFilters ? v`<div class="mobile-list-filters">
+        ${this.showListFilters ? _`<div class="mobile-list-filters">
                 <label
                   >Status<select
                     name="mobile_filter_status"
@@ -14422,8 +14531,8 @@ var Yi = class extends S {
                 >
                   ${this.listDescending ? "Descending ↓" : "Ascending ↑"}
                 </button>
-              </div>` : x}
-        ${this.view === "list" ? v`<label
+              </div>` : b}
+        ${this.view === "list" ? _`<label
                 >Entries per page<select
                   name="journal_page_size"
                   .value=${String(this.pageSize)}
@@ -14438,16 +14547,16 @@ var Yi = class extends S {
 			100,
 			500,
 			"all"
-		].map((e) => v`<option value=${e} ?selected=${e === this.pageSize}>${e === "all" ? "All" : e}</option>`)}
+		].map((e) => _`<option value=${e} ?selected=${e === this.pageSize}>${e === "all" ? "All" : e}</option>`)}
                 </select></label
-              >` : x}
-        ${this.view === "calendar" ? v`
+              >` : b}
+        ${this.view === "calendar" ? _`
                 <label
                   >Movie details<select
                     name="journal_movie_details"
                     .value=${this.movieDetails}
                     @change=${(e) => {
-			this.movieDetails = e.target.value === "compact" ? "compact" : "full", this.viewStore?.set({ movie_details: this.movieDetails }), xr(this.movieDetails === "full"), this.notify(), this.requestUpdate();
+			this.movieDetails = e.target.value === "compact" ? "compact" : "full", this.viewStore?.set({ movie_details: this.movieDetails }), Or(this.movieDetails === "full"), this.notify(), this.requestUpdate();
 		}}
                   >
                     <option
@@ -14513,7 +14622,7 @@ var Yi = class extends S {
 			["calendar_show_month", "Month viewings"],
 			["calendar_show_year", "Yearly viewings"],
 			["calendar_show_total", "Total viewings"]
-		].map(([e, t]) => v`<label class="check"
+		].map(([e, t]) => _`<label class="check"
                       ><input
                         name=${e}
                         type="checkbox"
@@ -14527,16 +14636,19 @@ var Yi = class extends S {
 		}}
                       />${t}</label
                     >`)}
-              ` : x}
+              ` : b}
       </dialog>`;
 	}
 };
-customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", Yi), M(), jr(), C(), I(), A(), Rn(), P(), z(), ai(), gi();
-var Xi = class extends S {
+customElements.get("kaleidescape-journal-options") || customElements.define("kaleidescape-journal-options", $i), M(), Rr(), C(), I(), A(), zn(), P(), z(), Qn(), fi(), Ci();
+var ea = class extends S {
 	constructor() {
-		super(), this.narrow = !1, this.api = null, this.coverSession = new _t(), this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...St }, this.next = null, this.history = [], this.page = 1, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.controlLocked = !1, this.locationChanged = () => {
-			this.navigationReady && this.scope?.library_enabled && this.activePage !== "library" && $r() && ei() && this.selectPage("library");
-		}, Oi(this, () => this.requestUpdate());
+		super(), this.narrow = !1, this.api = null, this.coverSession = new _t(), this.navigationScroll = new Qi(this, () => `${this.hass?.user?.id ?? "preview"}:${this.scope?.entry_id ?? ""}:${this.scope?.dataset_id ?? ""}`), this.userKey = "", this.generation = 0, this.scope = null, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest = 0, this.loading = !1, this.error = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...St }, this.next = null, this.history = [], this.page = 1, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.controlLocked = !1, this.locationChanged = (e) => {
+			if (e.type === "popstate" && this.navigationReady && this.scope) {
+				let e = qn(this.scope.ui_defaults?.default_landing_page, !1, !!this.scope.library_enabled);
+				e !== this.activePage && (this.selectPage(e, void 0, !0), this.activePage !== e && K(this.activePage));
+			} else this.navigationReady && this.scope?.library_enabled && this.activePage !== "library" && oi() && si() && this.selectPage("library");
+		}, Fi(this, () => this.requestUpdate());
 	}
 	static {
 		this.properties = {
@@ -14548,7 +14660,7 @@ var Xi = class extends S {
 	static {
 		this.styles = [
 			N,
-			Wi,
+			Zi,
 			At
 		];
 	}
@@ -14577,7 +14689,7 @@ var Xi = class extends S {
 		super.connectedCallback(), window.addEventListener("location-changed", this.locationChanged), window.addEventListener("popstate", this.locationChanged), this.requestUpdate("hass"), this.requestUpdate("client");
 	}
 	disconnectedCallback() {
-		super.disconnectedCallback(), window.removeEventListener("location-changed", this.locationChanged), window.removeEventListener("popstate", this.locationChanged), this.bind(null);
+		this.navigationScroll.stop(), super.disconnectedCallback(), window.removeEventListener("location-changed", this.locationChanged), window.removeEventListener("popstate", this.locationChanged), this.bind(null);
 	}
 	clear() {
 		this.coverSession.reset(), this.controlLocked = !1, this.generation++, this.scope = null, this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.rows = [], this.selected = null, this.detailLoading = !1, this.detailRequest++, this.next = null, this.cursor = void 0, this.history = [], this.page = 1, this.query = this.status = this.searchText = this.filterStatus = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...St }, this.calendarStatus = void 0, this.journalMovie = void 0, this.libraryTitleId = void 0, this.libraryCriterion = void 0, this.loading = !1, this.error = "";
@@ -14604,10 +14716,10 @@ var Xi = class extends S {
 					export: !1
 				}
 			}, !this.navigationReady) {
-				let e = qi(this.scope.ui_defaults?.default_landing_page, !1, !!this.scope.library_enabled);
+				let e = qn(this.scope.ui_defaults?.default_landing_page, !1, !!this.scope.library_enabled);
 				this.activePage = e === "library" || e === "now-playing" ? e : "journal", this.navigationReady = !0;
 			}
-			this.activePage === "library" && !this.scope.library_enabled && (this.activePage = "journal"), Ji(this.activePage), this.announcePage(), await this.load(void 0, e);
+			this.activePage === "library" && !this.scope.library_enabled && (this.activePage = "journal"), K(this.activePage), this.announcePage(), await this.load(void 0, e);
 		} catch (t) {
 			e === this.generation && this.fail(t);
 		} finally {
@@ -14663,8 +14775,8 @@ var Xi = class extends S {
 		let t = new Date(e);
 		return Number.isNaN(t.getTime()) ? "—" : t.toLocaleString();
 	}
-	selectPage(e, t) {
-		this.controlLocked || e === "library" && !this.scope?.library_enabled || (this.selected = null, this.detailLoading = !1, this.detailRequest++, this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, this.activePage = e, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = this.status = this.filterStatus = "", this.page = 1, this.history = [], this.load()), Ji(e), this.announcePage(), this.requestUpdate());
+	selectPage(e, t, n = !1) {
+		this.controlLocked || e === "library" && !this.scope?.library_enabled || (this.navigationScroll.save(this.activePage), this.selected = null, this.detailLoading = !1, this.detailRequest++, this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, this.activePage = e, e === "journal" && (this.journalMovie = t?.movie, t?.movie && (this.query = this.searchText = this.status = this.filterStatus = "", this.page = 1, this.history = [], this.cursor = void 0), this.load(this.cursor)), n || K(e, !0), this.announcePage(), this.requestUpdate(), this.updateComplete.then(() => this.navigationScroll.restore(e)));
 	}
 	tabKey(e) {
 		if (![
@@ -14685,28 +14797,28 @@ var Xi = class extends S {
 		this.query = this.searchText = "", this.page = 1, this.history = [], this.load(), this.requestUpdate();
 	}
 	render() {
-		let e = this.journalView === "calendar" && !this.query.trim(), t = window.innerWidth <= 700 ? Mi`dialog` : Mi`section`;
-		return v`<main>
+		let e = this.journalView === "calendar" && !this.query.trim(), t = window.innerWidth <= 700 ? zi`dialog` : zi`section`;
+		return _`<main>
       <header>
-        ${this.hass && this.narrow ? v`<button aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", {
+        ${this.hass && this.narrow ? _`<button aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", {
 			bubbles: !0,
 			composed: !0
-		}))}>☰</button>` : x}
+		}))}>☰</button>` : b}
         <img
           class="companion-icon"
-          src=${Ln}
+          src=${Rn}
           alt=""
           aria-hidden="true"
         />
         <div class="grow">
           <h1>Kaleidescape Companion</h1>
           <p>
-            ${Gi.find((e) => e.id === this.activePage).description}
+            ${Xn.find((e) => e.id === this.activePage).description}
           </p>
         </div>
         <span class="view-mode-slot"><slot name="view-mode"></slot></span>
       </header>
-      ${this.error ? v`<p role="alert" class="error">${this.error}</p>` : x}
+      ${this.error ? _`<p role="alert" class="error">${this.error}</p>` : b}
       <div class="page-navigation">
         <nav
           class="page-tabs"
@@ -14718,7 +14830,7 @@ var Xi = class extends S {
 			"now-playing",
 			"library",
 			"journal"
-		].map((e) => v`<button id=${`reader-${e}`} role="tab" aria-controls="reader-content" aria-selected=${this.activePage === e} tabindex=${this.activePage === e ? 0 : -1} ?disabled=${e === "library" && !this.scope?.library_enabled} @click=${() => this.selectPage(e)}>${e === "now-playing" ? "Now Playing" : e === "journal" ? "Journal" : "Library"}</button>`)}
+		].map((e) => _`<button id=${`reader-${e}`} role="tab" aria-controls="reader-content" aria-selected=${this.activePage === e} tabindex=${this.activePage === e ? 0 : -1} ?disabled=${e === "library" && !this.scope?.library_enabled} @click=${() => this.selectPage(e)}>${e === "now-playing" ? "Now Playing" : e === "journal" ? "Journal" : "Library"}</button>`)}
         </nav>
       </div>
       <section
@@ -14732,12 +14844,12 @@ var Xi = class extends S {
 			this.playbackPlayer = e.detail, this.selectPage("now-playing");
 		}}
       >
-        ${this.activePage === "now-playing" && this.scope ? v`<kaleidescape-now-playing
+        ${this.activePage === "now-playing" && this.scope ? _`<kaleidescape-now-playing
                 .playerId=${this.playbackPlayer}
                 .client=${this.api ?? void 0}
                 .scope=${this.scope}
                 @access-denied=${() => this.fail(new D("unauthorized"))}
-              ></kaleidescape-now-playing>` : this.activePage === "library" && this.scope ? v`<kaleidescape-library
+              ></kaleidescape-now-playing>` : this.activePage === "library" && this.scope ? _`<kaleidescape-library
                   .client=${this.api ?? void 0}
                   .scope=${this.scope}
                   .coverQueue=${this.coverSession.queue}
@@ -14749,12 +14861,12 @@ var Xi = class extends S {
                   @library-disabled=${() => {
 			this.activePage = "journal", this.refresh();
 		}}
-                ></kaleidescape-library>` : v`<section
+                ></kaleidescape-library>` : _`<section
                   class=${`card journal${e ? " journal-calendar-mode" : ""}`}
                   aria-label="Viewing history"
                 >
                   <div class="entries-header">
-                    ${e ? x : v`<kaleidescape-journal-shortcuts
+                    ${e ? b : _`<kaleidescape-journal-shortcuts
                             @journal-refresh=${() => this.refresh()}
                             .disabled=${this.loading || !this.scope}
                             .allowAdd=${!1}
@@ -14764,8 +14876,8 @@ var Xi = class extends S {
                             @journal-open-options=${() => this.renderRoot.querySelector("kaleidescape-journal-options")?.open()}
                             @journal-clear-movie=${() => this.selectPage("journal")}
                           ></kaleidescape-journal-shortcuts>`}
-                    ${this.journalMovie ? v`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button @click=${() => this.selectPage("journal")}>Show all viewings</button></p>` : x}
-                    ${this.query.trim() ? v`<button type="button" class="journal-search-chip" aria-label=${`Clear search: ${this.query}`} ?disabled=${this.loading || !this.scope} @click=${this.clearJournalSearch}><span>${this.query}</span><span aria-hidden="true">×</span></button>` : x}
+                    ${this.journalMovie ? _`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button @click=${() => this.selectPage("journal")}>Show all viewings</button></p>` : b}
+                    ${this.query.trim() ? _`<button type="button" class="journal-search-chip" aria-label=${`Clear search: ${this.query}`} ?disabled=${this.loading || !this.scope} @click=${this.clearJournalSearch}><span>${this.query}</span><span aria-hidden="true">×</span></button>` : b}
                     <form
                       class="filters journal-filters"
                       @submit=${(e) => {
@@ -14783,11 +14895,11 @@ var Xi = class extends S {
                             @input=${(e) => {
 			this.searchText = e.target.value, !this.searchText && this.query && this.clearJournalSearch();
 		}}
-                          />${this.query.trim() ? v`<button type="button" class="journal-clear-search" aria-label="Clear Journal search" title="Clear search" ?disabled=${this.loading || !this.scope} @click=${this.clearJournalSearch}>×</button>` : x}</span
+                          />${this.query.trim() ? _`<button type="button" class="journal-clear-search" aria-label="Clear Journal search" title="Clear search" ?disabled=${this.loading || !this.scope} @click=${this.clearJournalSearch}>×</button>` : b}</span
                         ></label
                       >
                       <div class="journal-filter-tools">
-                        ${e ? x : v`<label
+                        ${e ? b : _`<label
                                 >Status<select
                                   name="filter_status"
                                   .value=${this.status}
@@ -14863,7 +14975,7 @@ var Xi = class extends S {
                       </div>
                     </form>
                   </div>
-                  ${e ? v`<kaleidescape-journal-calendar
+                  ${e ? _`<kaleidescape-journal-calendar
                           @calendar-status=${(e) => {
 			this.calendarStatus = e.detail, this.requestUpdate();
 		}}
@@ -14890,7 +15002,7 @@ var Xi = class extends S {
                           >
                             ${F("options")}
                           </button></kaleidescape-journal-calendar
-                        >` : v`
+                        >` : _`
                           <div class="entries-layout">
                             <section
                               class="entries-list"
@@ -14901,22 +15013,22 @@ var Xi = class extends S {
                                   Viewings (${this.scope?.viewing_count ?? 0})
                                 </h2>
                               </div>
-                              ${this.loading ? v`<div class="empty" role="status">
+                              ${this.loading ? _`<div class="empty" role="status">
                                       Loading viewings…
-                                    </div>` : this.api ? this.rows.length ? v`<ul
+                                    </div>` : this.api ? this.rows.length ? _`<ul
                                           class="entry-list"
                                           tabindex="0"
                                           aria-label="Viewings"
                                         >
                                           ${this.rows.map((e) => Dt(e, this.selected?.id, (e) => void this.selectJournalEntry(e)))}
-                                        </ul>` : v`<div class="empty">
+                                        </ul>` : _`<div class="empty">
                                           No viewings to display.
-                                        </div>` : v`<p>
+                                        </div>` : _`<p>
                                         Sign in to Home Assistant to view the
                                         household journal.
                                       </p>`}
                             </section>
-                            ${Pi`<${t}
+                            ${Vi`<${t}
                               class="entries-detail journal-detail-dialog"
                   @click=${R}
                               aria-label="Viewing details"
@@ -14924,11 +15036,11 @@ var Xi = class extends S {
                             >
                               <div class="card-head">
                                 <h2>Viewing details</h2>
-                    ${window.innerWidth <= 700 ? L(() => this.renderRoot.querySelector("dialog.journal-detail-dialog")?.close()) : x}
+                    ${window.innerWidth <= 700 ? L(() => this.renderRoot.querySelector("dialog.journal-detail-dialog")?.close()) : b}
                               </div>
-                              ${this.detailLoading ? v`<div class="empty" role="status">
+                              ${this.detailLoading ? _`<div class="empty" role="status">
                                       Loading entry…
-                                    </div>` : this.selected ? v`${Ot(this.selected, (e) => this.date(e), this.linkedViewingId === this.selected.id ? () => this.renderRoot.querySelector("kaleidescape-viewing-library")?.openLibrary() : void 0)}
+                                    </div>` : this.selected ? _`${Ot(this.selected, (e) => this.date(e), this.linkedViewingId === this.selected.id ? () => this.renderRoot.querySelector("kaleidescape-viewing-library")?.openLibrary() : void 0)}
                                         <kaleidescape-viewing-library
                                           .client=${this.api ?? void 0}
                                           .scope=${this.scope ?? void 0}
@@ -14940,7 +15052,7 @@ var Xi = class extends S {
 		}}
                                           @access-denied=${() => this.fail(new D("unauthorized"))}
                                           @browse-library=${(e) => this.selectPage("library", { libraryCriterion: e.detail })}
-                                        ></kaleidescape-viewing-library> ` : v`<div class="empty">
+                                        ></kaleidescape-viewing-library> ` : _`<div class="empty">
                                         <strong>Select an entry</strong>
                                         <p>
                                           View its watching history and
@@ -14951,9 +15063,9 @@ var Xi = class extends S {
                           </div>
                         `}
                   <footer class="entries-footer journal-status">
-                    ${e ? wt(this.scope, this.calendarStatus, !0, this.calendarTotals) : v`<span class="journal-full-total">${wt(this.scope)}</span><span class="journal-mobile-total">Total Viewings ${this.scope?.viewing_count ?? 0}</span>`}${e ? Et(this.calendarStatus, () => {
+                    ${e ? wt(this.scope, this.calendarStatus, !0, this.calendarTotals) : _`<span class="journal-full-total">${wt(this.scope)}</span><span class="journal-mobile-total">Total Viewings ${this.scope?.viewing_count ?? 0}</span>`}${e ? Et(this.calendarStatus, () => {
 			this.renderRoot.querySelector("kaleidescape-journal-calendar")?.refresh();
-		}) : x}
+		}) : b}
 
                     <div class="pagination" ?hidden=${e}>
                       <small
@@ -15001,7 +15113,7 @@ var Xi = class extends S {
                         </button>
                       </div>
                     </div>
-                    ${e && this.journalMovie ? v`<button class="journal-mobile-movie-clear" type="button" ?disabled=${this.loading || !this.scope} @click=${() => this.selectPage("journal")}>Show all viewings</button>` : x}
+                    ${e && this.journalMovie ? _`<button class="journal-mobile-movie-clear" type="button" ?disabled=${this.loading || !this.scope} @click=${() => this.selectPage("journal")}>Show all viewings</button>` : b}
                     ${Tt(this.searchText, this.loading || !this.scope, (e) => {
 			this.searchText = e, !e && this.query && this.clearJournalSearch(), this.requestUpdate();
 		}, () => {
@@ -15013,9 +15125,9 @@ var Xi = class extends S {
     </main>`;
 	}
 };
-customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", Xi);
+customElements.get("kaleidescape-reader") || customElements.define("kaleidescape-reader", ea);
 // src/core/search.ts
-var Zi = {
+var ta = {
 	æ: "ae",
 	œ: "oe",
 	ø: "o",
@@ -15028,13 +15140,13 @@ var Zi = {
 	ß: "ss",
 	ς: "σ"
 };
-function Qi(e) {
-	return e.toLowerCase().replace(/[æœøłđðþħıßς]/gu, (e) => Zi[e]).normalize("NFKD").replace(/\p{M}/gu, "");
+function na(e) {
+	return e.toLowerCase().replace(/[æœøłđðþħıßς]/gu, (e) => ta[e]).normalize("NFKD").replace(/\p{M}/gu, "");
 }
-function $i(e) {
-	return Qi(e).match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
+function ra(e) {
+	return na(e).match(/[\p{L}\p{N}_]+/gu)?.join(" ") ?? "";
 }
-function ea(e, t) {
+function ia(e, t) {
 	let n = Math.min(2, Math.max(1, Math.ceil(e.length / 4)));
 	if (e.length < 3 || Math.max(e.length, t.length) > 100 || Math.abs(e.length - t.length) > n) return !1;
 	let r = Array.from({ length: t.length + 1 }, (e, t) => t), i = r;
@@ -15050,7 +15162,7 @@ function ea(e, t) {
 	}
 	return r[t.length] <= n;
 }
-function ta(e, t, n = !1) {
+function aa(e, t, n = !1) {
 	let r = t.trim();
 	if (r.length >= 2 && r.startsWith("\"") && r.endsWith("\"")) {
 		let t;
@@ -15060,19 +15172,19 @@ function ta(e, t, n = !1) {
 			t = r.slice(1, -1).trim();
 		}
 		if (!t) return !1;
-		let n = Qi(t).split(/\s+/).map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-		return RegExp("(?<![\\p{L}\\p{N}_])" + n.join("\\s+") + "(?![\\p{L}\\p{N}_])", "u").test(Qi(e));
+		let n = na(t).split(/\s+/).map((e) => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+		return RegExp("(?<![\\p{L}\\p{N}_])" + n.join("\\s+") + "(?![\\p{L}\\p{N}_])", "u").test(na(e));
 	}
-	if (Qi(e).includes(Qi(t))) return !0;
+	if (na(e).includes(na(t))) return !0;
 	if (!n) return !1;
-	let i = $i(t), a = $i(e);
+	let i = ra(t), a = ra(e);
 	if (!i) return !1;
 	if (a.includes(i)) return !0;
 	let o = i.split(" "), s = a.split(" ");
-	return o.length <= 12 && o.every((e) => s.some((t) => t.includes(e) || ea(e, t)));
+	return o.length <= 12 && o.every((e) => s.some((t) => t.includes(e) || ia(e, t)));
 }
 // src/enrichment/sources.ts
-var na = [
+var oa = [
 	[
 		"actors",
 		"Cast",
@@ -15143,12 +15255,12 @@ var na = [
 		"Landscape image",
 		["tmdb"]
 	]
-], ra = {
+], sa = {
 	auto: "Automatic",
 	original: "Original library data",
 	kaleidescape: "Kaleidescape store",
 	tmdb: "TMDB"
-}, ia = [
+}, ca = [
 	[
 		"general",
 		"General",
@@ -15203,7 +15315,7 @@ var na = [
 		"About Kaleidescape Companion",
 		"Installed versions, documentation and support information."
 	]
-], aa = [
+], la = [
 	{
 		key: "media_player",
 		label: "Media player",
@@ -15268,7 +15380,7 @@ var na = [
 		max: 60,
 		unit: "minutes"
 	}
-], oa = [
+], ua = [
 	{
 		key: "library_host",
 		label: "Kaleidescape Server Address",
@@ -15297,7 +15409,7 @@ var na = [
 		max: 4096,
 		unit: "MiB"
 	}
-], sa = [
+], da = [
 	[
 		"tracking_enabled",
 		"Automatically record playback",
@@ -15352,19 +15464,19 @@ var na = [
 		"Publish new movie completions to your selected calendar.",
 		"calendar"
 	]
-], ca = /* @__PURE__ */ new Set([
+], fa = /* @__PURE__ */ new Set([
 	"fuzzy_search",
-	...sa.map(([e]) => e),
+	...da.map(([e]) => e),
 	"calendar_full_sync",
 	"calendar_full_sync_dedicated",
 	"metadata_store_enabled",
 	"metadata_tmdb_enabled",
 	"metadata_auto_save",
 	"metadata_clear_tmdb_key"
-]), la = [
-	...aa,
-	...oa,
-	...sa.map(([e, t, n, r]) => ({
+]), pa = [
+	...la,
+	...ua,
+	...da.map(([e, t, n, r]) => ({
 		key: e,
 		label: t,
 		hint: n,
@@ -15503,25 +15615,130 @@ var na = [
 		section: n,
 		hint: r
 	})),
-	...na.map(([e, t]) => ({
+	...oa.map(([e, t]) => ({
 		key: `metadata_source_${e}`,
 		label: `${t} source`,
 		section: "metadata",
 		hint: "Preferred metadata source and fallback"
 	}))
 ];
-function ua(e, t) {
+function ma(e, t) {
 	let n = (e) => Array.isArray(e) ? JSON.stringify(e) : String(e ?? "");
 	return [.../* @__PURE__ */ new Set([...Object.keys(e), ...Object.keys(t)])].filter((r) => n(e[r]) !== n(t[r]));
 }
-function da(e) {
-	let t = Qi(e.trim()).split(/\s+/).filter(Boolean);
-	return t.length ? la.filter((e) => t.every((t) => Qi(`${e.label} ${e.hint} ${e.section} ${e.key}`).includes(t))) : [];
+function ha(e) {
+	let t = na(e.trim()).split(/\s+/).filter(Boolean);
+	return t.length ? pa.filter((e) => t.every((t) => na(`${e.label} ${e.hint} ${e.section} ${e.key}`).includes(t))) : [];
 }
-C(), yn();
-function fa(e, t) {
-	return v`<div class="switch-row">
-      ${G("calendar_full_sync", "Enable Full Sync", "Reconcile a dedicated calendar against completed Journal entries. Unmatched events require repeated successful scans and at least 10 minutes of grace before deletion. Schedule runs in Automations or use Run Full Sync now; enabling this does not create a schedule.")}<input
+// src/ui/about-sensors.ts
+var ga = [
+	[
+		"last_watched_movie",
+		"Last watched movie",
+		"Latest completed movie title.",
+		"movie: full title; watched_at: completion time."
+	],
+	[
+		"movies_7_days",
+		"Movies watched last 7 days",
+		"Completed viewings in the rolling seven-day window.",
+		"movies: titles; truncated: whether the list is incomplete."
+	],
+	[
+		"movies_30_days",
+		"Movies watched last 30 days",
+		"Completed viewings in the rolling 30-day window.",
+		"movies: titles; truncated: whether the list is incomplete."
+	],
+	[
+		"movies_365_days",
+		"Movies watched last 365 days",
+		"Completed viewings in the rolling 365-day window.",
+		"None."
+	],
+	[
+		"partial_movies",
+		"Partially watched movies",
+		"Unfinished partial viewings.",
+		"movies: titles; truncated: whether the list is incomplete."
+	],
+	[
+		"total_movies",
+		"Total movies",
+		"Available Library movie groups, with editions grouped together.",
+		"None."
+	],
+	[
+		"database_size",
+		"Database size",
+		"Size of the main Companion database, excluding sidecars.",
+		"None."
+	],
+	[
+		"last_library_sync",
+		"Last library sync",
+		"Time of the last completed catalog snapshot.",
+		"None."
+	],
+	[
+		"artwork_cache_size",
+		"Artwork cache size",
+		"Size of indexed cached artwork.",
+		"None."
+	],
+	[
+		"watched_movies",
+		"Watched movies",
+		"Movie groups in the source Played collection.",
+		"unknown_movies: groups with unknown status; collections_synced_at: collection snapshot time."
+	],
+	[
+		"unwatched_movies",
+		"Unwatched movies",
+		"Movie groups in the source New collection.",
+		"unknown_movies: groups with unknown status; collections_synced_at: collection snapshot time."
+	],
+	[
+		"recently_added",
+		"Recently added movies",
+		"Count in the latest newly discovered movie batch.",
+		"movies: titles; truncated: whether the list is incomplete; added_at: discovery time."
+	],
+	[
+		"last_scrape_date",
+		"Last scrape date",
+		"Last completed enrichment attempt, including failures.",
+		"operation: refresh or review; status: completed or failed; providers: involved scrapers; processed and total: movie groups; updated, skipped and provider_attempts: provider-level counts for a refresh."
+	],
+	[
+		"scraper_conflicts",
+		"Scraper conflicts",
+		"Movie groups with unresolved enabled-provider matching conflicts.",
+		"movies: titles; truncated: whether the list is incomplete."
+	],
+	[
+		"missing_metadata",
+		"Missing metadata",
+		"Movie groups missing expected enabled-provider data.",
+		"movies: titles; truncated: whether the list is incomplete."
+	],
+	[
+		"missing_artwork",
+		"Missing artwork",
+		"Movie groups missing expected poster or backdrop artwork.",
+		"movies: titles; truncated: whether the list is incomplete."
+	],
+	[
+		"missing_purchase_information",
+		"Missing purchase information",
+		"Movie groups missing expected purchase date or prices.",
+		"movies: titles; truncated: whether the list is incomplete."
+	]
+];
+C(), bn();
+function _a(e, t) {
+	return _`<div class="switch-row">
+      ${W("calendar_full_sync", "Enable Full Sync", "Reconcile a dedicated calendar against completed Journal entries. Unmatched events require repeated successful scans and at least 10 minutes of grace before deletion. Schedule runs in Automations or use Run Full Sync now; enabling this does not create a schedule.")}<input
         type="checkbox"
         role="switch"
         name="calendar_full_sync"
@@ -15534,7 +15751,7 @@ function fa(e, t) {
 	})}
       />
     </div>
-    ${e.calendar_full_sync ? v`
+    ${e.calendar_full_sync ? _`
             <p class="warning">
               <strong
                 >Full Sync requires its own separate calendar. Events in the
@@ -15551,11 +15768,11 @@ function fa(e, t) {
                 required
                 .checked=${!!e.calendar_full_sync_dedicated}
                 @change=${(e) => t({ calendar_full_sync_dedicated: e.target.checked })}
-              />${G("calendar_full_sync_dedicated", "I assigned a separate dedicated calendar and understand unmatched events will be deleted.", "Use a calendar reserved for Companion. Full Sync may permanently delete unrelated events within its age window; this acknowledgement resets when you change the destination or toggle Full Sync.")}
+              />${W("calendar_full_sync_dedicated", "I assigned a separate dedicated calendar and understand unmatched events will be deleted.", "Use a calendar reserved for Companion. Full Sync may permanently delete unrelated events within its age window; this acknowledgement resets when you change the destination or toggle Full Sync.")}
             </div>
             <div class="grid settings-grid">
               <div class="setting-field">
-                ${G("calendar_full_sync_months", "Full Sync age window · months", "Maintain 1–12 whole months of completed viewings. Older and future events remain outside the window, and recurring events are skipped. Increasing the window makes more events eligible for reconciliation and guarded deletion.")}<input
+                ${W("calendar_full_sync_months", "Full Sync age window · months", "Maintain 1–12 whole months of completed viewings. Older and future events remain outside the window, and recurring events are skipped. Increasing the window makes more events eligible for reconciliation and guarded deletion.")}<input
                   name="calendar_full_sync_months"
                   id="calendar_full_sync_months"
                   aria-describedby="calendar_full_sync_months-hint"
@@ -15569,10 +15786,10 @@ function fa(e, t) {
                 />
               </div>
             </div>
-          ` : x}`;
+          ` : b}`;
 }
 V(), C(), A(), P(), z();
-var pa = class extends S {
+var va = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.working = !1, this.error = "", this.reviewToken = "", this.generation = 0, this.bound = "";
 	}
@@ -15686,7 +15903,7 @@ var pa = class extends S {
 	}
 	renderMaintenance() {
 		let e = this.status.maintenance;
-		return v`<section aria-label="Full calendar sync">
+		return _`<section aria-label="Full calendar sync">
       <h4>Full Sync</h4>
       <p>
         Uses the saved dedicated calendar and age window. Save settings before
@@ -15697,12 +15914,12 @@ var pa = class extends S {
         · Pending delete: ${e.quarantined} ·
         ${B(e.uncertain, "unconfirmed write")}
       </p>
-      ${e.quarantined ? v`<p class="muted">Replaced and unmatched events remain visible until two unchanged scans at least ten minutes apart confirm cleanup. Changes restart this grace period. A forced sync keeps these safeguards.</p>` : x}
-      ${Object.keys(e.counts).length ? v`<p class="muted">
+      ${e.quarantined ? _`<p class="muted">Replaced and unmatched events remain visible until two unchanged scans at least ten minutes apart confirm cleanup. Changes restart this grace period. A forced sync keeps these safeguards.</p>` : b}
+      ${Object.keys(e.counts).length ? _`<p class="muted">
               ${Object.entries(e.counts).map(([e, t]) => `${t} ${e.replaceAll("_", " ")}`).join(" · ")}
-            </p>` : x}
-      ${e.error ? v`<p class="warning">${e.error} ${e.failure_stage ? `Stage: ${e.failure_stage}. Review Full Sync status and the calendar before retrying.` : ""}</p>` : x}
-      ${e.ready ? x : v`<p class="warning">The calendar must be available and support event reading, creation and deletion.</p>`}
+            </p>` : b}
+      ${e.error ? _`<p class="warning">${e.error} ${e.failure_stage ? `Stage: ${e.failure_stage}. Review Full Sync status and the calendar before retrying.` : ""}</p>` : b}
+      ${e.ready ? b : _`<p class="warning">The calendar must be available and support event reading, creation and deletion.</p>`}
       <div class="actions">
         <button
           ?disabled=${this.disabled || this.working || e.active || !e.ready}
@@ -15713,16 +15930,16 @@ var pa = class extends S {
         <button ?disabled=${this.working} @click=${this.refresh}>
           Refresh sync status
         </button>
-        ${e.uncertain ? v`<button
+        ${e.uncertain ? _`<button
                 ?disabled=${this.disabled || this.working || e.active || !e.ready}
                 @click=${() => {
 			this.reviewToken = e.review_token ?? "", this.renderRoot.querySelector("dialog")?.showModal();
 		}}
               >
                 Review unconfirmed writes
-              </button>` : x}
+              </button>` : b}
       </div>
-      ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
+      ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
       <dialog
         id="maintenance-review"
         class="database-dialog"
@@ -15803,7 +16020,7 @@ var pa = class extends S {
 	render() {
 		if (this.status?.maintenance?.enabled) return this.renderMaintenance();
 		let e = this.status?.job;
-		return v`<section aria-label="Journal calendar export">
+		return _`<section aria-label="Journal calendar export">
       <h4>Export Journal to calendar</h4>
       <p class="muted">
         Uses the saved calendar settings. Save any changes before exporting.
@@ -15818,14 +16035,14 @@ var pa = class extends S {
           Sync all watched movies to calendar</button
         ><button type="button" ?disabled=${this.working} @click=${this.refresh}>
           Refresh export status</button
-        >${this.status?.active ? v`<button type="button" ?disabled=${this.working} @click=${this.cancel}>Cancel export</button>` : x}
+        >${this.status?.active ? _`<button type="button" ?disabled=${this.working} @click=${this.cancel}>Cancel export</button>` : b}
       </div>
-      ${e ? v`<p role="status">
+      ${e ? _`<p role="status">
               ${e.finished ? "Export finished" : "Export in progress"} ·
               ${B(e.total, "viewing")} ·
               ${Object.entries(e.counts).map(([e, t]) => `${t} ${e}`).join(" · ")}
-            </p>` : x}
-      ${this.error ? v`<p role="alert" class="error">${this.error}</p>` : x}
+            </p>` : b}
+      ${this.error ? _`<p role="alert" class="error">${this.error}</p>` : b}
       <dialog
         class="database-dialog"
         aria-labelledby="calendar-export-title"
@@ -15852,7 +16069,7 @@ var pa = class extends S {
           anyone who can read the calendar. Failed or uncertain writes require
           review. Cancelling stops unstarted items; created events remain.
         </p>
-        ${this.pending ? v`<p role="alert">
+        ${this.pending ? _`<p role="alert">
                   The start result is unconfirmed. Retry the same request to
                   inspect or resume that job.
                 </p>
@@ -15864,7 +16081,7 @@ var pa = class extends S {
 		}}
                 >
                   Discard retry & inspect
-                </button>` : x}
+                </button>` : b}
         <div class="dialog-footer">
           <button
             class="primary"
@@ -15879,8 +16096,8 @@ var pa = class extends S {
     </section>`;
 	}
 };
-customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", pa), C(), A(), z(), P(), An();
-var ma = [
+customElements.get("kaleidescape-calendar-export") || customElements.define("kaleidescape-calendar-export", va), C(), A(), z(), P(), jn();
+var ya = [
 	[
 		"purchase_email",
 		"Purchase receipt email",
@@ -15911,18 +16128,18 @@ var ma = [
 		"Maintain a dedicated calendar from completed viewings.",
 		"Save a dedicated calendar and enable Full Sync first. Unmatched events can be deleted; the schedule includes a later safeguard check."
 	]
-], ha = {
+], ba = {
 	current: "Up to date",
 	outdated: "Update available",
 	modified: "Modified or unrecognized",
 	missing: "Not installed",
 	unavailable: "Unable to check"
 };
-function ga(e) {
+function xa(e) {
 	let t = e.split(/\r?\n/), n = t.indexOf("# Version history:"), r = t.indexOf("# End version history", n + 1);
 	return n < 0 || r < 0 ? [] : t.slice(n + 1, r).filter((e) => /^# v\d+: /.test(e)).map((e) => e.slice(2));
 }
-var _a = class extends S {
+var Sa = class extends S {
 	constructor(...e) {
 		super(...e), this.versionsOnly = !1, this.disabled = !1, this.busy = !1, this.message = "", this.error = "", this.checking = !1, this.generation = 0, this.reviewRequest = 0;
 	}
@@ -15937,7 +16154,7 @@ var _a = class extends S {
 	static {
 		this.styles = [
 			N,
-			kn,
+			An,
 			l`
       .blueprint-table-wrap {
         overflow-x: auto;
@@ -16104,7 +16321,7 @@ var _a = class extends S {
 			this.review = {
 				...this.review,
 				loading: !1,
-				entries: ga(t.yaml),
+				entries: xa(t.yaml),
 				template: t
 			};
 		} catch (e) {
@@ -16134,7 +16351,7 @@ var _a = class extends S {
 	}
 	renderReview() {
 		let e = this.review, t = e?.mode === "update" && !e.modified && e.installed != null ? e.entries.filter((t) => Number(/^v(\d+):/.exec(t)?.[1]) > e.installed) : e?.entries ?? [];
-		return v`<dialog
+		return _`<dialog
       class="blueprint-review"
       aria-labelledby="blueprint-review-title"
       @click=${R}
@@ -16150,7 +16367,7 @@ var _a = class extends S {
         </h2>
         ${L((e) => this.closeReview(e), this.busy)}
       </div>
-      <p>${ma.find(([t]) => t === e?.kind)?.[3]}</p>
+      <p>${ya.find(([t]) => t === e?.kind)?.[3]}</p>
       <div class="review-versions">
         <span
           >Installed:
@@ -16164,37 +16381,37 @@ var _a = class extends S {
           ></span
         >
       </div>
-      ${e?.mode === "update" ? v`<p class=${e.modified ? "warning" : "settings-note"}>${e.modified ? "This file is modified or unrecognized. Replacing it may discard local edits." : "This update replaces the installed blueprint."} Dependent automations are reloaded. Your automation inputs remain managed in Home Assistant.</p>` : e?.mode === "install" ? v`<p class="settings-note">Installing adds the blueprint template. It does not create or enable an automation. Existing blueprint files are preserved.</p>` : v`<p class="muted">History bundled with Companion; this does not describe local edits.</p>`}
+      ${e?.mode === "update" ? _`<p class=${e.modified ? "warning" : "settings-note"}>${e.modified ? "This file is modified or unrecognized. Replacing it may discard local edits." : "This update replaces the installed blueprint."} Dependent automations are reloaded. Your automation inputs remain managed in Home Assistant.</p>` : e?.mode === "install" ? _`<p class="settings-note">Installing adds the blueprint template. It does not create or enable an automation. Existing blueprint files are preserved.</p>` : _`<p class="muted">History bundled with Companion; this does not describe local edits.</p>`}
       <h3>
         ${e?.mode === "update" && !e.modified && e.installed != null ? `Changes since v${e.installed}` : "Version history"}
       </h3>
-      ${e?.loading ? v`<p role="status">Loading change log…</p>` : e?.error ? v`<p role="alert" class="error">${e.error}</p>
+      ${e?.loading ? _`<p role="status">Loading change log…</p>` : e?.error ? _`<p role="alert" class="error">${e.error}</p>
                 <button
                   type="button"
                   @click=${() => this.openReview(e.kind, e.label, e.mode)}
                 >
                   Retry change log
-                </button>` : t.length ? v`<ul class="history-list">
-                  ${t.map((e) => v`<li>${e}</li>`)}
-                </ul>` : v`<p>
+                </button>` : t.length ? _`<ul class="history-list">
+                  ${t.map((e) => _`<li>${e}</li>`)}
+                </ul>` : _`<p>
                   No change log entries are available for this version.
                 </p>`}
-      ${e && t.length !== e.entries.length && !e.loading ? v`<details class="setting-help">
+      ${e && t.length !== e.entries.length && !e.loading ? _`<details class="setting-help">
               <summary>Full bundled history</summary>
               <ul class="history-list">
-                ${e.entries.map((e) => v`<li>${e}</li>`)}
+                ${e.entries.map((e) => _`<li>${e}</li>`)}
               </ul>
-            </details>` : x}
+            </details>` : b}
       <div class="dialog-footer">
         <button type="button" ?disabled=${this.busy} @click=${this.closeReview}>
           ${e?.mode === "history" ? "Close" : "Cancel"}</button
-        >${e && e.mode !== "history" ? v`<button type="button" class="primary" ?disabled=${this.disabled || this.busy || e.loading || !!e.error || !e.template || e.mode === "update" && !e.revision} @click=${this.applyReview}>${this.busy ? "Applying…" : e.mode === "install" ? "Install blueprint" : "Update installed blueprint"}</button>` : x}
+        >${e && e.mode !== "history" ? _`<button type="button" class="primary" ?disabled=${this.disabled || this.busy || e.loading || !!e.error || !e.template || e.mode === "update" && !e.revision} @click=${this.applyReview}>${this.busy ? "Applying…" : e.mode === "install" ? "Install blueprint" : "Update installed blueprint"}</button>` : b}
       </div>
     </dialog>`;
 	}
 	render() {
-		return this.scope?.permissions.edit ? v`<section aria-label="Optional automations">
-      ${this.versionsOnly ? x : v`<div class="settings-card">
+		return this.scope?.permissions.edit ? _`<section aria-label="Optional automations">
+      ${this.versionsOnly ? b : _`<div class="settings-card">
               <div class="section-heading">
                 <div>
                   <h3>Optional automations</h3>
@@ -16237,8 +16454,8 @@ var _a = class extends S {
             ${this.checking ? "Checking…" : "Check again"}
           </button>
         </div>
-        ${this.checking && !this.statuses ? v`<p role="status">Checking blueprints…</p>` : x}
-        ${this.statuses ? v`<div
+        ${this.checking && !this.statuses ? _`<p role="status">Checking blueprints…</p>` : b}
+        ${this.statuses ? _`<div
                 class="blueprint-table-wrap"
                 tabindex="0"
                 role="region"
@@ -16255,9 +16472,9 @@ var _a = class extends S {
                     </tr>
                   </thead>
                   <tbody>
-                    ${ma.map(([e, t, n]) => {
+                    ${ya.map(([e, t, n]) => {
 			let r = this.statuses?.[e], i = r?.status ?? "unavailable";
-			return v`<tr data-blueprint=${e}>
+			return _`<tr data-blueprint=${e}>
                         <td>
                           <strong>${t}</strong><small>${n}</small>
                         </td>
@@ -16269,12 +16486,12 @@ var _a = class extends S {
                         </td>
                         <td>
                           <span class=${`status ${i}`}
-                            >${ha[i]}</span
+                            >${ba[i]}</span
                           >
                         </td>
                         <td>
                           <div class="row-actions">
-                            ${!this.versionsOnly && (i === "outdated" || i === "modified" || i === "missing") ? v`<button type="button" class=${i === "outdated" ? "primary" : ""} ?disabled=${this.disabled || this.busy} @click=${(n) => this.openReview(e, t, i === "missing" ? "install" : "update", n)}>${i === "missing" ? "Install" : i === "modified" ? "Review replacement" : "Update"}</button>` : x}
+                            ${!this.versionsOnly && (i === "outdated" || i === "modified" || i === "missing") ? _`<button type="button" class=${i === "outdated" ? "primary" : ""} ?disabled=${this.disabled || this.busy} @click=${(n) => this.openReview(e, t, i === "missing" ? "install" : "update", n)}>${i === "missing" ? "Install" : i === "modified" ? "Review replacement" : "Update"}</button>` : b}
                             <button
                               type="button"
                               class="link"
@@ -16284,15 +16501,15 @@ var _a = class extends S {
                             >
                               View change log
                             </button>
-                            ${!this.versionsOnly && i === "current" ? v`<a href="/config/blueprint/dashboard">Create automation ↗</a>` : x}
+                            ${!this.versionsOnly && i === "current" ? _`<a href="/config/blueprint/dashboard">Create automation ↗</a>` : b}
                           </div>
                         </td>
                       </tr>`;
 		})}
                   </tbody>
                 </table>
-              </div>` : x}
-        ${this.message ? v`<p class="settings-note" role="status">${this.message}</p>` : x}${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
+              </div>` : b}
+        ${this.message ? _`<p class="settings-note" role="status">${this.message}</p>` : b}${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
         <details class="setting-help">
           <summary>Installation, local changes & troubleshooting</summary>
           <p>
@@ -16309,17 +16526,17 @@ var _a = class extends S {
         </details>
       </div>
       ${this.renderReview()}
-    </section>` : x;
+    </section>` : b;
 	}
 };
-customElements.get("kaleidescape-automation-blueprints") || customElements.define("kaleidescape-automation-blueprints", _a), C(), A(), P(), z();
-var va = [
+customElements.get("kaleidescape-automation-blueprints") || customElements.define("kaleidescape-automation-blueprints", Sa), C(), A(), P(), z();
+var Ca = [
 	["rules", "Runtime rules and feature enablement"],
 	["browsing", "Personal browsing preferences · may include searches/names"],
 	["shared", "Shared hidden collection names"],
 	["connections", "Network addresses, player and HA entity choices · private"],
 	["templates", "Custom calendar text templates · private"]
-], ya = class extends S {
+], wa = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.generation = 0, this.selected = /* @__PURE__ */ new Set(["rules", "browsing"]), this.request = "", this.busy = !1, this.pending = !1, this.error = "", this.notice = "";
 	}
@@ -16388,16 +16605,16 @@ var va = [
 		}
 	}
 	render() {
-		if (!this.scope?.permissions.edit) return x;
+		if (!this.scope?.permissions.edit) return b;
 		let e = this.busy || this.disabled || this.pending;
-		return v`<button
+		return _`<button
         type="button"
         ?disabled=${this.disabled || this.busy}
         @click=${() => this.renderRoot.querySelector("dialog")?.showModal()}
       >
         Export / import settings
       </button>
-      ${this.notice ? v`<p class="notice" role="status">${this.notice}</p>` : x}
+      ${this.notice ? _`<p class="notice" role="status">${this.notice}</p>` : b}
       <dialog
         class="database-dialog"
         @click=${R}
@@ -16412,7 +16629,7 @@ var va = [
           Connection choices, searches, names and templates can contain private
           information; protect the downloaded file.
         </p>
-        ${va.map(([t, n]) => v`<label class="check"
+        ${Ca.map(([t, n]) => _`<label class="check"
               ><input
                 type="checkbox"
                 .checked=${this.selected.has(t)}
@@ -16446,15 +16663,15 @@ var va = [
         >
           Review selected categories
         </button>
-        ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-        ${this.preview ? v`<h3>Review import</h3>
+        ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+        ${this.preview ? _`<h3>Review import</h3>
                 <p>
                   Applying updates personal/shared settings immediately. Runtime
                   fields are staged on the Settings page for validation and Save
                   settings. Credentials and database contents are unaffected.
                 </p>
                 <div style="max-height:35vh;overflow:auto">
-                  ${Object.entries(this.preview.categories).map(([e, t]) => v`<details>
+                  ${Object.entries(this.preview.categories).map(([e, t]) => _`<details>
                         <summary>
                           ${e} · ${Object.keys(t).length} fields
                         </summary>
@@ -16463,8 +16680,8 @@ var va = [
                         >
 ${JSON.stringify(t, null, 2)}</pre>
                       </details>`)}
-                </div>` : x}
-        ${this.pending && !this.busy ? v`<p class="warning">Result unconfirmed. Retry the same import before changing the selection.</p>` : x}
+                </div>` : b}
+        ${this.pending && !this.busy ? _`<p class="warning">Result unconfirmed. Retry the same import before changing the selection.</p>` : b}
         <div class="dialog-footer">
           <button
             type="button"
@@ -16479,11 +16696,11 @@ ${JSON.stringify(t, null, 2)}</pre>
 	}
 };
 // src/core/test-dashboard.ts
-customElements.get("kaleidescape-settings-transfer") || customElements.define("kaleidescape-settings-transfer", ya), A();
-function ba(e) {
-	return Array.isArray(e) ? `[${e.map(ba).join(",")}]` : e && typeof e == "object" ? `{${Object.entries(e).sort(([e], [t]) => e.localeCompare(t)).map(([e, t]) => `${JSON.stringify(e)}:${ba(t)}`).join(",")}}` : JSON.stringify(e);
+customElements.get("kaleidescape-settings-transfer") || customElements.define("kaleidescape-settings-transfer", wa), A();
+function Ta(e) {
+	return Array.isArray(e) ? `[${e.map(Ta).join(",")}]` : e && typeof e == "object" ? `{${Object.entries(e).sort(([e], [t]) => e.localeCompare(t)).map(([e, t]) => `${JSON.stringify(e)}:${Ta(t)}`).join(",")}}` : JSON.stringify(e);
 }
-var Q = class extends Error {}, xa = class {
+var Q = class extends Error {}, Ea = class {
 	constructor(e, t) {
 		if (this.client = e, this.plan = t, this.attempted = !1, this.created = !1, !/^companion-test-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(t.url_path) || new TextEncoder().encode(t.yaml).length > 262144) throw new Q("Invalid generated dashboard artifact");
 	}
@@ -16506,17 +16723,17 @@ var Q = class extends Error {}, xa = class {
 			if (t(), w(e) !== "config_not_found") throw e;
 		}
 		if (i) {
-			if (ba(i) === ba(this.plan.config)) return;
+			if (Ta(i) === Ta(this.plan.config)) return;
 			throw new Q("This dashboard already contains different content. It was not overwritten. Inspect it in HA dashboard settings.");
 		}
 		if (!this.created && !r) throw new Q("Could not verify the new dashboard");
 		await this.client.saveHATestDashboard(this.plan), t();
 		let a = await this.client.haTestDashboardConfig(this.plan.url_path);
-		if (t(), ba(a) !== ba(this.plan.config)) throw new Q("The saved dashboard could not be verified. Inspect it before continuing.");
+		if (t(), Ta(a) !== Ta(this.plan.config)) throw new Q("The saved dashboard could not be verified. Inspect it before continuing.");
 	}
 };
 C(), A(), P(), z();
-var Sa = class extends S {
+var Da = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.name = "Kaleidescape test guide", this.request = "", this.generation = 0, this.busy = !1, this.pending = !1, this.complete = !1, this.error = "", this.bound = "";
 	}
@@ -16562,7 +16779,7 @@ var Sa = class extends S {
 			if (this.request ||= nt(), !this.plan) {
 				let e = await this.client.testDashboard(this.scope, this.request, this.name.trim());
 				if (!n()) return;
-				this.installer = new xa(this.client, e), this.plan = e;
+				this.installer = new Ea(this.client, e), this.plan = e;
 			}
 			if (this.pending = !0, await this.installer.install(n), !n() || (await this.client.verifyTestDashboard(this.scope, this.request), !n())) return;
 			this.complete = !0, this.pending = !1;
@@ -16583,7 +16800,7 @@ var Sa = class extends S {
 		t.href = e, t.download = "kaleidescape-test-dashboard.yaml", document.body.append(t), t.click(), t.remove(), setTimeout(() => URL.revokeObjectURL(e), 1e3);
 	}
 	render() {
-		return this.scope?.permissions.edit ? v`<section>
+		return this.scope?.permissions.edit ? _`<section>
         <h3>Test dashboard and usage guide</h3>
         <p>
           Generate seven focused views with card examples and expected behavior,
@@ -16628,9 +16845,9 @@ var Sa = class extends S {
 			this.name = e.target.value;
 		}}
           /></label>
-          ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-          ${this.pending ? v`<p class="warning">Setup is unconfirmed. Retry checks the same unique dashboard before writing. Changed dashboard content is never overwritten; failed setup does not delete anything.</p>` : x}
-          ${this.plan ? v`<p>Views: ${this.plan.views.join(" · ")}</p>
+          ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+          ${this.pending ? _`<p class="warning">Setup is unconfirmed. Retry checks the same unique dashboard before writing. Changed dashboard content is never overwritten; failed setup does not delete anything.</p>` : b}
+          ${this.plan ? _`<p>Views: ${this.plan.views.join(" · ")}</p>
                   <div class="actions">
                     <a
                       href=${`/${this.plan.url_path}`}
@@ -16640,17 +16857,17 @@ var Sa = class extends S {
                     ><button type="button" @click=${this.download}>
                       Download YAML
                     </button>
-                  </div>` : x}
-          ${this.complete ? v`<p role="status">Test dashboard created and verified. Open it to follow the test cases.</p>` : x}
+                  </div>` : b}
+          ${this.complete ? _`<p role="status">Test dashboard created and verified. Open it to follow the test cases.</p>` : b}
           <div class="dialog-footer">
-            ${this.complete ? v`<button
+            ${this.complete ? _`<button
                     type="button"
                     @click=${() => {
 			this.reset(), this.requestUpdate();
 		}}
                   >
                     Create another guide
-                  </button>` : v`<button
+                  </button>` : _`<button
                     class="primary"
                     type="submit"
                     ?disabled=${this.busy || this.disabled && !this.plan}
@@ -16659,11 +16876,11 @@ var Sa = class extends S {
                   </button>`}
           </div>
         </form>
-      </dialog>` : x;
+      </dialog>` : b;
 	}
 };
-customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", Sa), C(), A(), V(), z(), P();
-var Ca = class extends S {
+customElements.get("kaleidescape-test-dashboard") || customElements.define("kaleidescape-test-dashboard", Da), C(), A(), V(), z(), P();
+var Oa = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.working = !1, this.error = "", this.generation = 0, this.bound = "";
 	}
@@ -16744,7 +16961,7 @@ var Ca = class extends S {
 	}
 	render() {
 		let e = this.review;
-		return v`<section aria-label="Journal metadata repair">
+		return _`<section aria-label="Journal metadata repair">
       <h4>Journal Library metadata</h4>
       <p class="muted">
         Fill missing movie details in existing Journal entries from the saved
@@ -16758,8 +16975,8 @@ var Ca = class extends S {
       >
         ${this.working ? "Checking…" : "Repair Journal Library metadata"}
       </button>
-      ${this.result ? v`<p role="status">Updated ${B(this.result.updated_count, "entry", "entries")} · ${this.result.unmatched_count} unmatched · ${this.result.active_count} active and skipped.</p>` : x}
-      ${this.error ? v`<p role="alert" class="error">${this.error}</p>` : x}
+      ${this.result ? _`<p role="status">Updated ${B(this.result.updated_count, "entry", "entries")} · ${this.result.unmatched_count} unmatched · ${this.result.active_count} active and skipped.</p>` : b}
+      ${this.error ? _`<p role="alert" class="error">${this.error}</p>` : b}
       <dialog
         class="database-dialog"
         aria-labelledby="metadata-repair-title"
@@ -16770,7 +16987,7 @@ var Ca = class extends S {
           <h2 id="metadata-repair-title">Repair Journal Library metadata</h2>
           ${L((e) => this.close(e))}
         </div>
-        ${e ? v`<p>${B(e.updated_count, "entry", "entries")} with missing details can be updated. ${e.unchanged_count} already up to date · ${e.unmatched_count} unmatched · ${e.active_count} active and skipped.</p>` : x}
+        ${e ? _`<p>${B(e.updated_count, "entry", "entries")} with missing details can be updated. ${e.unchanged_count} already up to date · ${e.unmatched_count} unmatched · ${e.active_count} active and skipped.</p>` : b}
         <p>
           Matches use version identifiers in the configured Library, including
           recognized playback handles. Movie names are never guessed. Existing
@@ -16780,8 +16997,8 @@ var Ca = class extends S {
           Existing calendar events are not edited or recreated. Sync the Library
           first if its details need refreshing.
         </p>
-        ${this.error ? v`<p role="alert" class="error">${this.error}</p>` : x}
-        ${this.pending ? v`<p role="alert">
+        ${this.error ? _`<p role="alert" class="error">${this.error}</p>` : b}
+        ${this.pending ? _`<p role="alert">
                   The result is unconfirmed. Retry the same repair to retrieve
                   its result.
                 </p>
@@ -16793,7 +17010,7 @@ var Ca = class extends S {
 		}}
                 >
                   Discard retry & review again
-                </button>` : x}
+                </button>` : b}
         <div class="dialog-footer">
           <button
             class="primary"
@@ -16808,8 +17025,8 @@ var Ca = class extends S {
     </section>`;
 	}
 };
-customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Ca), C(), A(), P(), z(), yn();
-var wa = [
+customElements.get("kaleidescape-metadata-repair") || customElements.define("kaleidescape-metadata-repair", Oa), C(), A(), P(), z(), bn();
+var ka = [
 	[
 		"calendar",
 		"Calendar reconciliation history",
@@ -16825,7 +17042,7 @@ var wa = [
 		"Playback control history",
 		"Finished or reviewed playback control receipts; pending and uncertain commands are kept."
 	]
-], Ta = class extends S {
+], Aa = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.busy = !1, this.policies = {
 			calendar: 180,
@@ -16904,23 +17121,23 @@ var wa = [
 		}
 	}
 	updated() {
-		for (let [e] of wa) {
+		for (let [e] of ka) {
 			let t = this.renderRoot.querySelector(`#${e}`);
 			t && (t.value = String(this.policies[e]));
 		}
 	}
 	render() {
 		let e = Object.values(this.review?.counts ?? {}).reduce((e, t) => e + t, 0);
-		return v`<div class="launch">
+		return _`<div class="launch">
         <button
           type="button"
           ?disabled=${this.disabled || this.busy}
           @click=${this.open}
         >
           Database cleanup</button
-        >${W("Database cleanup", "Review finalized operation histories and link missing artwork between matching Library editions. Pending work and retry barriers are protected.")}
+        >${U("Database cleanup", "Review finalized operation histories and link missing artwork between matching Library editions. Pending work and retry barriers are protected.")}
       </div>
-      ${this.notice ? v`<small role="status">${this.notice}</small>` : x}
+      ${this.notice ? _`<small role="status">${this.notice}</small>` : b}
       <dialog
         aria-labelledby="cleanup-heading"
         @cancel=${(e) => {
@@ -16931,10 +17148,10 @@ var wa = [
           <h2 id="cleanup-heading">Database cleanup</h2>
           ${L(() => this.renderRoot.querySelector("dialog")?.close(), this.busy)}
         </div>
-        ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-        ${this.review ? v` <p>Review the proposed cleanup:</p>
+        ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+        ${this.review ? _` <p>Review the proposed cleanup:</p>
                 <ul>
-                  ${wa.filter(([e]) => this.review.policies[e]).map(([e, t]) => v`<li>${t}: ${this.review.counts[e]} older than ${this.review.policies[e]} days</li>`)}
+                  ${ka.filter(([e]) => this.review.policies[e]).map(([e, t]) => _`<li>${t}: ${this.review.counts[e]} older than ${this.review.policies[e]} days</li>`)}
                 </ul>
                 <p>
                   Artwork links to repair: ${this.review.artwork_links ?? 0}
@@ -16961,7 +17178,7 @@ var wa = [
                   >
                     ${this.busy ? "Cleaning…" : "Apply cleanup"}
                   </button>
-                </div>` : v`<p>
+                </div>` : _`<p>
                   Choose which finalized histories to clean and how long to keep
                   them. Missing artwork links between matching Library editions
                   are also reviewed.
@@ -16991,10 +17208,10 @@ var wa = [
                     ></span>
                   </button>
                 </div>
-                ${wa.map(([e, t, n]) => v`<div class="cleanup-field">
+                ${ka.map(([e, t, n]) => _`<div class="cleanup-field">
                       <span class="cleanup-label"
                         ><label for=${e}>${t}</label
-                        >${W(t, n)}</span
+                        >${U(t, n)}</span
                       ><select
                         id=${e}
                         ?disabled=${this.busy || !this.advanced}
@@ -17014,7 +17231,7 @@ var wa = [
 			365,
 			730,
 			3650
-		].map((e) => v`<option value=${e}>Keep ${e} days</option>`)}
+		].map((e) => _`<option value=${e}>Keep ${e} days</option>`)}
                       </select>
                     </div>`)}
                 <div class="actions">
@@ -17036,8 +17253,8 @@ var wa = [
       </dialog>`;
 	}
 };
-customElements.get("kaleidescape-database-cleanup") || customElements.define("kaleidescape-database-cleanup", Ta), C(), A(), V(), P(), An(), yn(), Gt();
-var Ea = class extends S {
+customElements.get("kaleidescape-database-cleanup") || customElements.define("kaleidescape-database-cleanup", Aa), C(), A(), V(), P(), jn(), bn(), Gt();
+var ja = class extends S {
 	constructor(...e) {
 		super(...e), this.draft = {}, this.disabled = !1, this.actionsDisabled = !1, this.credentialConfigured = !1, this.generation = 0, this.bound = "", this.error = "", this.loading = !1;
 	}
@@ -17052,7 +17269,7 @@ var Ea = class extends S {
 		};
 	}
 	static {
-		this.styles = [N, kn];
+		this.styles = [N, An];
 	}
 	willUpdate(e) {
 		if (e.has("client") || e.has("scope")) {
@@ -17086,8 +17303,8 @@ var Ea = class extends S {
 		}
 	}
 	toggle(e, t, n) {
-		return v`<div class="switch-row">
-      ${G(e, t, n)}<input
+		return _`<div class="switch-row">
+      ${W(e, t, n)}<input
         name=${e}
         id=${e}
         aria-describedby=${`${e}-hint`}
@@ -17100,7 +17317,7 @@ var Ea = class extends S {
     </div>`;
 	}
 	render() {
-		return this.scope?.permissions.edit ? v`<section aria-label="External metadata">
+		return this.scope?.permissions.edit ? _`<section aria-label="External metadata">
       <p class="settings-note">
         Internet lookups share movie titles and release years with enabled
         providers. Store lookups may use existing purchase links; prices and
@@ -17127,7 +17344,7 @@ var Ea = class extends S {
         ${this.toggle("metadata_tmdb_enabled", "Enable TMDB", "Use your TMDB API credential for optional metadata requests.")}
         <div class="credential-row spaced">
           <div class="setting-field">
-            ${G("metadata_tmdb_credential", "TMDB API key or API Read Access Token", "Use an API key or API Read Access Token from your TMDB account's API settings. Leave blank to keep a saved credential; enter a new value to replace it when you save. Saved secrets are never displayed or included in settings exports.")}<input
+            ${W("metadata_tmdb_credential", "TMDB API key or API Read Access Token", "Use an API key or API Read Access Token from your TMDB account's API settings. Leave blank to keep a saved credential; enter a new value to replace it when you save. Saved secrets are never displayed or included in settings exports.")}<input
               name="metadata_tmdb_credential"
               id="metadata_tmdb_credential"
               aria-describedby="metadata_tmdb_credential-hint"
@@ -17152,7 +17369,7 @@ var Ea = class extends S {
             >
               ${this.draft.metadata_clear_tmdb_key ? "Undo" : "Remove"}
             </button>
-            ${W("Remove TMDB credential", "Stage removal of the stored credential. Save settings to apply it, or choose Undo to keep it. Removal takes precedence over any replacement entered here.")}
+            ${U("Remove TMDB credential", "Stage removal of the stored credential. Save settings to apply it, or choose Undo to keep it. Removal takes precedence over any replacement entered here.")}
             <span class="setting-description" id="metadata_clear_tmdb_key-hint"
               >Removal is applied only when you save settings; Undo cancels the
               removal.</span
@@ -17185,7 +17402,7 @@ var Ea = class extends S {
             type="button"
             ?disabled=${this.disabled || !this.draft.metadata_tmdb_enabled}
             @click=${() => {
-			let e = Object.fromEntries(na.map(([e, , t]) => ["metadata_source_" + e, e === "artwork" || e === "critic_score" || e === "audience_score" || e === "distributor" ? "kaleidescape" : t.some((e) => e === "tmdb") ? "tmdb" : "auto"]));
+			let e = Object.fromEntries(oa.map(([e, , t]) => ["metadata_source_" + e, e === "artwork" || e === "critic_score" || e === "audience_score" || e === "distributor" ? "kaleidescape" : t.some((e) => e === "tmdb") ? "tmdb" : "auto"]));
 			this.dispatchEvent(new CustomEvent("metadata-settings", {
 				detail: e,
 				bubbles: !0,
@@ -17196,10 +17413,10 @@ var Ea = class extends S {
             Prefer TMDB · keep Kaleidescape covers and RT scores
           </button>
           <div class="grid settings-grid spaced">
-            ${na.map(([e, t, n]) => {
+            ${oa.map(([e, t, n]) => {
 			let r = "metadata_source_" + e, i = String(this.draft[r] ?? "auto"), a = e === "artwork" ? "Choose the preferred portrait cover. Kaleidescape uses the edition artwork cached from your system; TMDB downloads covers on metadata refresh when Cover artwork sync is enabled. Per-movie choices take priority." : e === "backdrop" ? "Choose the source for landscape images. TMDB is the available provider; enable TMDB and Cover artwork sync for new downloads. Existing cached images remain usable." : `Choose the preferred source for ${t.toLowerCase()}. Automatic uses available cached sources; a preferred provider falls back when its value is missing. Original library data uses only the scanned field. This does not enable providers or override reviewed per-movie choices.`;
-			return v`<div class="setting-field">
-                ${G(r, t, a)}<select
+			return _`<div class="setting-field">
+                ${W(r, t, a)}<select
                   name=${r}
                   id=${r}
                   aria-describedby=${`${r}-hint`}
@@ -17211,7 +17428,7 @@ var Ea = class extends S {
 				"auto",
 				"original",
 				...n
-			].map((t) => v`<option value=${t} ?selected=${t === i}>${e === "artwork" && t === "kaleidescape" ? "Kaleidescape library cover" : ra[t]}</option>`)}
+			].map((t) => _`<option value=${t} ?selected=${t === i}>${e === "artwork" && t === "kaleidescape" ? "Kaleidescape library cover" : sa[t]}</option>`)}
                 </select>
               </div>`;
 		})}
@@ -17241,7 +17458,7 @@ var Ea = class extends S {
         </div>
         ${this.toggle("metadata_auto_save", "Auto-save metadata manager changes", "Save per-movie source and field choices as they change. This does not auto-save this Settings page.")}
         <div class="setting-field spaced">
-          ${G("metadata_requests_per_second", "Shared request limit", "The combined request rate for enabled metadata providers, from 0.1 to 10 requests per second. A lower value slows refreshes and reduces provider traffic; it is not a separate allowance for each provider.")}<span
+          ${W("metadata_requests_per_second", "Shared request limit", "The combined request rate for enabled metadata providers, from 0.1 to 10 requests per second. A lower value slows refreshes and reduces provider traffic; it is not a separate allowance for each provider.")}<span
             class="field-input"
             ><input
               name="metadata_requests_per_second"
@@ -17267,7 +17484,7 @@ var Ea = class extends S {
           </div>
           <span class="scope-tag">Runs when requested</span>
         </div>
-        ${this.actionsDisabled ? v`<p class="settings-note">Save or cancel your configuration changes before starting a refresh.</p>` : this.scope.library_enabled ? x : v`<p class="settings-note">Enable and save Library sync before refreshing metadata.</p>`}
+        ${this.actionsDisabled ? _`<p class="settings-note">Save or cancel your configuration changes before starting a refresh.</p>` : this.scope.library_enabled ? b : _`<p class="settings-note">Enable and save Library sync before refreshing metadata.</p>`}
         <div class="actions">
           <button
             type="button"
@@ -17289,8 +17506,8 @@ var Ea = class extends S {
             Check metadata status
           </button>
         </div>
-        ${this.status ? v`<p role="status">${this.status.running ? "Syncing" : "Idle"} · ${this.status.processed} of ${B(this.status.total, "movie")} · ${B(this.status.updated, "provider update")} · ${B(this.status.skipped, "skipped attempt")}${this.status.error ? ` · ${this.status.error}` : ""}</p>` : x}
-        ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
+        ${this.status ? _`<p role="status">${this.status.running ? "Syncing" : "Idle"} · ${this.status.processed} of ${B(this.status.total, "movie")} · ${B(this.status.updated, "provider update")} · ${B(this.status.skipped, "skipped attempt")}${this.status.error ? ` · ${this.status.error}` : ""}</p>` : b}
+        ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
         <details class="setting-help">
           <summary>When is metadata refreshed?</summary>
           <p>
@@ -17310,11 +17527,11 @@ var Ea = class extends S {
           </p>
         </details>
       </div>
-    </section>` : x;
+    </section>` : b;
 	}
 };
-customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", Ea), C(), A(), P(), An(), yn(), lr(), V(), Kn(), Vn();
-var Da = {
+customElements.get("kaleidescape-enrichment-settings") || customElements.define("kaleidescape-enrichment-settings", ja), C(), A(), P(), jn(), bn(), gr(), V(), Qn(), $n(), Hn();
+var Ma = {
 	invalid_calendar_full_sync: "Use an age window of 1–12 whole months.",
 	calendar_dedicated_required: "Acknowledge that Full Sync uses a separate calendar and deletes unmatched events.",
 	calendar_full_sync_unsupported: "Full Sync requires a calendar with event creation and deletion support.",
@@ -17329,20 +17546,26 @@ var Da = {
 	invalid_control_options: "Use a private LAN control hostname/IP and a valid player serial number.",
 	invalid_library_host: "Enter a hostname or private LAN HTTP(S) origin without a path, credentials, or query.",
 	invalid_library_options: "Choose a purchase window of 0–520 weeks and an artwork cache limit of 32–4096 MiB."
-}, Oa = class extends S {
+}, Na = class extends S {
 	constructor(...e) {
-		super(...e), this.tab = "general", this.search = "", this.automationBusy = !1, this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.savedHiddenCollections = [], this.savingCollections = !1, this.purchaseLoading = !1, this.purchaseError = "", this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.dashboardBusy = !1, this.error = "", this.bound = "";
+		super(...e), this.tab = "general", this.search = "", this.automationBusy = !1, this.generation = 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.hiddenCollections = [], this.savedHiddenCollections = [], this.savingCollections = !1, this.aboutError = "", this.aboutLoading = !1, this.purchaseLoading = !1, this.purchaseError = "", this.sharedReady = !1, this.sharedError = "", this.customCollection = "", this.loading = !1, this.saving = !1, this.uncertain = !1, this.dashboardBusy = !1, this.error = "", this.bound = "", this.locationChanged = () => {
+			let e = new URL(location.href);
+			if (e.searchParams.get("companion_page") !== "settings") return;
+			let t = e.searchParams.get("companion_settings") ?? "general";
+			ca.some(([e]) => e === t) && this.selectTab(t, !0);
+		};
 	}
 	static {
 		this.properties = {
 			client: { attribute: !1 },
-			scope: { attribute: !1 }
+			scope: { attribute: !1 },
+			navigationUser: { attribute: !1 }
 		};
 	}
 	static {
 		this.styles = [
 			N,
-			kn,
+			An,
 			l`
       [hidden] {
         display: none !important;
@@ -17480,6 +17703,18 @@ var Da = {
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 20px;
       }
+      .sensor-detail {
+        border-top: 1px solid var(--line);
+        padding: 12px 0;
+      }
+      .sensor-detail summary {
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .sensor-detail dd {
+        margin: 4px 0 12px;
+        overflow-wrap: anywhere;
+      }
       .purchase-summary {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -17580,20 +17815,23 @@ var Da = {
 	willUpdate(e) {
 		if (!e.has("client") && !e.has("scope")) return;
 		let t = `${this.scope?.entry_id}:${this.scope?.dataset_id}:${!!this.scope?.permissions.edit}`;
-		(t !== this.bound || this.client !== this.boundClient) && (this.cancelFlow(), this.bound = t, this.boundClient = this.client, this.boundScope = this.scope, this.flow = void 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.customCollection = "", this.uncertain = this.saving = !1, this.client && this.scope?.permissions.edit && this.start());
+		if (t === this.bound && this.client === this.boundClient) return;
+		this.cancelFlow(), this.bound = t, this.boundClient = this.client, this.boundScope = this.scope;
+		let n = new URL(location.href).searchParams.get("companion_settings") ?? Jn(this.navigationKey());
+		this.tab = ca.some(([e]) => e === n) ? n : "general", this.flow = void 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.customCollection = "", this.uncertain = this.saving = !1, this.client && this.scope?.permissions.edit && this.start();
 	}
 	disconnectedCallback() {
-		super.disconnectedCallback(), this.cancelFlow(), this.flow = void 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.customCollection = "", this.bound = "", this.boundClient = void 0;
+		super.disconnectedCallback(), window.removeEventListener("popstate", this.locationChanged), this.cancelFlow(), this.flow = void 0, this.draft = {}, this.initial = {}, this.collectionChoices = [], this.customCollection = "", this.bound = "", this.boundClient = void 0;
 	}
 	connectedCallback() {
-		super.connectedCallback(), this.requestUpdate("client"), this.requestUpdate("scope");
+		super.connectedCallback(), window.addEventListener("popstate", this.locationChanged), this.requestUpdate("client"), this.requestUpdate("scope");
 	}
 	updated() {
 		let e = this.renderRoot.querySelector("[name=\"default_landing_page\"]"), t = String(this.draft.default_landing_page ?? "journal");
 		e && e.value !== t && (e.value = t);
 	}
 	cancelFlow() {
-		this.search = "", this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.hiddenCollections = [], this.savedHiddenCollections = [], this.savingCollections = !1, this.libraryInfo = void 0, this.purchaseTotals = void 0, this.purchaseLoading = !1, this.purchaseError = "", this.sharedReady = !1, this.sharedError = "", this.generation++, this.flow?.flow_id && this.boundClient && this.boundScope && this.boundClient.settings(this.boundScope, "cancel", { flow_id: this.flow.flow_id }).catch(() => {});
+		clearTimeout(this.aboutTimer), this.aboutSensors = void 0, this.aboutError = "", this.aboutLoading = !1, this.search = "", this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.hiddenCollections = [], this.savedHiddenCollections = [], this.savingCollections = !1, this.libraryInfo = void 0, this.purchaseTotals = void 0, this.purchaseLoading = !1, this.purchaseError = "", this.sharedReady = !1, this.sharedError = "", this.generation++, this.flow?.flow_id && this.boundClient && this.boundScope && this.boundClient.settings(this.boundScope, "cancel", { flow_id: this.flow.flow_id }).catch(() => {});
 	}
 	fail(e) {
 		this.error = T(e), w(e) === "unauthorized" && (this.sharedPreferences?.dispose(), this.sharedPreferences = void 0, this.sharedReady = !1, this.hiddenCollections = [], this.savedHiddenCollections = [], this.libraryInfo = void 0, this.purchaseTotals = void 0, this.flow = void 0, this.draft = {}, this.initial = {}, this.dispatchEvent(new CustomEvent("access-denied", {
@@ -17610,7 +17848,7 @@ var Da = {
 				r.flow_id && e.settings(t, "cancel", { flow_id: r.flow_id }).catch(() => {});
 				return;
 			}
-			this.flow = r, this.draft = Object.fromEntries((r.fields ?? []).map((e) => [e.name, ca.has(e.name) ? !!e.default : String(e.default ?? "")])), this.initial = { ...this.draft }, this.sharedPreferences = new q(e, t, !0, (e) => {
+			this.flow = r, this.draft = Object.fromEntries((r.fields ?? []).map((e) => [e.name, fa.has(e.name) ? !!e.default : String(e.default ?? "")])), this.initial = { ...this.draft }, this.sharedPreferences = new q(e, t, !0, (e) => {
 				n === this.generation && (e && w(e) === "unauthorized" ? this.fail(e) : (this.sharedError = e ? T(e) : "", this.requestUpdate()));
 			});
 			let i = await this.sharedPreferences.load();
@@ -17622,12 +17860,12 @@ var Da = {
 		} catch (e) {
 			n === this.generation && this.fail(e);
 		} finally {
-			n === this.generation && (this.loading = !1, this.tab === "general" && this.selectTab("general"), this.requestUpdate());
+			n === this.generation && (this.loading = !1, this.tab === "general" && this.selectTab("general"), this.tab === "about" && this.loadAboutSensors(), this.requestUpdate());
 		}
 	}
 	confirmNavigation() {
 		let e = this.renderRoot.querySelector("kaleidescape-calendar-export"), t = this.renderRoot.querySelector("kaleidescape-test-dashboard"), n = this.renderRoot.querySelector("kaleidescape-metadata-repair");
-		return this.saving || this.savingCollections || this.automationBusy || t && !t.confirmNavigation() || e && !e.confirmNavigation() || n && !n.confirmNavigation() ? !1 : this.uncertain ? window.confirm("The settings save may already have committed. Leave this view and inspect saved values before making another change?") : !ua(this.draft, this.initial).length && !this.collectionsDirty || window.confirm("Discard your unsaved settings changes?");
+		return this.saving || this.savingCollections || this.automationBusy || t && !t.confirmNavigation() || e && !e.confirmNavigation() || n && !n.confirmNavigation() ? !1 : this.uncertain ? window.confirm("The settings save may already have committed. Leave this view and inspect saved values before making another change?") : !ma(this.draft, this.initial).length && !this.collectionsDirty || window.confirm("Discard your unsaved settings changes?");
 	}
 	busy() {
 		this.dispatchEvent(new CustomEvent("settings-busy", {
@@ -17645,8 +17883,8 @@ var Da = {
 		if (!await this.validateForm(e.target) || this.saving || t !== this.generation || !this.scope?.permissions.edit) return;
 		this.saving = !0, this.busy(), this.error = "", this.requestUpdate();
 		let n = { ...this.draft };
-		for (let { key: e, type: t } of aa) t === "number" ? n[e] = Number(n[e]) : n[e] || delete n[e];
-		for (let { key: e, type: t } of oa) t === "number" && (n[e] = Number(n[e]));
+		for (let { key: e, type: t } of la) t === "number" ? n[e] = Number(n[e]) : n[e] || delete n[e];
+		for (let { key: e, type: t } of ua) t === "number" && (n[e] = Number(n[e]));
 		n.library_host = String(n.library_host ?? ""), n.metadata_requests_per_second !== void 0 && (n.metadata_requests_per_second = Number(n.metadata_requests_per_second)), n.calendar_full_sync_months !== void 0 && (n.calendar_full_sync_months = Number(n.calendar_full_sync_months)), n.calendar_entity || delete n.calendar_entity;
 		try {
 			let e = await this.client.settings(this.scope, "submit", {
@@ -17665,7 +17903,7 @@ var Da = {
 					"duplicate_entities",
 					"invalid_rules"
 				].includes(t) ? "journal" : void 0;
-				n && this.selectTab(n), this.error = Object.values(e.errors ?? {}).map((e) => Da[e] ?? "Check the settings and try again.").join(" ");
+				n && this.selectTab(n), this.error = Object.values(e.errors ?? {}).map((e) => Ma[e] ?? "Check the settings and try again.").join(" ");
 			} else this.error = "The settings flow ended. Reload settings to continue.";
 		} catch (e) {
 			t === this.generation && (this.fail(e), this.uncertain = ![
@@ -17677,11 +17915,18 @@ var Da = {
 			t === this.generation && (this.saving = !1, this.busy(), this.requestUpdate());
 		}
 	}
-	selectTab(e) {
-		ia.some(([t]) => t === e) && (this.tab = e, this.requestUpdate());
+	navigationKey() {
+		return `settings:${this.navigationUser ?? "preview"}:${this.scope?.entry_id ?? ""}:${this.scope?.dataset_id ?? ""}`;
+	}
+	selectTab(e, t = !1) {
+		if (!ca.some(([t]) => t === e)) return;
+		let n = this.tab;
+		this.tab = e;
+		let r = new URL(location.href);
+		!t && r.searchParams.get("companion_page") === "settings" && (n !== this.tab && !r.searchParams.has("companion_settings") && (r.searchParams.set("companion_settings", n), history.replaceState(history.state, "", r)), r.searchParams.set("companion_settings", this.tab), n === this.tab ? history.replaceState(history.state, "", r) : history.pushState(history.state, "", r)), Yn(this.navigationKey(), this.tab), n !== this.tab && (clearTimeout(this.aboutTimer), this.tab === "about" && this.loadAboutSensors()), this.requestUpdate();
 	}
 	tabKey(e, t) {
-		let n = ia.map(([e]) => e), r = n.indexOf(t), i = e.key === "ArrowRight" || e.key === "ArrowDown" ? n[(r + 1) % n.length] : e.key === "ArrowLeft" || e.key === "ArrowUp" ? n[(r + n.length - 1) % n.length] : e.key === "Home" ? n[0] : e.key === "End" ? n.at(-1) : void 0;
+		let n = ca.map(([e]) => e), r = n.indexOf(t), i = e.key === "ArrowRight" || e.key === "ArrowDown" ? n[(r + 1) % n.length] : e.key === "ArrowLeft" || e.key === "ArrowUp" ? n[(r + n.length - 1) % n.length] : e.key === "Home" ? n[0] : e.key === "End" ? n.at(-1) : void 0;
 		i && (e.preventDefault(), this.selectTab(i), this.renderRoot.querySelector(`#settings-tab-${i}`)?.focus());
 	}
 	submitForm() {
@@ -17698,7 +17943,7 @@ var Da = {
 		return e.reportValidity();
 	}
 	get dirtyKeys() {
-		return ua(this.draft, this.initial);
+		return ma(this.draft, this.initial);
 	}
 	get blocked() {
 		return this.saving || this.uncertain;
@@ -17710,7 +17955,7 @@ var Da = {
 		}, this.requestUpdate());
 	}
 	heading(e, t, n = "Shared · Save settings") {
-		return v`<div class="section-heading">
+		return _`<div class="section-heading">
       <div>
         <h3>${e}</h3>
         <p>${t}</p>
@@ -17722,9 +17967,9 @@ var Da = {
     </div>`;
 	}
 	toggle(e) {
-		let t = sa.find(([t]) => t === e);
-		return v`<div class="switch-row">
-      ${G(e, t[1], t[2])}<input
+		let t = da.find(([t]) => t === e);
+		return _`<div class="switch-row">
+      ${W(e, t[1], t[2])}<input
         type="checkbox"
         role="switch"
         name=${e}
@@ -17737,32 +17982,32 @@ var Da = {
 	}
 	field(e, t) {
 		let { key: n, label: r, hint: i, type: a, min: o, max: s, unit: c, placeholder: l } = e;
-		return v`<div
+		return _`<div
       class=${a === "text" ? "setting-field full" : "setting-field"}
     >
-      ${G(n, r, i)}<span class="field-input"
+      ${W(n, r, i)}<span class="field-input"
         ><input
           name=${n}
           id=${n}
           type=${a ?? "text"}
-          min=${o ?? x}
-          max=${s ?? x}
-          step=${a === "number" ? "1" : x}
-          maxlength=${a === "text" ? "255" : x}
-          placeholder=${l ?? x}
-          list=${t ? `${n}-choices` : x}
+          min=${o ?? b}
+          max=${s ?? b}
+          step=${a === "number" ? "1" : b}
+          maxlength=${a === "text" ? "255" : b}
+          placeholder=${l ?? b}
+          list=${t ? `${n}-choices` : b}
           aria-describedby=${`${n}-hint`}
           ?required=${a === "number" || !!t && !!this.draft.tracking_enabled}
           .value=${String(this.draft[n] ?? "")}
           @input=${(e) => this.change(n, e.target.value)}
         />
-        ${c ? v`<span class="unit">${c}</span>` : x}</span
+        ${c ? _`<span class="unit">${c}</span>` : b}</span
       >
-      ${t ? v`<datalist id=${`${n}-choices`}>${t.map((e) => v`<option value=${e.value}>${e.label}</option>`)}</datalist>` : x}
+      ${t ? _`<datalist id=${`${n}-choices`}>${t.map((e) => _`<option value=${e.value}>${e.label}</option>`)}</datalist>` : b}
     </div>`;
 	}
 	shortcut(e, t) {
-		return v`<button
+		return _`<button
       type="button"
       class="link"
       @click=${() => this.selectTab(e)}
@@ -17779,10 +18024,10 @@ var Da = {
 		t?.focus(), t?.scrollIntoView?.({ block: "nearest" });
 	}
 	renderGeneral() {
-		return v` <div class="settings-card">
+		return _` <div class="settings-card">
         ${this.heading("Start where you want", "Choose the first page for everyone who opens Companion without a page in the URL.")}
         <div class="setting-field">
-          ${G("default_landing_page", "Default landing page", "The shared starting page when a link does not specify one. Unavailable or administrator-only pages fall back to an accessible page for each user.")}<select
+          ${W("default_landing_page", "Default landing page", "The shared starting page when a link does not specify one. Unavailable or administrator-only pages fall back to an accessible page for each user.")}<select
             name="default_landing_page"
             id="default_landing_page"
             aria-describedby="default_landing_page-hint"
@@ -17796,7 +18041,7 @@ var Da = {
 			["journal", "Journal"],
 			["database", "Database"],
 			["settings", "Settings"]
-		].map(([e, t]) => v`<option
+		].map(([e, t]) => _`<option
                   value=${e}
                   ?selected=${e === this.draft.default_landing_page}
                 >
@@ -17808,7 +18053,7 @@ var Da = {
       <div class="settings-card">
         ${this.heading("Search & display", "Choose how searches work for everyone.")}
         <div class="switch-row">
-          ${G("fuzzy_search", "Fuzzy search across all views", "Allow close spelling matches when searching. Turn off for case-insensitive partial matching. This setting applies to everyone and is saved with the other shared settings.")}<input
+          ${W("fuzzy_search", "Fuzzy search across all views", "Allow close spelling matches when searching. Turn off for case-insensitive partial matching. This setting applies to everyone and is saved with the other shared settings.")}<input
             type="checkbox"
             role="switch"
             name="fuzzy_search"
@@ -17850,10 +18095,10 @@ var Da = {
       </div>`;
 	}
 	renderJournal() {
-		return v`<div class="settings-card">
+		return _`<div class="settings-card">
         ${this.heading("Automatic recording", "Observe one player and keep the Journal up to date.")}${this.toggle("tracking_enabled")}
         <div class="settings-grid spaced">
-          ${aa.filter((e) => e.type === "text").map((e) => this.field(e, this.flow?.entity_choices?.[e.key === "media_player" ? "media_player" : "sensor"] ?? []))}
+          ${la.filter((e) => e.type === "text").map((e) => this.field(e, this.flow?.entity_choices?.[e.key === "media_player" ? "media_player" : "sensor"] ?? []))}
         </div>
         <details class="setting-help">
           <summary>How do I choose the right entities?</summary>
@@ -17871,23 +18116,23 @@ var Da = {
       <div class="settings-card">
         ${this.heading("Viewing rules", "Fine-tune when a movie is recorded, completed or resumed.")}
         <div class="settings-grid">
-          ${aa.filter((e) => e.type === "number").map((e) => this.field(e))}
+          ${la.filter((e) => e.type === "number").map((e) => this.field(e))}
         </div>
       </div>`;
 	}
 	renderLibrary() {
-		return v`<div class="settings-card">
+		return _`<div class="settings-card">
         ${this.heading("Local Library connection", "Read the movie catalog from your Kaleidescape system.")}${this.toggle("library_enabled")}
-        ${this.draft.library_enabled ? v`<div class="settings-grid spaced">
-                  ${this.field(oa[0])}
+        ${this.draft.library_enabled ? _`<div class="settings-grid spaced">
+                  ${this.field(ua[0])}
                 </div>
                 <p class="settings-note">
                   A scan runs after setup. For recurring scans, configure the
                   Library sync automation after saving.
                 </p>
-                ${this.shortcut("automations", "Set up a Library schedule")}` : x}
+                ${this.shortcut("automations", "Set up a Library schedule")}` : b}
       </div>
-      ${this.draft.library_enabled ? v`<div class="settings-card">
+      ${this.draft.library_enabled ? _`<div class="settings-card">
                 ${this.heading("What to sync", "Choose the information to read from your system.")}${this.toggle("library_sync_collections")}${this.toggle("library_sync_details")}${this.toggle("library_sync_artwork")}
                 <details class="setting-help">
                   <summary>What comes from the device?</summary>
@@ -17903,19 +18148,19 @@ var Da = {
               <div class="settings-card">
                 ${this.heading("Artwork & purchase display", "Control local storage and the Recently Added purchase badge.")}
                 <div class="settings-grid">
-                  ${oa.slice(1).map((e) => this.field(e))}
+                  ${ua.slice(1).map((e) => this.field(e))}
                 </div>
-                ${this.draft.library_sync_artwork ? v`<p class="settings-note">Artwork uses additional disk space: up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. HA backups can include these cached files.</p>` : x}
+                ${this.draft.library_sync_artwork ? _`<p class="settings-note">Artwork uses additional disk space: up to ${String(this.draft.library_artwork_cache_mb)} MiB plus one incoming image (up to 5 MiB). The journal database retains its 256 MiB limit. HA backups can include these cached files.</p>` : b}
               </div>
               <div class="settings-card">
                 ${this.heading("Collection actions", "Control whether administrators can queue explicit changes on the device.")}${this.toggle("library_allow_collection_add")}
-              </div>` : x}
+              </div>` : b}
       <div class="settings-card">
         ${this.heading("Collection visibility", "Hide collection names in shared Library labels and filters. Movies and status remain visible.", "Shared · save visibility")}${this.renderCollections()}
       </div>`;
 	}
 	renderPlayback() {
-		return v`<div class="settings-card">
+		return _`<div class="settings-card">
         ${this.heading("Playback connection", "The control target is separate from the player observed by the Journal.")}${this.toggle("control_enabled")}
         <div class="settings-grid spaced">
           ${this.field({
@@ -17959,7 +18204,7 @@ var Da = {
       </div>`;
 	}
 	renderMetadata() {
-		return v`<kaleidescape-enrichment-settings
+		return _`<kaleidescape-enrichment-settings
       .client=${this.client}
       .scope=${this.scope}
       .draft=${this.draft}
@@ -17979,7 +18224,7 @@ var Da = {
 		this.change(e, r.slice(0, i) + `{${t}}` + r.slice(a)), await this.updateComplete, n?.focus(), n?.setSelectionRange(i + t.length + 2, i + t.length + 2);
 	}
 	templateHelp(e) {
-		return v`<details class="setting-help">
+		return _`<details class="setting-help">
       <summary>Insert a movie or viewing field</summary>
       <p>
         Select a field to insert at the cursor. Missing values are blank;
@@ -18007,19 +18252,19 @@ var Da = {
 			"started_at",
 			"ended_at",
 			"watched"
-		].map((t) => v`<button type="button" aria-label=${`Insert ${t} in ${e === "calendar_title" ? "event title" : "event description"}`} @click=${() => this.insertCalendarField(e, t)}>{${t}}</button>`)}
+		].map((t) => _`<button type="button" aria-label=${`Insert ${t} in ${e === "calendar_title" ? "event title" : "event description"}`} @click=${() => this.insertCalendarField(e, t)}>{${t}}</button>`)}
       </div>
     </details>`;
 	}
 	renderCalendar() {
-		return v`<div class="settings-card">
+		return _`<div class="settings-card">
         ${this.heading("Calendar publishing", "Add completed viewings to a Home Assistant calendar.")}${this.toggle("calendar_enabled")}
         <p class="settings-note">
           Movie information is shared with the calendar provider and anyone who
           can read that calendar.
         </p>
-        ${this.draft.calendar_enabled ? v`<div class="setting-field">
-                  ${G("calendar_entity", "Calendar destination", "Choose a Home Assistant calendar that supports creating events. Full Sync also requires deletion support and a dedicated calendar. Changing this destination resets the dedicated-calendar acknowledgement.")}<input
+        ${this.draft.calendar_enabled ? _`<div class="setting-field">
+                  ${W("calendar_entity", "Calendar destination", "Choose a Home Assistant calendar that supports creating events. Full Sync also requires deletion support and a dedicated calendar. Changing this destination resets the dedicated-calendar acknowledgement.")}<input
                     name="calendar_entity"
                     id="calendar_entity"
                     aria-describedby="calendar_entity-hint"
@@ -18038,13 +18283,13 @@ var Da = {
                   />
                 </div>
                 <datalist id="calendar-choices">
-                  ${(this.flow?.calendar_choices ?? []).map((e) => v`<option value=${e.value}>${e.label}</option>`)}
-                </datalist>` : x}
+                  ${(this.flow?.calendar_choices ?? []).map((e) => _`<option value=${e.value}>${e.label}</option>`)}
+                </datalist>` : b}
       </div>
-      ${this.draft.calendar_enabled ? v`<div class="settings-card">
+      ${this.draft.calendar_enabled ? _`<div class="settings-card">
                 ${this.heading("Event format", "Use movie and viewing fields to make calendar entries useful.")}
                 <div class="setting-field">
-                  ${G("calendar_title", "Event title", "Format each calendar event with placeholders such as {title} and {year}. Use the insertion buttons below; unknown values are blank. Changing the title format can cause a later export to create additional events.")}<input
+                  ${W("calendar_title", "Event title", "Format each calendar event with placeholders such as {title} and {year}. Use the insertion buttons below; unknown values are blank. Changing the title format can cause a later export to create additional events.")}<input
                     name="calendar_title"
                     id="calendar_title"
                     aria-describedby="calendar_title-hint"
@@ -18056,7 +18301,7 @@ var Da = {
                 </div>
                 ${this.templateHelp("calendar_title")}
                 <div class="setting-field spaced">
-                  ${G("calendar_description", "Event description", "Use plain text and supported movie/viewing placeholders. Duration and watched time are in minutes; double braces create literal braces. Standard export leaves existing descriptions unchanged; Full Sync can reconcile them.")}<textarea
+                  ${W("calendar_description", "Event description", "Use plain text and supported movie/viewing placeholders. Duration and watched time are in minutes; double braces create literal braces. Standard export leaves existing descriptions unchanged; Full Sync can reconcile them.")}<textarea
                     name="calendar_description"
                     id="calendar_description"
                     aria-describedby="calendar_description-hint"
@@ -18069,13 +18314,13 @@ var Da = {
                 ${this.templateHelp("calendar_description")}
               </div>
               <div class="settings-card">
-                ${this.heading("Dedicated calendar maintenance", "Optional Full Sync reconciles a separate calendar against completed Journal entries.")}${fa(this.draft, (e) => {
+                ${this.heading("Dedicated calendar maintenance", "Optional Full Sync reconciles a separate calendar against completed Journal entries.")}${_a(this.draft, (e) => {
 			this.draft = {
 				...this.draft,
 				...e
 			}, this.requestUpdate();
 		})}${this.shortcut("automations", "Configure the Full Sync schedule")}
-              </div>` : x}
+              </div>` : b}
       <div class="settings-card">
         ${this.heading("Existing viewing history", "Export previous completions or inspect calendar jobs using saved settings.", "Runs when requested")}<kaleidescape-calendar-export
           .client=${this.client}
@@ -18085,7 +18330,7 @@ var Da = {
       </div>`;
 	}
 	renderMaintenance() {
-		return v`<div class="settings-card">
+		return _`<div class="settings-card">
         ${this.heading("Database cleanup", "Review finalized receipts and repair missing artwork links.")}
         <kaleidescape-database-cleanup
           .client=${this.client}
@@ -18114,11 +18359,11 @@ var Da = {
       </div>
       <div class="settings-card">
         ${this.heading("Metadata repair", "Review local cached metadata before applying a repair.", "Runs when requested")}
-        ${this.initial.library_enabled ? v`<kaleidescape-metadata-repair
+        ${this.initial.library_enabled ? _`<kaleidescape-metadata-repair
                 .client=${this.client}
                 .scope=${this.scope}
                 .disabled=${this.blocked || this.collectionsDirty || this.dirtyKeys.length > 0}
-              ></kaleidescape-metadata-repair>` : v`<p>Enable and save Library sync to use metadata repair.</p>
+              ></kaleidescape-metadata-repair>` : _`<p>Enable and save Library sync to use metadata repair.</p>
                 ${this.shortcut("library", "Open Library settings")}`}
       </div>
       <div class="settings-card">
@@ -18167,7 +18412,7 @@ var Da = {
 	}
 	renderPurchaseDetails() {
 		let e = this.purchaseTotals;
-		return v`<details
+		return _`<details
       class="purchase-details"
       @toggle=${(e) => {
 			e.target.open && this.loadPurchaseTotals();
@@ -18179,9 +18424,9 @@ var Da = {
         unavailable titles. Unlinked purchases are excluded until matched.
         Filters do not change these totals. Currencies are kept separate.
       </p>
-      ${this.purchaseLoading ? v`<p role="status">Loading purchase totals…</p>` : x}
-      ${this.purchaseError ? v`<p class="error" role="alert">${this.purchaseError} <button @click=${() => this.loadPurchaseTotals()}>Retry purchase totals</button></p>` : x}
-      ${e ? v`<dl class="purchase-summary">
+      ${this.purchaseLoading ? _`<p role="status">Loading purchase totals…</p>` : b}
+      ${this.purchaseError ? _`<p class="error" role="alert">${this.purchaseError} <button @click=${() => this.loadPurchaseTotals()}>Retry purchase totals</button></p>` : b}
+      ${e ? _`<dl class="purchase-summary">
                 <dt>Total library cost</dt>
                 <dd>${this.purchaseAmount("library_cost")}</dd>
                 <dt>Total retail price</dt>
@@ -18190,7 +18435,7 @@ var Da = {
                 <dd>${this.purchaseAmount("savings")}</dd>
                 <dt>Unique transactions</dt>
                 <dd>${e.unique_transactions}</dd>
-                ${e.missing_information_titles === void 0 ? x : v`<dt>Library titles missing purchase information</dt>
+                ${e.missing_information_titles === void 0 ? b : _`<dt>Library titles missing purchase information</dt>
                         <dd>${e.missing_information_titles}</dd>`}
               </dl>
               <p class="muted">
@@ -18201,16 +18446,31 @@ var Da = {
                 checks purchase dates. Savings use entries with both prices in
                 the same currency.
               </p>
-              ${e.missing_purchase_prices || e.missing_retail_prices ? v`<p class="muted">${B(e.missing_purchase_prices, "missing paid price")} · ${B(e.missing_retail_prices, "missing retail price")}.</p>` : x}
-              ${e.missing_price_entries ? v`<p class="muted">${B(e.missing_price_entries, "purchase entry", "purchase entries")} excluded from savings because a paid or retail price is missing.</p>` : x}
-              ${e.currency_mismatch_entries ? v`<p class="muted">${B(e.currency_mismatch_entries, "purchase entry", "purchase entries")} excluded from savings because the paid and retail prices use different currencies. The Currency mismatch filter shows available Library titles.</p>` : x}
-              ${e.unpaired_prices && e.missing_price_entries === void 0 ? v`<p class="muted">${B(e.unpaired_prices, "purchase entry", "purchase entries")} excluded from savings because prices are missing or use different currencies.</p>` : x}
-              ${e.missing_order_ids ? v`<p class="muted">${B(e.missing_order_ids, "purchase entry", "purchase entries")} without an order ID; not included in the transaction count.</p>` : x}
-              ${e.duplicate_purchases ? v`<p class="muted">${B(e.duplicate_purchases, "duplicate purchase record")} counted only once.</p>` : x}` : x}
+              ${e.missing_purchase_prices || e.missing_retail_prices ? _`<p class="muted">${B(e.missing_purchase_prices, "missing paid price")} · ${B(e.missing_retail_prices, "missing retail price")}.</p>` : b}
+              ${e.missing_price_entries ? _`<p class="muted">${B(e.missing_price_entries, "purchase entry", "purchase entries")} excluded from savings because a paid or retail price is missing.</p>` : b}
+              ${e.currency_mismatch_entries ? _`<p class="muted">${B(e.currency_mismatch_entries, "purchase entry", "purchase entries")} excluded from savings because the paid and retail prices use different currencies. The Currency mismatch filter shows available Library titles.</p>` : b}
+              ${e.unpaired_prices && e.missing_price_entries === void 0 ? _`<p class="muted">${B(e.unpaired_prices, "purchase entry", "purchase entries")} excluded from savings because prices are missing or use different currencies.</p>` : b}
+              ${e.missing_order_ids ? _`<p class="muted">${B(e.missing_order_ids, "purchase entry", "purchase entries")} without an order ID; not included in the transaction count.</p>` : b}
+              ${e.duplicate_purchases ? _`<p class="muted">${B(e.duplicate_purchases, "duplicate purchase record")} counted only once.</p>` : b}` : b}
     </details>`;
 	}
+	async loadAboutSensors() {
+		if (!this.client || !this.scope?.permissions.edit || this.aboutLoading || this.tab !== "about") return;
+		let e = this.client, t = this.scope, n = this.generation;
+		this.aboutLoading = !0;
+		try {
+			let r = await e.aboutSensors(t);
+			if (n !== this.generation || this.tab !== "about") return;
+			this.aboutSensors = r, this.aboutError = "";
+		} catch (e) {
+			if (n !== this.generation || this.tab !== "about") return;
+			w(e) === "unauthorized" ? this.fail(e) : this.aboutError = "Sensor states are unavailable. Try refreshing.";
+		} finally {
+			n === this.generation && (this.aboutLoading = !1, this.tab === "about" && (this.aboutTimer = setTimeout(() => void this.loadAboutSensors(), 3e4)), this.requestUpdate());
+		}
+	}
 	renderAbout() {
-		return v`<div class="settings-card">
+		return _`<div class="settings-card">
         ${this.heading("Installed versions", "Version information for troubleshooting this installation.", "Read only")}
         <dl class="version-grid">
           ${[
@@ -18218,15 +18478,15 @@ var Da = {
 			["pykaleidescape version", this.scope?.pyk_version],
 			["Companion API version", this.scope?.api_version],
 			["Database schema version", this.scope?.schema_version]
-		].map(([e, t]) => v`<div>
+		].map(([e, t]) => _`<div>
                 <dt>${e}</dt>
                 <dd>${t ?? "Unknown"}</dd>
               </div>`)}
         </dl>
       </div>
-      ${this.scope?.library_enabled ? v`<div class="settings-card">
+      ${this.scope?.library_enabled ? _`<div class="settings-card">
                 ${this.heading("Library details", "Information from the last Library scan.", "Read only")}
-                ${this.libraryInfo ? v`<p>
+                ${this.libraryInfo ? _`<p>
                           ${B(this.libraryInfo.group_count, "movie")} ·
                           ${B(this.libraryInfo.title_count, "individual version")}
                           ·
@@ -18241,12 +18501,76 @@ var Da = {
                         <p>
                           Source “New”, “Played” and “Paused” map to Unwatched,
                           Watched and In progress.
-                        </p>` : v`<p>Library details are unavailable.</p>`}
+                        </p>` : _`<p>Library details are unavailable.</p>`}
               </div>
               <div class="settings-card">
                 ${this.heading("Purchase details", "Recorded purchases for this Library source.", "Read only")}
                 ${this.renderPurchaseDetails()}
-              </div>` : x}
+              </div>` : b}
+      <div class="settings-card">
+        ${this.heading("Integration status", "Values loaded when Settings opened; saved settings are shown.", "Read only")}
+        <dl class="version-grid">
+          ${[
+			["Automatic recording", this.scope?.tracking_enabled ? "Enabled" : "Disabled"],
+			["Library", this.scope?.library_enabled ? "Enabled" : "Disabled"],
+			["Calendar publishing", this.initial.calendar_enabled === void 0 ? "Unknown" : this.initial.calendar_enabled ? "Enabled" : "Disabled"],
+			["Store metadata", this.initial.metadata_store_enabled === void 0 ? "Unknown" : this.initial.metadata_store_enabled ? "Enabled" : "Disabled"],
+			["TMDB metadata", this.initial.metadata_tmdb_enabled === void 0 ? "Unknown" : this.initial.metadata_tmdb_enabled ? "Enabled" : "Disabled"],
+			["Viewings", String(this.scope?.viewing_count ?? "Unknown")],
+			["Database revision", String(this.scope?.revision ?? "Unknown")],
+			["Backup", this.scope?.backup_in_progress ? "In progress" : "Not in progress"]
+		].map(([e, t]) => _`<div>
+                <dt>${e}</dt>
+                <dd>${t}</dd>
+              </div>`)}
+        </dl>
+      </div>
+      <div class="settings-card">
+        ${this.heading("Home Assistant sensors", "Current states and attributes, with descriptions for automations and templates.", "Read only")}
+        <details class="sensors-section">
+          <summary>Sensor details</summary>
+          <p class="muted">
+            Updates every 30 seconds while this page is open. Movie lists
+            contain up to 50 titles and may be truncated. Entity IDs can be
+            renamed in Home Assistant.
+          </p>
+          <button
+            type="button"
+            ?disabled=${this.aboutLoading}
+            @click=${() => {
+			clearTimeout(this.aboutTimer), this.loadAboutSensors();
+		}}
+          >
+            Refresh sensors
+          </button>
+          ${this.aboutError ? _`<p role="status">${this.aboutError}</p>` : b}
+          ${ga.map(([e, t, n, r]) => {
+			let i = this.aboutSensors?.[e];
+			return _`<details class="sensor-detail">
+              <summary>
+                ${t}:
+                ${i?.state ?? "Unavailable"}${i?.unit ? ` ${i.unit}` : ""}
+              </summary>
+              <p>${n}</p>
+              <p>
+                <strong>Entity ID:</strong>
+                <code
+                  >${i?.entity_id ?? (this.aboutSensors ? "Not registered" : "Not loaded")}</code
+                >
+              </p>
+              <p><strong>Attributes:</strong> ${r}</p>
+              ${i && Object.keys(i.attributes).length ? _`<dl>
+                      ${Object.entries(i.attributes).map(([e, t]) => _`<dt><code>${e}</code></dt>
+                            <dd><code>${JSON.stringify(t)}</code></dd>`)}
+                    </dl>` : b}
+            </details>`;
+		})}
+          <p class="muted">
+            Library sensors may be unavailable when Library is disabled. The
+            size sensors remain available.
+          </p>
+        </details>
+      </div>
       <div class="settings-card">
         ${this.heading("Documentation & updates", "Find current guidance and the history of changes.", "Reference")}
         <div class="reference-links">
@@ -18283,7 +18607,7 @@ var Da = {
 			case "playback": return this.renderPlayback();
 			case "metadata": return this.renderMetadata();
 			case "calendar": return this.renderCalendar();
-			case "automations": return v`<kaleidescape-automation-blueprints
+			case "automations": return _`<kaleidescape-automation-blueprints
           .client=${this.client}
           .scope=${this.scope}
           .disabled=${this.blocked}
@@ -18296,8 +18620,8 @@ var Da = {
 		}
 	}
 	render() {
-		let e = this.dirtyKeys, t = this.flow?.type === "form" && !!this.scope?.permissions.edit, n = da(this.search);
-		return v`<section class="settings-page" aria-labelledby="settings-title">
+		let e = this.dirtyKeys, t = this.flow?.type === "form" && !!this.scope?.permissions.edit, n = ha(this.search);
+		return _`<section class="settings-page" aria-labelledby="settings-title">
       <div class="settings-top">
         <div>
           <span class="eyebrow">Your household, your way</span>
@@ -18323,10 +18647,10 @@ var Da = {
           </button>
         </div>
       </div>
-      ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-      ${this.collectionsDirty ? v`<p class="settings-note" role="status">Save or discard Collection visibility changes before saving other settings.</p>` : x}
-      ${this.uncertain ? v`<p class="warning">The save result is unconfirmed. Reload settings to inspect the saved values before making another change.</p>` : x}
-      ${t ? v`<div class="settings-layout">
+      ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+      ${this.collectionsDirty ? _`<p class="settings-note" role="status">Save or discard Collection visibility changes before saving other settings.</p>` : b}
+      ${this.uncertain ? _`<p class="warning">The save result is unconfirmed. Reload settings to inspect the saved values before making another change.</p>` : b}
+      ${t ? _`<div class="settings-layout">
               <aside class="settings-sidebar">
                 <label class="setting-field settings-search"
                   >Find a setting<input
@@ -18347,14 +18671,14 @@ var Da = {
                   aria-orientation="vertical"
                   aria-label="Settings categories"
                 >
-                  ${ia.map(([t, n]) => v`<button
+                  ${ca.map(([t, n]) => _`<button
                         type="button"
                         role="tab"
                         id=${`settings-tab-${t}`}
                         aria-controls=${`settings-${t}`}
                         aria-selected=${this.tab === t}
                         tabindex=${this.tab === t ? 0 : -1}
-                        class=${e.some((e) => la.find((t) => t.key === e)?.section === t) ? "has-changes" : ""}
+                        class=${e.some((e) => pa.find((t) => t.key === e)?.section === t) ? "has-changes" : ""}
                         @click=${() => {
 			this.search = "", this.selectTab(t);
 		}}
@@ -18370,7 +18694,7 @@ var Da = {
 			this.search = "", this.selectTab(e.target.value);
 		}}
                   >
-                    ${ia.map(([e, t]) => v`<option value=${e} ?selected=${this.tab === e}>${t}</option>`)}
+                    ${ca.map(([e, t]) => _`<option value=${e} ?selected=${this.tab === e}>${t}</option>`)}
                   </select></label
                 >
                 <p class="settings-legend">
@@ -18379,7 +18703,7 @@ var Da = {
                 </p>
               </aside>
               <div class="settings-content">
-                ${this.search.trim() ? v`<section
+                ${this.search.trim() ? _`<section
                         class="settings-card search-results"
                         aria-label="Settings search results"
                       >
@@ -18388,8 +18712,8 @@ var Da = {
                           ${n.length}
                           ${n.length === 1 ? "setting" : "settings"} found
                         </p>
-                        ${n.length ? v`<ul>
-                                ${n.map((e) => v`<li>
+                        ${n.length ? _`<ul>
+                                ${n.map((e) => _`<li>
                                       <button
                                         type="button"
                                         @click=${() => this.findSetting(e)}
@@ -18398,11 +18722,11 @@ var Da = {
                                           ><strong>${e.label}</strong
                                           ><small>${e.hint}</small></span
                                         ><span class="scope-tag"
-                                          >${ia.find(([t]) => t === e.section)?.[1]}</span
+                                          >${ca.find(([t]) => t === e.section)?.[1]}</span
                                         >
                                       </button>
                                     </li>`)}
-                              </ul>` : v`<p>
+                              </ul>` : _`<p>
                                 Try a feature such as recording, artwork,
                                 receipts or calendar.
                               </p>`}<button
@@ -18414,7 +18738,7 @@ var Da = {
                         >
                           Clear search
                         </button>
-                      </section>` : x}
+                      </section>` : b}
                 <form
                   id="companion-settings-form"
                   novalidate
@@ -18424,7 +18748,7 @@ var Da = {
                   ?hidden=${!!this.search.trim()}
                 >
                   <fieldset class="settings-fieldset" ?disabled=${this.blocked}>
-                    ${ia.map(([e, , t, n]) => v`<section
+                    ${ca.map(([e, , t, n]) => _`<section
                           role="tabpanel"
                           id=${`settings-${e}`}
                           aria-labelledby=${`settings-tab-${e}`}
@@ -18440,24 +18764,24 @@ var Da = {
                   </fieldset>
                 </form>
               </div>
-            </div>` : this.loading ? v`<p class="settings-note" role="status">
+            </div>` : this.loading ? _`<p class="settings-note" role="status">
                 Loading your configuration and preferences…
-              </p>` : x}
+              </p>` : b}
     </section>`;
 	}
 	renderCollections() {
-		if (!this.sharedReady) return v`<p>
+		if (!this.sharedReady) return _`<p>
         Shared display settings could not be loaded. Reload settings to retry.
       </p>`;
 		let e = this.hiddenCollections, t = [.../* @__PURE__ */ new Set([...this.collectionChoices, ...e])].sort((e, t) => e.localeCompare(t));
-		return v`<fieldset class="full" ?disabled=${this.savingCollections}>
+		return _`<fieldset class="full" ?disabled=${this.savingCollections}>
       <legend>
         Hidden collection names
-        ${W("Hidden collection names", "Selected names are hidden from Library labels, filters, and collection management. Movies remain visible and source collections still determine status. Save visibility to apply changes; this does not modify device collections.")}
+        ${U("Hidden collection names", "Selected names are hidden from Library labels, filters, and collection management. Movies remain visible and source collections still determine status. Save visibility to apply changes; this does not modify device collections.")}
       </legend>
-      ${this.sharedError ? v`<p class="error" role="alert">${this.sharedError} Save could not be confirmed. Retry Save visibility or reload settings to inspect the saved values.</p>` : x}
+      ${this.sharedError ? _`<p class="error" role="alert">${this.sharedError} Save could not be confirmed. Retry Save visibility or reload settings to inspect the saved values.</p>` : b}
       <div class="facet-options">
-        ${t.map((t) => v`<label class="check"
+        ${t.map((t) => _`<label class="check"
               ><input
                 name="library_excluded_collections"
                 type="checkbox"
@@ -18467,12 +18791,12 @@ var Da = {
                 @change=${(n) => {
 			this.hiddenCollections = n.target.checked ? [...e, t] : e.filter((e) => e !== t), this.requestUpdate();
 		}}
-              />${er(t)}</label
+              />${sr(t)}</label
             >`)}
       </div>
       <div class="actions field-actions">
         <div class="setting-field">
-          ${G("custom_collection", "Custom collection name", "Hide a collection name that is not in the current list, including one you may sync later. Enter the source collection's name and choose Add hidden name. You can hide up to 200 names.")}<input
+          ${W("custom_collection", "Custom collection name", "Hide a collection name that is not in the current list, including one you may sync later. Enter the source collection's name and choose Add hidden name. You can hide up to 200 names.")}<input
             name="custom_collection"
             id="custom_collection"
             aria-describedby="custom_collection-hint"
@@ -18525,8 +18849,8 @@ var Da = {
 	}
 };
 // src/ui/database.styles.ts
-customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", Oa), C();
-var ka = l`
+customElements.get("kaleidescape-settings") || customElements.define("kaleidescape-settings", Na), C();
+var Pa = l`
   .database {
     overflow: visible;
     margin-top: 24px;
@@ -18732,7 +19056,7 @@ var ka = l`
       box-shadow: -8px 0 8px var(--surface);
     }
   }
-`, Aa = {
+`, Fa = {
 	viewings: "Journal viewing records, including watched time, status, and notes.",
 	sessions: "Individual playback sessions linked to Journal viewings, used to track pauses and resumes.",
 	library: "Cached movie versions and metadata synchronized from the Kaleidescape server.",
@@ -18760,7 +19084,7 @@ var ka = l`
 	purchase_identity_barriers: "Reserved purchase identities that guard against replay and duplicate imports."
 };
 C(), A();
-var ja = class extends S {
+var Ia = class extends S {
 	constructor(...e) {
 		super(...e), this.table = "viewings", this.value = "", this.fields = [], this.operators = [], this.disabled = !1, this.open = !1, this.active = 0, this.cursor = 0, this.message = "", this.invalid = !1, this.generation = 0;
 	}
@@ -18969,7 +19293,7 @@ var ja = class extends S {
 	}
 	render() {
 		let { options: e } = this.completion();
-		return v`<div class="search">
+		return _`<div class="search">
         <label for="database-query">Search rows / conditions</label>
         <div class="control-row">
           <div class="query-input">
@@ -18980,7 +19304,7 @@ var ja = class extends S {
               aria-autocomplete="list"
               aria-expanded=${this.open && !!e.length}
               aria-controls="query-suggestions"
-              aria-activedescendant=${this.open && e.length ? `query-option-${this.active}` : x}
+              aria-activedescendant=${this.open && e.length ? `query-option-${this.active}` : b}
               aria-invalid=${this.invalid}
               aria-describedby=${this.message ? "query-result query-help" : "query-help"}
               maxlength="2000"
@@ -19006,13 +19330,13 @@ var ja = class extends S {
 				composed: !0
 			})), this.requestUpdate());
 		}}
-            />${this.value ? v`<button class="query-clear" type="button" aria-label="Clear database search" title="Clear search" ?disabled=${this.disabled} @click=${this.clearQuery}>×</button>` : x}
+            />${this.value ? _`<button class="query-clear" type="button" aria-label="Clear database search" title="Clear search" ?disabled=${this.disabled} @click=${this.clearQuery}>×</button>` : b}
           </div>
           <slot name="actions"></slot>
         </div>
-        ${this.open && e.length ? v`<div class="suggestions" id="query-suggestions" role="listbox">${e.map((e, t) => v`<button type="button" role="option" id=${`query-option-${t}`} aria-selected=${this.active === t} tabindex="-1" @pointerdown=${(e) => e.preventDefault()} @click=${() => this.choose(e)}>${e}</button>`)}</div>` : x}
+        ${this.open && e.length ? _`<div class="suggestions" id="query-suggestions" role="listbox">${e.map((e, t) => _`<button type="button" role="option" id=${`query-option-${t}`} aria-selected=${this.active === t} tabindex="-1" @pointerdown=${(e) => e.preventDefault()} @click=${() => this.choose(e)}>${e}</button>`)}</div>` : b}
       </div>
-      ${this.message ? v`<small id="query-result" class=${this.invalid ? "error" : ""} role="status">${this.message}</small>` : x}
+      ${this.message ? _`<small id="query-result" class=${this.invalid ? "error" : ""} role="status">${this.message}</small>` : b}
       <details class="query-guide">
         <summary>Query help</summary>
         <small id="query-help"
@@ -19024,8 +19348,8 @@ var ja = class extends S {
       </details>`;
 	}
 };
-customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", ja), C(), A(), V(), P();
-var Ma = class extends S {
+customElements.get("kaleidescape-database-search") || customElements.define("kaleidescape-database-search", Ia), C(), A(), V(), P();
+var La = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.bound = "", this.request = 0, this.query = "", this.items = [], this.active = -1, this.loading = !1, this.more = !1, this.error = "";
 	}
@@ -19145,7 +19469,7 @@ var Ma = class extends S {
 		this.disabled || (e.key === "Escape" && (e.preventDefault(), e.stopPropagation(), this.cancel()), ["ArrowDown", "ArrowUp"].includes(e.key) && this.items.length && (e.preventDefault(), this.active = this.active < 0 ? e.key === "ArrowDown" ? 0 : this.items.length - 1 : (this.active + (e.key === "ArrowDown" ? 1 : -1) + this.items.length) % this.items.length, this.requestUpdate(), this.updateComplete.then(() => this.renderRoot.querySelector(`#purchase-match-${this.active}`)?.scrollIntoView?.({ block: "nearest" }))), e.key === "Enter" && this.active >= 0 && (e.preventDefault(), this.choose(this.items[this.active].id)));
 	}
 	render() {
-		return v`<h3>Match purchase: ${this.row?.title}</h3>
+		return _`<h3>Match purchase: ${this.row?.title}</h3>
       <label
         >Find a Library movie<input
           type="search"
@@ -19153,7 +19477,7 @@ var Ma = class extends S {
           aria-autocomplete="list"
           aria-controls="purchase-matches"
           aria-expanded=${!!this.items.length}
-          aria-activedescendant=${this.active >= 0 ? `purchase-match-${this.active}` : x}
+          aria-activedescendant=${this.active >= 0 ? `purchase-match-${this.active}` : b}
           maxlength="100"
           .value=${this.query}
           ?disabled=${this.disabled}
@@ -19162,18 +19486,18 @@ var Ma = class extends S {
 			this.query = e.target.value, clearTimeout(this.timer), this.request++, this.items = [], this.active = -1, this.more = !1, this.error = "", this.timer = setTimeout(() => void this.search(), 250), this.requestUpdate();
 		}}
       /></label>
-      ${this.loading ? v`<p role="status">Searching cached Library…</p>` : x}
-      ${this.error ? v`<p class="error" role="alert">${this.error}</p>
+      ${this.loading ? _`<p role="status">Searching cached Library…</p>` : b}
+      ${this.error ? _`<p class="error" role="alert">${this.error}</p>
               <button ?disabled=${this.disabled} @click=${() => this.search()}>
                 Retry search
-              </button>` : x}
+              </button>` : b}
       <ul
         id="purchase-matches"
         class="suggestions"
         role="listbox"
         aria-label="Matching Library movies"
       >
-        ${this.items.map((e, t) => v`<li role="presentation">
+        ${this.items.map((e, t) => _`<li role="presentation">
               <button
                 role="option"
                 id=${`purchase-match-${t}`}
@@ -19181,14 +19505,14 @@ var Ma = class extends S {
                 ?disabled=${this.disabled}
                 @click=${() => this.choose(e.id)}
               >
-                ${e.artwork_key ? v`<kaleidescape-library-cover
+                ${e.artwork_key ? _`<kaleidescape-library-cover
                         .client=${this.client}
                         .scope=${this.scope}
                         .queue=${this.queue}
                         .artworkKey=${e.artwork_key}
                         .title=${e.title}
                         aria-hidden="true"
-                      ></kaleidescape-library-cover>` : x}
+                      ></kaleidescape-library-cover>` : b}
                 <span
                   >${e.title} · ${e.year ?? "Year unknown"}<small
                     >${e.directors.join(", ") || "Director unknown"} ·
@@ -19199,8 +19523,8 @@ var Ma = class extends S {
               </button>
             </li>`)}
       </ul>
-      ${!this.loading && !this.error && !this.items.length ? v`<p class="muted">No matching titles. Try part of the Library title.</p>` : x}
-      ${this.more ? v`<p class="muted">Showing 20 movies. Refine the search for more specific results.</p>` : x}
+      ${!this.loading && !this.error && !this.items.length ? _`<p class="muted">No matching titles. Try part of the Library title.</p>` : b}
+      ${this.more ? _`<p class="muted">Showing 20 movies. Refine the search for more specific results.</p>` : b}
       <div class="actions">
         <button ?disabled=${this.disabled} @click=${this.cancel}>
           Cancel match</button
@@ -19210,8 +19534,8 @@ var Ma = class extends S {
       </div>`;
 	}
 };
-customElements.get("kaleidescape-import-matcher") || customElements.define("kaleidescape-import-matcher", Ma), V(), C(), A(), P(), z(), M();
-var Na = class extends S {
+customElements.get("kaleidescape-import-matcher") || customElements.define("kaleidescape-import-matcher", La), V(), C(), A(), P(), z(), M();
+var Ra = class extends S {
 	constructor(...e) {
 		super(...e), this.disabled = !1, this.bound = "", this.generation = 0, this.selected = /* @__PURE__ */ new Set(), this.query = "", this.changesOnly = !1, this.page = 0, this.pageSize = 100, this.working = !1, this.error = "", this.notice = "", this.dialog = null, this.purchaseReview = !1, this.covers = new j();
 	}
@@ -19464,9 +19788,9 @@ var Na = class extends S {
 		}
 	}
 	renderReview(e) {
-		if (!this.review) return x;
-		let t = this.review, n = this.query.trim().toLocaleLowerCase(), r = t.rows.filter((e) => (!this.changesOnly || e.needs_match || !e.needs_match && ["new", "merge"].includes(e.action)) && ta(`${e.title} ${e.detail ?? ""} ${e.table} ${Object.keys(e.changes).join(" ")}`, n)).sort((e, t) => Number(!!t.needs_match) - Number(!!e.needs_match)), i = Math.max(0, Math.ceil(r.length / this.pageSize) - 1), a = Math.min(this.page, i), o = r.slice(a * this.pageSize, (a + 1) * this.pageSize);
-		return v`${this.matching ? v`<kaleidescape-import-matcher
+		if (!this.review) return b;
+		let t = this.review, n = this.query.trim().toLocaleLowerCase(), r = t.rows.filter((e) => (!this.changesOnly || e.needs_match || !e.needs_match && ["new", "merge"].includes(e.action)) && aa(`${e.title} ${e.detail ?? ""} ${e.table} ${Object.keys(e.changes).join(" ")}`, n)).sort((e, t) => Number(!!t.needs_match) - Number(!!e.needs_match)), i = Math.max(0, Math.ceil(r.length / this.pageSize) - 1), a = Math.min(this.page, i), o = r.slice(a * this.pageSize, (a + 1) * this.pageSize);
+		return _`${this.matching ? _`<kaleidescape-import-matcher
               .client=${this.client}
               .scope=${this.scope}
               .review=${t}
@@ -19478,19 +19802,19 @@ var Na = class extends S {
 			this.matching = void 0, this.requestUpdate();
 		}}
               @access-denied=${() => this.fail({ code: "unauthorized" })}
-            ></kaleidescape-import-matcher>` : x}
+            ></kaleidescape-import-matcher>` : b}
       <p role="status">
         ${t.counts.new} new · ${t.counts.merge} mergeable ·
         ${t.counts.unchanged} unchanged · ${t.counts.skip} skipped.
         ${this.selected.size} selected.
-        ${t.rows.some((e) => e.needs_match) ? v`${B(t.rows.filter((e) => e.needs_match).length, "purchase requiring review")} shown first.` : x}
+        ${t.rows.some((e) => e.needs_match) ? _`${B(t.rows.filter((e) => e.needs_match).length, "purchase requiring review")} shown first.` : b}
       </p>
-      ${t.rows.some((e) => e.key.startsWith("purchases:")) ? v`<p class="muted">
+      ${t.rows.some((e) => e.key.startsWith("purchases:")) ? _`<p class="muted">
               Purchase records can be saved without a Library match and linked
               later. New means a new purchase record, not a new movie. Purchase
               titles preserve the store's wording; Library titles are kept
               unchanged.
-            </p>` : x}
+            </p>` : b}
       <div class="actions">
         <label
           >Search review<input
@@ -19546,7 +19870,7 @@ var Na = class extends S {
 				unchanged: "Purchase already imported",
 				skip: "Skip purchase"
 			}[t.action] : t.action;
-			return v`<tr>
+			return _`<tr>
                 <td>
                   <input
                     type="checkbox"
@@ -19560,7 +19884,7 @@ var Na = class extends S {
                 </td>
                 <td>
                   <div class="review-entry">
-                    ${t.artwork_key ? v`<kaleidescape-library-cover
+                    ${t.artwork_key ? _`<kaleidescape-library-cover
                             .client=${this.client}
                             .scope=${this.scope}
                             .queue=${this.covers}
@@ -19568,7 +19892,7 @@ var Na = class extends S {
                             .title=${t.title}
                             aria-hidden="true"
                             @access-denied=${() => this.fail({ code: "unauthorized" })}
-                          ></kaleidescape-library-cover>` : x}
+                          ></kaleidescape-library-cover>` : b}
                     <div>
                       ${t.title}<small class="muted" title=${t.key}
                         >${t.detail}</small
@@ -19582,8 +19906,8 @@ var Na = class extends S {
                 <td>${r}</td>
                 <td>
                   ${t.reason || Object.keys(t.changes).join(", ") || "No missing data"}
-                  ${t.possible_duplicate ? v`<small class="warning">Compare the existing purchases before selecting this as a separate purchase.</small>` : t.needs_match && !t.repair_barrier ? v`<small class="warning">No Library match selected</small>` : x}
-                  ${t.duplicate_candidates?.length ? v`<details>
+                  ${t.possible_duplicate ? _`<small class="warning">Compare the existing purchases before selecting this as a separate purchase.</small>` : t.needs_match && !t.repair_barrier ? _`<small class="warning">No Library match selected</small>` : b}
+                  ${t.duplicate_candidates?.length ? _`<details>
                           <summary>
                             Possible existing purchases
                             (${t.duplicate_candidates.length}${t.duplicate_candidates_more ? "+" : ""})
@@ -19592,22 +19916,22 @@ var Na = class extends S {
                             Similar details are review hints, not proof of a
                             duplicate.
                           </p>
-                          ${t.duplicate_candidates.map((e) => v`<pre>${JSON.stringify(e, null, 2)}</pre>`)}
-                          ${t.duplicate_candidates_more ? v`<p>More possible matches exist. Inspect Purchases for the full list.</p>` : x}
-                        </details>` : x}
-                  ${t.can_match ? v`<button
+                          ${t.duplicate_candidates.map((e) => _`<pre>${JSON.stringify(e, null, 2)}</pre>`)}
+                          ${t.duplicate_candidates_more ? _`<p>More possible matches exist. Inspect Purchases for the full list.</p>` : b}
+                        </details>` : b}
+                  ${t.can_match ? _`<button
                           ?disabled=${e || !!this.matching || !!this.scope?.tracking_enabled && !this.purchaseReview}
                           @click=${() => this.openMatch(t)}
                         >
                           Match title…
-                        </button>` : x}
-                  ${t.conflicts.length ? v`<small class="muted">Existing ${n ? "purchase " : ""}values kept: ${t.conflicts.join(", ")}</small>` : x}
-                  ${Object.keys(t.changes).length ? v`<details>
+                        </button>` : b}
+                  ${t.conflicts.length ? _`<small class="muted">Existing ${n ? "purchase " : ""}values kept: ${t.conflicts.join(", ")}</small>` : b}
+                  ${Object.keys(t.changes).length ? _`<details>
                           <summary>
                             ${n ? t.action === "new" ? "Purchase record to add" : "Purchase record changes" : "Changes"}
                           </summary>
                           <pre>${JSON.stringify(t.changes, null, 2)}</pre>
-                        </details>` : x}
+                        </details>` : b}
                 </td>
               </tr>`;
 		})}
@@ -19647,13 +19971,13 @@ var Na = class extends S {
 			25,
 			100,
 			500
-		].map((e) => v`<option value=${e}>${e}</option>`)}
+		].map((e) => _`<option value=${e}>${e}</option>`)}
           </select></label
         >
       </div>`;
 	}
 	renderImport(e) {
-		return this.purchaseReview ? v`
+		return this.purchaseReview ? _`
         <p>
           Reconcile purchase records that are not linked to a Library title.
           Automatically match unambiguous purchases or choose a Library match
@@ -19667,9 +19991,9 @@ var Na = class extends S {
             Auto-match purchases
           </button>
         </div>
-        ${this.notice ? v`<p role="status">${this.notice}</p>` : x}
+        ${this.notice ? _`<p role="status">${this.notice}</p>` : b}
         ${this.renderReview(e)}
-      ` : v`<p>
+      ` : _`<p>
         Add new IDs and fill missing data in existing viewings and Library
         versions. Populated values, manual corrections and deletion status are
         kept. Only known Library sources match. Newly imported versions stay
@@ -19681,7 +20005,7 @@ var Na = class extends S {
         review. Ambiguous names stay unlinked. Purchase rows start unchecked;
         select the purchases and links you approve.
       </p>
-      ${this.scope?.tracking_enabled && !this.purchaseReview ? v`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : x}
+      ${this.scope?.tracking_enabled && !this.purchaseReview ? _`<p class="warning">Disable automatic tracking in Settings before importing.</p>` : b}
       <label
         >JSON or SQLite file<input
           type="file"
@@ -19691,7 +20015,7 @@ var Na = class extends S {
 			this.file = e.target.files?.[0], this.review = void 0, this.matching = void 0, this.selected.clear(), this.error = this.notice = "", this.requestUpdate();
 		}}
       /></label>
-      ${this.file ? v`<p>${this.file.name} · ${(this.file.size / 1024).toFixed(1)} KiB</p>` : x}
+      ${this.file ? _`<p>${this.file.name} · ${(this.file.size / 1024).toFixed(1)} KiB</p>` : b}
       <div class="actions">
         <button
           ?disabled=${e || !this.file || !!this.scope?.tracking_enabled && !this.purchaseReview}
@@ -19701,7 +20025,7 @@ var Na = class extends S {
         </button>
       </div>
       ${this.renderReview(e)}
-      ${this.pending ? v`<div class="warning">
+      ${this.pending ? _`<div class="warning">
               ${this.working ? "Importing…" : "The import result is unconfirmed. Retry the same selection and request to confirm it."}
               <div class="actions">
                 <button ?disabled=${this.working} @click=${this.importData}>
@@ -19718,11 +20042,11 @@ var Na = class extends S {
                   Discard import retry & inspect
                 </button>
               </div>
-            </div>` : x}`;
+            </div>` : b}`;
 	}
 	render() {
 		let e = this.disabled || this.working || !!this.pending;
-		return v`<div class="actions" aria-label="Import and export">
+		return _`<div class="actions" aria-label="Import and export">
         <button
           data-transfer="import"
           ?disabled=${e}
@@ -19745,8 +20069,8 @@ var Na = class extends S {
           Export
         </button>
       </div>
-      ${!this.dialog && this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-      ${!this.dialog && this.notice ? v`<p class="notice" role="status">${this.notice}</p>` : x}
+      ${!this.dialog && this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+      ${!this.dialog && this.notice ? _`<p class="notice" role="status">${this.notice}</p>` : b}
       <dialog
         class="database-dialog"
         @click=${R}
@@ -19759,22 +20083,22 @@ var Na = class extends S {
           </h2>
           ${L((e) => this.closeDialog(e))}
         </div>
-        ${this.error && this.dialog ? v`<p class="error" role="alert">${this.error}</p>` : x}
-        ${this.dialog === "export" ? v`<p>
+        ${this.error && this.dialog ? _`<p class="error" role="alert">${this.error}</p>` : b}
+        ${this.dialog === "export" ? _`<p>
                 Exports include private history and deleted records. SQLite also
                 includes catalog, source metadata, purchase repair history and
                 replay barriers. JSON does not preserve repair history or replay
                 barriers. Use a SQLite backup for a full restore. Store
                 downloads securely.
-              </p> ` : this.dialog === "import" ? this.renderImport(e) : x}
-        ${this.dialog === "export" || this.dialog === "import" && this.review ? v`<div class="actions dialog-footer">
-                ${this.dialog === "export" ? v`<button ?disabled=${e} @click=${() => this.exportData("json")}>Export JSON</button><button class="primary" ?disabled=${e} @click=${() => this.exportData("sqlite")}>Export SQLite</button>` : v`<button class="primary" ?disabled=${e || !!this.matching || !this.selected.size} @click=${this.importData}>Apply ${B(this.selected.size, "selected change")}</button>`}
-              </div>` : x}
+              </p> ` : this.dialog === "import" ? this.renderImport(e) : b}
+        ${this.dialog === "export" || this.dialog === "import" && this.review ? _`<div class="actions dialog-footer">
+                ${this.dialog === "export" ? _`<button ?disabled=${e} @click=${() => this.exportData("json")}>Export JSON</button><button class="primary" ?disabled=${e} @click=${() => this.exportData("sqlite")}>Export SQLite</button>` : _`<button class="primary" ?disabled=${e || !!this.matching || !this.selected.size} @click=${this.importData}>Apply ${B(this.selected.size, "selected change")}</button>`}
+              </div>` : b}
       </dialog>`;
 	}
 };
-customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Na), C(), A(), P(), z();
-var Pa = [
+customElements.get("kaleidescape-transfers") || customElements.define("kaleidescape-transfers", Ra), C(), A(), P(), z();
+var za = [
 	["title", "Receipt title"],
 	["purchased_on", "Purchase date"],
 	["purchase_price", "Purchase price"],
@@ -19782,15 +20106,15 @@ var Pa = [
 	["order_id", "Transaction ID"],
 	["href", "Store link"]
 ];
-function Fa(e, t = "") {
-	return typeof e == "object" && e ? Object.fromEntries(Object.entries(e).flatMap(([e, n]) => Object.entries(Fa(n, t ? `${t}.${e}` : e)))) : t ? { [t]: e } : {};
+function Ba(e, t = "") {
+	return typeof e == "object" && e ? Object.fromEntries(Object.entries(e).flatMap(([e, n]) => Object.entries(Ba(n, t ? `${t}.${e}` : e)))) : t ? { [t]: e } : {};
 }
-function Ia(e) {
+function Va(e) {
 	return e === void 0 ? "—" : e === null ? "null" : typeof e == "string" ? e : JSON.stringify(e);
 }
-function La(e, t, n) {
-	let r = Fa(t), i = Fa(n), a = [.../* @__PURE__ */ new Set([...Object.keys(r), ...Object.keys(i)])];
-	return v`<h4>${e}</h4>
+function Ha(e, t, n) {
+	let r = Ba(t), i = Ba(n), a = [.../* @__PURE__ */ new Set([...Object.keys(r), ...Object.keys(i)])];
+	return _`<h4>${e}</h4>
     <div class="diff" role="table" aria-label=${e}>
       <div class="diff-row" role="row">
         <strong role="columnheader">Field</strong>
@@ -19798,8 +20122,8 @@ function La(e, t, n) {
         <strong role="columnheader">After</strong>
       </div>
       ${a.length ? a.map((e) => {
-		let t = JSON.stringify(r[e]) !== JSON.stringify(i[e]), n = Pa.find(([t]) => t === e)?.[1] ?? e;
-		return v`<div
+		let t = JSON.stringify(r[e]) !== JSON.stringify(i[e]), n = za.find(([t]) => t === e)?.[1] ?? e;
+		return _`<div
                 class=${t ? "diff-row changed" : "diff-row"}
                 role="row"
               >
@@ -19807,16 +20131,16 @@ function La(e, t, n) {
                   >${n}${t ? " (changed)" : ""}</span
                 >
                 <span class="before" role="cell"
-                  >${Ia(r[e])}</span
+                  >${Va(r[e])}</span
                 >
                 <span class="after" role="cell"
-                  >${Ia(i[e])}</span
+                  >${Va(i[e])}</span
                 >
               </div>`;
-	}) : v`<p>No values to compare.</p>`}
+	}) : _`<p>No values to compare.</p>`}
     </div>`;
 }
-var Ra = class extends S {
+var Ua = class extends S {
 	constructor(...e) {
 		super(...e), this.row = {}, this.token = "", this.reverse = !1, this.editOnly = !1, this.action = "correct", this.draft = {}, this.query = "", this.results = [], this.owner = null, this.ownerLabel = "", this.confirmed = !1, this.busy = !1, this.error = "", this.fieldErrors = {}, this.generation = 0, this.searchGeneration = 0, this.searching = !1, this.searched = !1;
 	}
@@ -19880,7 +20204,7 @@ var Ra = class extends S {
     `];
 	}
 	connectedCallback() {
-		super.connectedCallback(), this.draft = Object.fromEntries(Pa.map(([e]) => [e, String(this.row[e] ?? "")])), this.owner = typeof this.row.library_id == "string" ? this.row.library_id : null, this.ownerLabel = this.owner ? "Current Library entry" : "Unlinked";
+		super.connectedCallback(), this.draft = Object.fromEntries(za.map(([e]) => [e, String(this.row[e] ?? "")])), this.owner = typeof this.row.library_id == "string" ? this.row.library_id : null, this.ownerLabel = this.owner ? "Current Library entry" : "Unlinked";
 	}
 	firstUpdated() {
 		this.renderRoot.querySelector("dialog")?.showModal();
@@ -19926,7 +20250,7 @@ var Ra = class extends S {
 	}
 	changes() {
 		let e = {};
-		for (let [t] of Pa) {
+		for (let [t] of za) {
 			let n = this.draft[t] || null;
 			n !== (this.row[t] ?? null) && (e[t] = n);
 		}
@@ -19995,7 +20319,7 @@ var Ra = class extends S {
 		}
 	}
 	render() {
-		return v`
+		return _`
       <dialog
         @click=${R}
         @cancel=${this.close}
@@ -20011,11 +20335,11 @@ var Ra = class extends S {
           Review the invoice, its Library association and totals before applying
           a change. Similar purchases may be legitimate separate transactions.
         </p>
-        ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-        ${this.review ? v`
-                ${La("Purchase", this.review.before, this.review.after)}
-                ${La("Library association", this.review.before_library, this.review.after_library)}
-                ${La("Library totals", this.review.totals_change.map((e) => ({
+        ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+        ${this.review ? _`
+                ${Ha("Purchase", this.review.before, this.review.after)}
+                ${Ha("Library association", this.review.before_library, this.review.after_library)}
+                ${Ha("Library totals", this.review.totals_change.map((e) => ({
 			source_id: e.source_id,
 			totals: e.before
 		})), this.review.totals_change.map((e) => ({
@@ -20048,9 +20372,9 @@ var Ra = class extends S {
                     ${this.pending ? "Retry change" : "Apply reviewed change"}
                   </button>
                 </div>
-              ` : v`
-                ${this.reverse ? x : v`
-                        ${this.editOnly ? x : v`<label
+              ` : _`
+                ${this.reverse ? b : _`
+                        ${this.editOnly ? b : _`<label
                                 >Action<select
                                   .value=${this.action}
                                   ?disabled=${this.busy}
@@ -20064,21 +20388,21 @@ var Ra = class extends S {
                                   <option value="void">Void purchase</option>
                                 </select></label
                               >`}
-                        ${this.action === "correct" ? v`
+                        ${this.action === "correct" ? _`
                                 <div class="fields">
-                                  ${Pa.map(([e, t]) => v`
+                                  ${za.map(([e, t]) => _`
                                       <label
                                         >${t}<input
                                           name=${e}
                                           type=${e === "purchased_on" ? "date" : "text"}
                                           .value=${this.draft[e] ?? ""}
                                           aria-invalid=${this.fieldErrors[e] ? "true" : "false"}
-                                          aria-describedby=${this.fieldErrors[e] ? `error-${e}` : x}
+                                          aria-describedby=${this.fieldErrors[e] ? `error-${e}` : b}
                                           ?disabled=${this.busy}
                                           @input=${(t) => {
 			this.draft[e] = t.target.value, this.fieldErrors[e] && (delete this.fieldErrors[e], this.requestUpdate());
 		}}
-                                        />${this.fieldErrors[e] ? v`<span class="error" id=${`error-${e}`}>${this.fieldErrors[e]}</span>` : x}</label
+                                        />${this.fieldErrors[e] ? _`<span class="error" id=${`error-${e}`}>${this.fieldErrors[e]}</span>` : b}</label
                                       >
                                     `)}
                                 </div>
@@ -20098,8 +20422,8 @@ var Ra = class extends S {
                                     >Enter at least 3 characters to
                                     search.</small
                                   >
-                                  ${this.searching ? v`<small role="status">Searching Library…</small>` : x}
-                                  ${this.searched ? v`<label
+                                  ${this.searching ? _`<small role="status">Searching Library…</small>` : b}
+                                  ${this.searched ? _`<label
                                           >Matching Library movies
                                           <select
                                             ?disabled=${this.busy}
@@ -20112,9 +20436,9 @@ var Ra = class extends S {
                                             <option value="">
                                               ${this.results.length ? "Select a movie" : "No matching movies"}
                                             </option>
-                                            ${this.results.map((e) => v`<option value=${e.id}>${e.title} ${e.year ? `(${e.year})` : ""}</option>`)}
+                                            ${this.results.map((e) => _`<option value=${e.id}>${e.title} ${e.year ? `(${e.year})` : ""}</option>`)}
                                           </select>
-                                        </label>` : x}
+                                        </label>` : b}
                                   <button
                                     type="button"
                                     ?disabled=${this.busy || !this.owner}
@@ -20125,7 +20449,7 @@ var Ra = class extends S {
                                     Unlink purchase
                                   </button>
                                 </div>
-                              ` : v`<p class="warning">
+                              ` : _`<p class="warning">
                                 Voiding removes this invoice from active totals
                                 and prevents its identity from being imported
                                 again.
@@ -20143,8 +20467,8 @@ var Ra = class extends S {
     `;
 	}
 };
-customElements.get("kaleidescape-purchase-repair") || customElements.define("kaleidescape-purchase-repair", Ra), Gn(), V(), C(), _r(), A(), P(), yn(), Kn(), z(), M();
-var za = {
+customElements.get("kaleidescape-purchase-repair") || customElements.define("kaleidescape-purchase-repair", Ua), Kn(), V(), C(), wr(), A(), P(), bn(), $n(), z(), M();
+var Wa = {
 	viewings: "Viewings",
 	sessions: "Sessions",
 	library: "Library",
@@ -20175,26 +20499,26 @@ var za = {
 	"sessions",
 	"library",
 	"purchase_records"
-], Ba = 100, Va = 44, Ha = [
+], Ga = 100, Ka = 44, qa = [
 	["Library", (e) => e.startsWith("library_")],
 	["Purchases", (e) => e.startsWith("purchase_")],
 	["Calendar", (e) => e.startsWith("calendar_")],
 	["Activity and audits", (e) => e.endsWith("_audit") || e === "requests" || e === "playback_controls"],
 	["System", () => !0]
 ];
-function Ua(e) {
-	return Ha.find(([, t]) => t(e))[0];
+function Ja(e) {
+	return qa.find(([, t]) => t(e))[0];
 }
-var Wa = class extends S {
+var Ya = class extends S {
 	constructor() {
 		super(), this.bound = "", this.generation = 0, this.mutationEpoch = 0, this.request = 0, this.table = "viewings", this.filters = {
 			limit: 25,
 			query: "",
 			descending: !1
-		}, this.fitPage = !0, this.allMode = !1, this.allBatchSize = Ba, this.moreLoading = !1, this.moreError = "", this.detailLoading = !1, this.detailRequest = 0, this.referenceRequest = 0, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.listHeight = 440, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.repairing = !1, this.repairPending = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = Vi(), this.confirmed = !1, this.deleteWord = "", this.covers = new j(), this.scheduleFit = () => {
+		}, this.fitPage = !0, this.allMode = !1, this.allBatchSize = Ga, this.moreLoading = !1, this.moreError = "", this.detailLoading = !1, this.detailRequest = 0, this.referenceRequest = 0, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.listHeight = 440, this.showSystem = !1, this.sorts = {}, this.fuzzySearch = !0, this.ready = !1, this.preferenceError = "", this.loading = !1, this.saving = !1, this.transferBusy = !1, this.repairing = !1, this.repairPending = !1, this.error = "", this.notice = "", this.search = "", this.selected = /* @__PURE__ */ new Set(), this.operation = null, this.draft = {}, this.nulls = /* @__PURE__ */ new Set(), this.original = "", this.createDraft = Ji(), this.confirmed = !1, this.deleteWord = "", this.covers = new j(), this.scheduleFit = () => {
 			clearTimeout(this.fitTimer), this.fitPage && this.ready && this.page && !this.blocked && !this.operation && (this.fitTimer = setTimeout(() => this.resizePage(), 120));
-		}, Oi(this, () => this.scheduleFit()), Hn(this, () => {
-			if (!this.ready || this.preferences?.unsettled || this.moreLoading || this.detailLoading || this.allMode && (this.detail || this.selected.size > 0 || (this.page?.items.length ?? 0) > Ba) || this.blocked || this.operation || this.renderRoot.querySelector("dialog[open]")) return !1;
+		}, Fi(this, () => this.scheduleFit()), Un(this, () => {
+			if (!this.ready || this.preferences?.unsettled || this.moreLoading || this.detailLoading || this.allMode && (this.detail || this.selected.size > 0 || (this.page?.items.length ?? 0) > Ga) || this.blocked || this.operation || this.renderRoot.querySelector("dialog[open]")) return !1;
 			let e = this.detail && this.page ? {
 				row: this.detail,
 				index: this.page.offset + this.page.items.indexOf(this.detail),
@@ -20208,15 +20532,25 @@ var Wa = class extends S {
 	static {
 		this.properties = {
 			client: { attribute: !1 },
-			scope: { attribute: !1 }
+			scope: { attribute: !1 },
+			navigationState: { attribute: !1 }
 		};
 	}
 	static {
 		this.styles = [
 			N,
-			Wi,
-			ka
+			Zi,
+			Pa
 		];
+	}
+	snapshotNavigation() {
+		if (this.ready && this.page && this.scope) return {
+			entryId: this.scope.entry_id,
+			datasetId: this.scope.dataset_id,
+			table: this.table,
+			filters: { ...this.filters },
+			offset: this.allMode ? 0 : this.page.offset
+		};
 	}
 	willUpdate(e) {
 		if (!e.has("client") && !e.has("scope")) return;
@@ -20233,7 +20567,7 @@ var Wa = class extends S {
 		super.disconnectedCallback(), window.removeEventListener("resize", this.scheduleFit), window.visualViewport?.removeEventListener("resize", this.scheduleFit), this.fitObserver?.disconnect(), this.fitObserver = void 0, this.fitList = void 0, clearTimeout(this.fitTimer), this.clear(), this.boundClient = void 0, this.bound = "";
 	}
 	clear() {
-		this.covers.cache.dispose(), this.covers = new j(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.fuzzySearch = !0, this.ready = !1, this.page = void 0, this.table = "viewings", this.fitPage = !0, this.allMode = this.moreLoading = this.detailLoading = !1, this.allBatchSize = Ba, this.moreError = "", this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.filters = {
+		this.covers.cache.dispose(), this.covers = new j(), this.generation++, this.request++, this.preferences?.dispose(), this.preferences = void 0, this.fuzzySearch = !0, this.ready = !1, this.page = void 0, this.table = "viewings", this.fitPage = !0, this.allMode = this.moreLoading = this.detailLoading = !1, this.allBatchSize = Ga, this.moreError = "", this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.filters = {
 			limit: 25,
 			query: "",
 			descending: !1
@@ -20249,13 +20583,18 @@ var Wa = class extends S {
 		try {
 			let n = await this.preferences.load();
 			if (t !== this.generation) return;
-			if (this.fuzzySearch = this.scope?.ui_defaults?.fuzzy_search !== !1, this.fitPage = n.limit === "fit" || n.limit === void 0, this.allMode = n.limit === "all", this.filters.limit = this.allMode ? Ba : this.fitPage ? 25 : n.limit, this.showSystem = n.show_system, this.sorts = n.sorts ?? {}, this.table = String(n.table ?? "viewings"), !this.showSystem && !$.includes(this.table) && (this.table = "viewings"), this.filters = {
+			this.fuzzySearch = this.scope?.ui_defaults?.fuzzy_search !== !1, this.fitPage = n.limit === "fit" || n.limit === void 0, this.allMode = n.limit === "all", this.filters.limit = this.allMode ? Ga : this.fitPage ? 25 : n.limit, this.showSystem = n.show_system, this.sorts = n.sorts ?? {}, this.table = String(n.table ?? "viewings"), !this.showSystem && !$.includes(this.table) && (this.table = "viewings"), this.filters = {
 				...this.filters,
 				...this.sorts[this.table]
 			}, e && (this.table = e.table, this.showSystem ||= !$.includes(this.table), this.filters = {
 				...e.filters,
 				limit: this.filters.limit
-			}, this.search = this.filters.query), this.ready = !0, await this.load(e && !this.allMode ? Math.floor(e.index / this.filters.limit) * this.filters.limit : 0, e?.revision, this.allMode ? void 0 : e?.row), e && this.allMode && t === this.generation) {
+			}, this.search = this.filters.query);
+			let r = !e && this.navigationState?.entryId === this.scope?.entry_id && this.navigationState?.datasetId === this.scope?.dataset_id ? this.navigationState : void 0;
+			if (r && (this.showSystem || $.includes(r.table)) && (this.table = r.table, this.filters = {
+				...r.filters,
+				limit: this.filters.limit
+			}, this.search = this.filters.query), this.ready = !0, await this.load(e && !this.allMode ? Math.floor(e.index / this.filters.limit) * this.filters.limit : r && !this.allMode ? Math.floor(r.offset / this.filters.limit) * this.filters.limit : 0, e?.revision, this.allMode ? void 0 : e?.row), e && this.allMode && t === this.generation) {
 				for (; this.page && this.page.items.length <= e.index && this.page.has_more && !this.moreError && t === this.generation;) {
 					let e = this.page.items.length;
 					if (await this.loadMore(), !this.page || this.page.items.length <= e) break;
@@ -20264,7 +20603,7 @@ var Wa = class extends S {
 				if (n && t === this.generation) {
 					await this.showDetail(n), await this.updateComplete;
 					let t = this.renderRoot.querySelector(".entry-list");
-					t && (t.scrollTop = e.index * Va, this.rowScrollTop = t.scrollTop, this.requestUpdate());
+					t && (t.scrollTop = e.index * Ka, this.rowScrollTop = t.scrollTop, this.requestUpdate());
 				}
 			}
 		} catch (e) {
@@ -20320,7 +20659,7 @@ var Wa = class extends S {
 	async load(e = 0, t, n) {
 		if (!this.client || !this.scope || !this.ready || this.pending) return;
 		let r = this.generation, i = ++this.request;
-		this.loading = !0, this.moreLoading = this.detailLoading = !1, this.moreError = "", this.allBatchSize = Ba, this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.page?.table !== this.table && (this.page = void 0), this.error = "", n || (this.detail = void 0), this.selected.clear(), this.requestUpdate();
+		this.loading = !0, this.moreLoading = this.detailLoading = !1, this.moreError = "", this.allBatchSize = Ga, this.detailRequest++, this.referenceRequest++, this.referenceLoading = !1, this.referenceError = "", this.referencedBy = [], this.rowScrollTop = 0, this.page?.table !== this.table && (this.page = void 0), this.error = "", n || (this.detail = void 0), this.selected.clear(), this.requestUpdate();
 		try {
 			let a = this.allMode ? await this.inspectAllChunk(e, t, r, i) : await this.client.inspect(this.scope, this.table, e, t, this.filters);
 			if (r !== this.generation || i !== this.request) return;
@@ -20366,7 +20705,7 @@ var Wa = class extends S {
 		await this.load(), r === this.generation && i === this.table && (this.page?.items[0] ? this.showDetail(this.page.items[0]) : this.notice = "The referenced entry no longer exists.", this.requestUpdate());
 	}
 	referenceText(e, t) {
-		return `${za[e] ?? e} - ${t.map((e) => String(e)).join(", ")}`;
+		return `${Wa[e] ?? e} - ${t.map((e) => String(e)).join(", ")}`;
 	}
 	async loadReferencedBy(e) {
 		if (!this.client || !this.scope || !this.page) return;
@@ -20447,7 +20786,7 @@ var Wa = class extends S {
 	scrollRows(e) {
 		let t = e.currentTarget;
 		if (this.rowScrollTop = t.scrollTop, this.listHeight = t.clientHeight || 440, this.allMode && t.scrollHeight - t.scrollTop - t.clientHeight < 300 && this.loadMore(), this.allMode) {
-			let e = this.renderRoot.activeElement?.closest("li[data-row-index]"), n = e ? Number(e.dataset.rowIndex) : -1, r = Math.max(0, Math.floor(this.rowScrollTop / Va) - 8), i = r + Math.ceil(this.listHeight / Va) + 16;
+			let e = this.renderRoot.activeElement?.closest("li[data-row-index]"), n = e ? Number(e.dataset.rowIndex) : -1, r = Math.max(0, Math.floor(this.rowScrollTop / Ka) - 8), i = r + Math.ceil(this.listHeight / Ka) + 16;
 			n >= 0 && (n < r || n >= i) && t.focus({ preventScroll: !0 }), this.requestUpdate();
 		}
 	}
@@ -20498,7 +20837,7 @@ var Wa = class extends S {
 		}
 	}
 	newEntry() {
-		this.blocked || this.table !== "viewings" || (this.operation = "new", this.createDraft = Vi(), this.original = JSON.stringify(this.createDraft), this.confirmed = !1, this.open("database-edit"));
+		this.blocked || this.table !== "viewings" || (this.operation = "new", this.createDraft = Ji(), this.original = JSON.stringify(this.createDraft), this.confirmed = !1, this.open("database-edit"));
 	}
 	deleteEntries() {
 		!this.blocked && this.page?.deletable && this.selectedRows().length && (this.operation = "delete", this.deleteWord = "", this.open("database-delete"));
@@ -20520,7 +20859,7 @@ var Wa = class extends S {
 		if (e?.preventDefault(), this.client && this.scope && !this.saving) try {
 			if (!this.pending) {
 				if (!this.operation || !this.page || this.operation === "delete" && this.deleteWord !== "DELETE" || this.operation !== "delete" && !this.confirmed) return;
-				if (this.operation === "new") this.pending = this.client.prepare(this.scope, "create", { data: Hi(this.createDraft) });
+				if (this.operation === "new") this.pending = this.client.prepare(this.scope, "create", { data: Yi(this.createDraft) });
 				else {
 					let e = {};
 					if (this.operation === "edit") {
@@ -20594,7 +20933,7 @@ var Wa = class extends S {
 		}, this.preferences?.set({ sorts: this.sorts })), this.load());
 	}
 	retry() {
-		return this.pending ? v`<div class="warning" role="alert">
+		return this.pending ? _`<div class="warning" role="alert">
           ${this.saving ? "Saving…" : "Result unconfirmed. Retry this exact request."}<button
             ?disabled=${this.saving}
             @click=${() => this.save()}
@@ -20612,10 +20951,10 @@ var Wa = class extends S {
           >
             Discard retry & reload
           </button>
-        </div>` : x;
+        </div>` : b;
 	}
 	options() {
-		return v`<dialog
+		return _`<dialog
       id="database-options"
       class="database-dialog"
       @click=${R}
@@ -20632,7 +20971,7 @@ var Wa = class extends S {
             .value=${this.allMode ? "all" : this.fitPage ? "fit" : String(this.filters.limit)}
             @change=${(e) => {
 			let t = e.target.value, n = this.allMode;
-			this.fitPage = t === "fit", this.allMode = t === "all", this.preferences?.set({ limit: this.fitPage ? "fit" : this.allMode ? "all" : Number(t) }), this.fitPage && n ? (this.filters.limit = 25, this.load()) : this.fitPage ? (this.scheduleFit(), this.requestUpdate()) : this.allMode ? (this.filters.limit = Ba, this.load()) : this.browse({ limit: Number(t) });
+			this.fitPage = t === "fit", this.allMode = t === "all", this.preferences?.set({ limit: this.fitPage ? "fit" : this.allMode ? "all" : Number(t) }), this.fitPage && n ? (this.filters.limit = 25, this.load()) : this.fitPage ? (this.scheduleFit(), this.requestUpdate()) : this.allMode ? (this.filters.limit = Ga, this.load()) : this.browse({ limit: Number(t) });
 		}}
           >
             <option value="fit">Fit to screen</option>
@@ -20642,7 +20981,7 @@ var Wa = class extends S {
 			25,
 			100,
 			500
-		].map((e) => v`<option value=${e}>${e}</option>`)}
+		].map((e) => _`<option value=${e}>${e}</option>`)}
           </select></label
         >
         <p class="muted">
@@ -20667,10 +21006,10 @@ var Wa = class extends S {
     </dialog>`;
 	}
 	render() {
-		if (!this.ready) return v`<p>${this.error || "Loading database preferences…"}</p>
-        ${this.error ? v`<button @click=${() => this.initialize()}>Retry loading database</button>` : x}`;
-		let e = Object.keys(this.page?.tables ?? za), t = $.filter((t) => e.includes(t)), n = e.filter((e) => !$.includes(e)), r = (this.page?.schema ?? []).some((e) => e.editable), i = this.page?.items ?? [], a = this.allMode ? Math.max(0, Math.floor(this.rowScrollTop / Va) - 8) : 0, o = this.allMode ? Math.min(i.length, a + Math.ceil(this.listHeight / Va) + 16) : i.length;
-		return v`<section class="card database" aria-label="Database management">
+		if (!this.ready) return _`<p>${this.error || "Loading database preferences…"}</p>
+        ${this.error ? _`<button @click=${() => this.initialize()}>Retry loading database</button>` : b}`;
+		let e = Object.keys(this.page?.tables ?? Wa), t = $.filter((t) => e.includes(t)), n = e.filter((e) => !$.includes(e)), r = (this.page?.schema ?? []).some((e) => e.editable), i = this.page?.items ?? [], a = this.allMode ? Math.max(0, Math.floor(this.rowScrollTop / Ka) - 8) : 0, o = this.allMode ? Math.min(i.length, a + Math.ceil(this.listHeight / Ka) + 16) : i.length;
+		return _`<section class="card database" aria-label="Database management">
       <div class="entries-header">
         <div class="database-toolbar">
           <div class="actions">
@@ -20719,7 +21058,7 @@ var Wa = class extends S {
           </button>
         </div>
         <div class="database-messages">
-          ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}${this.notice ? v`<p role="status">${this.notice}</p>` : x}${this.preferenceError ? v`<p class="warning">${this.preferenceError}<button @click=${() => this.preferences?.retry()}>Retry preferences</button></p>` : x}${this.retry()}
+          ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}${this.notice ? _`<p role="status">${this.notice}</p>` : b}${this.preferenceError ? _`<p class="warning">${this.preferenceError}<button @click=${() => this.preferences?.retry()}>Retry preferences</button></p>` : b}${this.retry()}
         </div>
         <div class="database-table-selector">
           <div
@@ -20731,9 +21070,9 @@ var Wa = class extends S {
 			r >= 0 && !this.blocked && (e.preventDefault(), this.changeTable(t[r]), this.updateComplete.then(() => this.renderRoot.querySelector(`#table-${this.table}`)?.focus()));
 		}}
           >
-            ${t.map((e) => v`<button role="tab" id=${`table-${e}`} aria-selected=${this.table === e} tabindex=${this.table === e || !$.includes(this.table) && e === t[0] ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(e)}>${za[e] ?? e}${this.page ? ` (${this.page.tables[e]})` : ""}</button>`)}
+            ${t.map((e) => _`<button role="tab" id=${`table-${e}`} aria-selected=${this.table === e} tabindex=${this.table === e || !$.includes(this.table) && e === t[0] ? 0 : -1} ?disabled=${this.blocked} @click=${() => this.changeTable(e)}>${Wa[e] ?? e}${this.page ? ` (${this.page.tables[e]})` : ""}</button>`)}
           </div>
-          ${this.showSystem ? v`<label class="system-table-picker"
+          ${this.showSystem ? _`<label class="system-table-picker"
                   >System tables<select
                     name="database_table"
                     .value=${$.includes(this.table) ? "" : this.table}
@@ -20744,14 +21083,14 @@ var Wa = class extends S {
 		}}
                   >
                     <option value="">Choose a table</option>
-                    ${Ha.map(([e]) => {
-			let t = n.filter((t) => Ua(t) === e);
-			return t.length ? v`<optgroup label=${e}>
-                            ${t.map((e) => v`<option value=${e}>${za[e] ?? e.replaceAll("_", " ")}${this.page ? ` (${this.page.tables[e]})` : ""}</option>`)}
-                          </optgroup>` : x;
+                    ${qa.map(([e]) => {
+			let t = n.filter((t) => Ja(t) === e);
+			return t.length ? _`<optgroup label=${e}>
+                            ${t.map((e) => _`<option value=${e}>${Wa[e] ?? e.replaceAll("_", " ")}${this.page ? ` (${this.page.tables[e]})` : ""}</option>`)}
+                          </optgroup>` : b;
 		})}
                   </select></label
-                >` : x}
+                >` : b}
         </div>
         <div class="database-filters filters">
           <kaleidescape-database-search
@@ -20781,7 +21120,7 @@ var Wa = class extends S {
               .value=${this.filters.sort ?? ""}
               @change=${(e) => this.browse({ sort: e.target.value })}
             >
-              ${this.page?.columns.map((e) => v`<option value=${e}>${e}</option>`)}
+              ${this.page?.columns.map((e) => _`<option value=${e}>${e}</option>`)}
             </select></label
           ><label
             >Order<button
@@ -20800,27 +21139,27 @@ var Wa = class extends S {
         >
           <div class="card-head">
             <span class="database-table-heading"
-              ><h2>${za[this.table] ?? this.table}</h2>
-              ${W(za[this.table] ?? this.table, Aa[this.table] ?? "Database table records.")}</span
+              ><h2>${Wa[this.table] ?? this.table}</h2>
+              ${U(Wa[this.table] ?? this.table, Fa[this.table] ?? "Database table records.")}</span
             >
           </div>
-          ${this.loading ? v`<p role="status">Loading database…</p>` : x}
+          ${this.loading ? _`<p role="status">Loading database…</p>` : b}
           <ul
             class="entry-list"
             tabindex="0"
             aria-label="Database rows"
             @scroll=${this.scrollRows}
           >
-            ${this.allMode && a ? v`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${a * Va}px`}></li>` : x}
-            ${hr(i.slice(a, o), (e, t) => `${this.request}:${a + t}`, (e, t) => {
+            ${this.allMode && a ? _`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${a * Ka}px`}></li>` : b}
+            ${Sr(i.slice(a, o), (e, t) => `${this.request}:${a + t}`, (e, t) => {
 			let n = a + t;
-			return v`<li
+			return _`<li
                   data-row-index=${n}
                   aria-posinset=${(this.page?.offset ?? 0) + n + 1}
                   aria-setsize=${this.page?.total ?? i.length}
                   class=${this.detail === e ? "selected" : ""}
                 >
-                  ${this.page?.deletable ? v`<input
+                  ${this.page?.deletable ? _`<input
                           type="checkbox"
                           aria-label=${`Select ${String(e.title ?? e.name ?? e.id ?? e.cache_key ?? e.owner ?? "row")}`}
                           .checked=${this.selected.has(n)}
@@ -20828,7 +21167,7 @@ var Wa = class extends S {
                           @change=${(e) => {
 				e.target.checked ? this.selected.add(n) : this.selected.delete(n), this.requestUpdate();
 			}}
-                        />` : x}<button
+                        />` : b}<button
                     class="link entry-name"
                     title=${String(e.title ?? e.name ?? e.id ?? "Database entry")}
                     ?disabled=${this.blocked}
@@ -20838,11 +21177,11 @@ var Wa = class extends S {
                   </button>
                 </li>`;
 		})}
-            ${this.allMode && o < i.length ? v`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${(i.length - o) * Va}px`}></li>` : x}
+            ${this.allMode && o < i.length ? _`<li class="entry-spacer" role="presentation" aria-hidden="true" style=${`height:${(i.length - o) * Ka}px`}></li>` : b}
           </ul>
-          ${this.allMode && this.moreLoading ? v`<p role="status">Loading more rows…</p>` : x}
-          ${this.allMode && this.moreError ? v`<p class="error" role="alert">${this.moreError} Refresh database to restart.</p>` : x}
-          ${this.allMode && this.page?.has_more && !this.moreError ? v`<button type="button" ?disabled=${this.moreLoading || this.blocked} @click=${this.loadMore}>Load more rows</button>` : x}
+          ${this.allMode && this.moreLoading ? _`<p role="status">Loading more rows…</p>` : b}
+          ${this.allMode && this.moreError ? _`<p class="error" role="alert">${this.moreError} Refresh database to restart.</p>` : b}
+          ${this.allMode && this.page?.has_more && !this.moreError ? _`<button type="button" ?disabled=${this.moreLoading || this.blocked} @click=${this.loadMore}>Load more rows</button>` : b}
         </section>
         <section
           class="database-detail entries-detail"
@@ -20851,25 +21190,25 @@ var Wa = class extends S {
         >
           <div class="card-head">
             <h2>Entry details</h2>
-            ${this.detail ? v`<button
+            ${this.detail ? _`<button
                     ?disabled=${this.blocked || !r && this.table !== "purchase_records"}
                     @click=${() => {
 			this.table === "purchase_records" ? (this.repairing = !0, this.requestUpdate()) : this.edit();
 		}}
                   >
                     Edit entry
-                  </button>` : x}
-            ${this.detail && this.table === "purchase_repair_events" ? v`<button
+                  </button>` : b}
+            ${this.detail && this.table === "purchase_repair_events" ? _`<button
                     ?disabled=${this.blocked}
                     @click=${() => {
 			this.repairing = !0, this.requestUpdate();
 		}}
                   >
                     Review reversal
-                  </button>` : x}
+                  </button>` : b}
           </div>
-          ${this.detailLoading ? v`<p role="status">Loading entry…</p>` : x}
-          ${this.detail ? v`${(this.table === "library_artwork" || this.table === "library") && (this.detail.cache_key || this.detail.artwork_key) ? v`<div class="database-preview">
+          ${this.detailLoading ? _`<p role="status">Loading entry…</p>` : b}
+          ${this.detail ? _`${(this.table === "library_artwork" || this.table === "library") && (this.detail.cache_key || this.detail.artwork_key) ? _`<div class="database-preview">
                             <kaleidescape-library-cover
                               .client=${this.client}
                               .scope=${this.scope}
@@ -20878,7 +21217,7 @@ var Wa = class extends S {
                               .title=${String(this.detail.title ?? "Database artwork")}
                             ></kaleidescape-library-cover>
                           </div>
-                          ${this.scope?.library_enabled ? x : v`<small>Enable Library to preview cached artwork.</small>`}` : x}
+                          ${this.scope?.library_enabled ? b : _`<small>Enable Library to preview cached artwork.</small>`}` : b}
                   <div class="database-relationships">
                     <section
                       class="database-references"
@@ -20887,8 +21226,8 @@ var Wa = class extends S {
                       <h3>References</h3>
                       ${(() => {
 			let e = (this.page?.references ?? []).filter((e) => Object.values(e.key).every((e) => this.detail?.[e] != null));
-			return e.length ? v`<ul>
-                              ${e.map((e) => v`<li>
+			return e.length ? _`<ul>
+                              ${e.map((e) => _`<li>
                                     <button
                                       class="link"
                                       ?disabled=${this.blocked}
@@ -20897,7 +21236,7 @@ var Wa = class extends S {
                                       ${this.referenceText(e.table, Object.values(e.key).map((e) => this.detail[e]))}
                                     </button>
                                   </li>`)}
-                            </ul>` : v`<small>None</small>`;
+                            </ul>` : _`<small>None</small>`;
 		})()}
                     </section>
                     <section
@@ -20905,29 +21244,29 @@ var Wa = class extends S {
                       aria-label="Referenced by"
                     >
                       <h3>Referenced by</h3>
-                      ${this.referenceLoading ? v`<small role="status">Loading…</small>` : this.referenceError ? v`<small class="error" role="alert"
+                      ${this.referenceLoading ? _`<small role="status">Loading…</small>` : this.referenceError ? _`<small class="error" role="alert"
                                   >${this.referenceError}</small
                                 ><button
                                   class="link"
                                   @click=${() => this.detail && this.loadReferencedBy(this.detail)}
                                 >
                                   Retry
-                                </button>` : this.referencedBy.length ? v`<ul>
-                                  ${this.referencedBy.map((e) => v`${e.items.map((t) => v`<li><button class="link" ?disabled=${this.blocked} @click=${() => this.followValues(e.table, t)}>${this.referenceText(e.table, Object.values(t))}</button></li>`)}${e.more ? v`<li>
+                                </button>` : this.referencedBy.length ? _`<ul>
+                                  ${this.referencedBy.map((e) => _`${e.items.map((t) => _`<li><button class="link" ?disabled=${this.blocked} @click=${() => this.followValues(e.table, t)}>${this.referenceText(e.table, Object.values(t))}</button></li>`)}${e.more ? _`<li>
                                               <button
                                                 class="link"
                                                 ?disabled=${this.blocked}
                                                 @click=${() => this.follow(e)}
                                               >
                                                 View all
-                                                ${za[e.table] ?? e.table}
+                                                ${Wa[e.table] ?? e.table}
                                               </button>
-                                            </li>` : x}`)}
-                                </ul>` : v`<small>None</small>`}
+                                            </li>` : b}`)}
+                                </ul>` : _`<small>None</small>`}
                     </section>
                   </div>
                   <pre>${JSON.stringify(this.detail, null, 2)}</pre>
-                  ${this.repairing && ["purchase_records", "purchase_repair_events"].includes(this.table) ? v`<kaleidescape-purchase-repair
+                  ${this.repairing && ["purchase_records", "purchase_repair_events"].includes(this.table) ? _`<kaleidescape-purchase-repair
                           .client=${this.client}
                           .scope=${this.scope}
                           .row=${this.detail}
@@ -20947,23 +21286,23 @@ var Wa = class extends S {
 			})), this.load();
 		}}
                           @access-denied=${() => this.fail({ code: "unauthorized" })}
-                        ></kaleidescape-purchase-repair>` : x}
-                  ${!r && this.table !== "purchase_records" ? v`<p class="muted">This table protects system integrity; stored values are read-only.</p>` : x}` : v`<p class="empty">
+                        ></kaleidescape-purchase-repair>` : b}
+                  ${!r && this.table !== "purchase_records" ? _`<p class="muted">This table protects system integrity; stored values are read-only.</p>` : b}` : _`<p class="empty">
                   Select an entry to inspect raw values.
                 </p>`}
         </section>
       </div>
       <footer class="entries-footer">
         <span
-          >${za[this.table] ?? this.table} · ${this.page?.total ?? 0} total
+          >${Wa[this.table] ?? this.table} · ${this.page?.total ?? 0} total
           · Revision ${this.page?.dataset_revision ?? 0}</span
         >
-        ${this.page ? v`<div class="pagination database-pagination">
+        ${this.page ? _`<div class="pagination database-pagination">
                 <small
                   >${this.allMode ? `${this.page.items.length} of ${this.page.total} rows loaded` : `${this.page.items.length === 1 ? "Row" : "Rows"} ${this.page.items.length ? this.page.offset + 1 : 0}–${this.page.offset + this.page.items.length} of ${this.page.total}`}
                   · ${this.selected.size} selected (maximum 100)</small
                 >
-                ${this.allMode ? x : v`<div class="actions">
+                ${this.allMode ? b : _`<div class="actions">
                         <button
                           ?disabled=${this.blocked || !this.page.offset}
                           @click=${() => this.load()}
@@ -20981,7 +21320,7 @@ var Wa = class extends S {
                           Next
                         </button>
                       </div>`}
-              </div>` : x}
+              </div>` : b}
       </footer>
       ${this.options()}
       <dialog
@@ -21002,10 +21341,10 @@ var Wa = class extends S {
           until closed. Session corrections do not recalculate viewing
           summaries.
         </p>
-        ${this.error ? v`<p class="error">${this.error}</p>` : x}${this.retry()}
+        ${this.error ? _`<p class="error">${this.error}</p>` : b}${this.retry()}
         <form @submit=${this.save}>
           <fieldset ?disabled=${this.saving || !!this.pending}>
-            ${this.operation === "new" ? v`<kaleidescape-manual-viewing
+            ${this.operation === "new" ? _`<kaleidescape-manual-viewing
                     .fuzzySearch=${this.fuzzySearch}
                     .client=${this.client}
                     .scope=${this.scope}
@@ -21015,9 +21354,9 @@ var Wa = class extends S {
 			this.createDraft = e.detail, this.requestUpdate();
 		}}
                     @access-denied=${() => this.fail(new D("unauthorized"))}
-                  ></kaleidescape-manual-viewing>` : (this.page?.schema ?? []).filter((e) => e.editable).map((e) => v`<div class="database-edit-field">
+                  ></kaleidescape-manual-viewing>` : (this.page?.schema ?? []).filter((e) => e.editable).map((e) => _`<div class="database-edit-field">
                           <label
-                            >${e.name}${e.type === "json" || e.name === "notes" ? v`<textarea
+                            >${e.name}${e.type === "json" || e.name === "notes" ? _`<textarea
                                     name=${e.name}
                                     .value=${this.nulls.has(e.name) ? "" : this.draft[e.name] ?? ""}
                                     placeholder=${this.nulls.has(e.name) ? "NULL · type to set a value" : ""}
@@ -21027,7 +21366,7 @@ var Wa = class extends S {
 				[e.name]: t.target.value
 			};
 		}}
-                                  ></textarea>` : v`<input
+                                  ></textarea>` : _`<input
                                     name=${e.name}
                                     type=${e.type === "number" ? "number" : "text"}
                                     step="any"
@@ -21040,7 +21379,7 @@ var Wa = class extends S {
 			};
 		}}
                                   />`}</label
-                          >${e.nullable ? v`<label class="check"
+                          >${e.nullable ? _`<label class="check"
                                   ><input
                                     type="checkbox"
                                     aria-label=${`Set ${e.name} to NULL`}
@@ -21049,7 +21388,7 @@ var Wa = class extends S {
 			t.target.checked ? this.nulls.add(e.name) : this.nulls.delete(e.name), this.requestUpdate();
 		}}
                                   />NULL</label
-                                >` : x}
+                                >` : b}
                         </div>`)}<label class="check"
               ><input
                 name="confirm_edit"
@@ -21091,7 +21430,7 @@ var Wa = class extends S {
           sync may recreate cached library records. Existing exports and backups
           remain.
         </p>
-        ${this.error ? v`<p class="error">${this.error}</p>` : x}${this.retry()}<label
+        ${this.error ? _`<p class="error">${this.error}</p>` : b}${this.retry()}<label
           >Type DELETE to confirm<input
             name="delete_confirmation"
             .value=${this.deleteWord}
@@ -21114,9 +21453,9 @@ var Wa = class extends S {
 	}
 };
 // src/ui/view-mode.ts
-customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Wa), C();
-function Ga(e, t, n) {
-	return v`<button
+customElements.get("kaleidescape-database") || customElements.define("kaleidescape-database", Ya), C();
+function Xa(e, t, n) {
+	return _`<button
     type="button"
     class="view-mode-switch"
     role="switch"
@@ -21132,12 +21471,15 @@ function Ga(e, t, n) {
     ></span>
   </button>`;
 }
-M(), jr(), V(), C(), I(), A(), P(), z(), ai(), gi(), Rn(), Kn(), Gn();
-var Ka = class extends S {
+M(), Rr(), V(), C(), I(), A(), P(), z(), Qn(), fi(), Ci(), zn(), $n(), Kn();
+var Za = class extends S {
 	constructor() {
-		super(), this.narrow = !1, this.api = null, this.coverSession = new _t(), this.generation = 0, this.mutationEpoch = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...St }, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1, this.advancedView = !0, this.modeReady = !1, this.modeScope = "", this.modeError = "", this.controlLocked = !1, this.locationChanged = () => {
-			this.navigationReady && this.advancedView && this.info?.permissions.edit && this.info.library_enabled && this.activePage !== "library" && $r() && ei(void 0, !0) && this.switchPage("library");
-		}, Oi(this, () => this.requestUpdate()), Hn(this, () => {
+		super(), this.narrow = !1, this.api = null, this.coverSession = new _t(), this.navigationScroll = new Qi(this, () => `${this.hass?.user?.id ?? "preview"}:${this.info?.entry_id ?? ""}:${this.info?.dataset_id ?? ""}`), this.generation = 0, this.mutationEpoch = 0, this.listRequest = 0, this.detailRequest = 0, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...St }, this.journalReady = !1, this.sessions = null, this.sessionError = "", this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.nextCursor = null, this.history = [], this.page = 1, this.loading = !1, this.detailLoading = !1, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.error = "", this.lastError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = !1, this.maintenanceBusy = !1, this.advancedView = !0, this.modeReady = !1, this.modeScope = "", this.modeError = "", this.controlLocked = !1, this.locationChanged = (e) => {
+			if (e.type === "popstate" && this.navigationReady && this.advancedView && this.info?.permissions.edit) {
+				let e = qn(this.info.ui_defaults?.default_landing_page, !0, !!this.info.library_enabled);
+				e !== this.activePage && (this.switchPage(e, void 0, !0), this.activePage !== e && K(this.activePage));
+			} else this.navigationReady && this.advancedView && this.info?.permissions.edit && this.info.library_enabled && this.activePage !== "library" && oi() && si(void 0, !0) && this.switchPage("library");
+		}, Fi(this, () => this.requestUpdate()), Un(this, () => {
 			let e = this.renderRoot.querySelector("kaleidescape-reader");
 			return !this.info?.permissions.edit || !this.modeReady || this.loading || this.saving || this.pending || this.settingsBusy || this.maintenanceBusy || this.controlLocked || this.dirty() || this.hasOpenDialog() || this.modePreferences?.unsettled || !(e?.confirmNavigation() ?? !0) ? !1 : (this.modePreferences?.dispose(), this.modePreferences = void 0, this.modeReady = !1, this.refresh(), !0);
 		});
@@ -21152,14 +21494,14 @@ var Ka = class extends S {
 	static {
 		this.styles = [
 			N,
-			Wi,
+			Zi,
 			At
 		];
 	}
 	modeControl(e = !1) {
-		return v`<div class="mode-control" slot="view-mode">
-      ${Ga(this.advancedView, e, () => void this.changeMode())}
-      ${this.modeError ? v`<small role="alert">Mode preference did not save. <button @click=${() => this.modePreferences?.retry()}>Retry</button></small>` : x}
+		return _`<div class="mode-control" slot="view-mode">
+      ${Xa(this.advancedView, e, () => void this.changeMode())}
+      ${this.modeError ? _`<small role="alert">Mode preference did not save. <button @click=${() => this.modePreferences?.retry()}>Retry</button></small>` : b}
     </div>`;
 	}
 	hasOpenDialog(e = this.renderRoot, t = !1) {
@@ -21168,7 +21510,7 @@ var Ka = class extends S {
 	async changeMode() {
 		if (!this.info?.permissions.edit || !this.modeReady || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || this.controlLocked) return;
 		let e = this.renderRoot.querySelector("kaleidescape-reader"), t = !this.advancedView, n = !t && (["database", "settings"].includes(this.activePage) || this.hasOpenDialog(this.renderRoot, !0));
-		(this.advancedView ? !this.discard() : !(e?.confirmNavigation() ?? !0)) || (this.generation++, this.listRequest++, this.detailRequest++, this.closeEditor(), this.rows = [], this.selected = this.sessions = null, this.cursor = void 0, this.history = [], this.nextCursor = null, this.page = 1, this.journalReady = !1, this.error = this.notice = "", n && (this.activePage = qi(this.info.ui_defaults?.default_landing_page, !1, !!this.info.library_enabled, !1)), Ji(this.activePage), this.advancedView = t, this.modePreferences?.set({ advanced_view: t }), this.requestUpdate(), t && await this.loadList(), await this.updateComplete, this.renderRoot.querySelector(".view-mode-switch")?.focus());
+		(this.advancedView ? !this.discard() : !(e?.confirmNavigation() ?? !0)) || (this.generation++, this.listRequest++, this.detailRequest++, this.closeEditor(), this.rows = [], this.selected = this.sessions = null, this.cursor = void 0, this.history = [], this.nextCursor = null, this.page = 1, this.journalReady = !1, this.error = this.notice = "", n && (this.activePage = qn(this.info.ui_defaults?.default_landing_page, !1, !!this.info.library_enabled, !1)), K(this.activePage), this.advancedView = t, this.modePreferences?.set({ advanced_view: t }), this.requestUpdate(), t && await this.loadList(), await this.updateComplete, this.renderRoot.querySelector(".view-mode-switch")?.focus());
 	}
 	willUpdate(e) {
 		if (e.has("hass") || e.has("client")) {
@@ -21188,10 +21530,10 @@ var Ka = class extends S {
 		super.connectedCallback(), window.addEventListener("location-changed", this.locationChanged), window.addEventListener("popstate", this.locationChanged), this.requestUpdate("hass"), this.requestUpdate("client");
 	}
 	disconnectedCallback() {
-		super.disconnectedCallback(), window.removeEventListener("location-changed", this.locationChanged), window.removeEventListener("popstate", this.locationChanged), this.bind(null);
+		this.navigationScroll.stop(), super.disconnectedCallback(), window.removeEventListener("location-changed", this.locationChanged), window.removeEventListener("popstate", this.locationChanged), this.bind(null);
 	}
 	clearPrivate() {
-		this.coverSession.reset(), this.modePreferences?.dispose(), this.modePreferences = void 0, this.modeScope = this.modeError = "", this.modeReady = this.controlLocked = !1, this.advancedView = !0, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.generation++, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.sessions = null, this.pending = null, this.history = [], this.nextCursor = null, this.cursor = void 0, this.page = 1, this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.confirmDelete = !1, this.saving = !1, this.loading = !1, this.detailLoading = !1, this.sessionError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.navigationReady = !1, this.settingsBusy = this.maintenanceBusy = !1, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...St }, this.calendarStatus = void 0, this.journalMovie = void 0, this.libraryTitleId = void 0, this.libraryCriterion = void 0, this.journalReady = !1;
+		this.coverSession.reset(), this.modePreferences?.dispose(), this.modePreferences = void 0, this.modeScope = this.modeError = "", this.modeReady = this.controlLocked = !1, this.advancedView = !0, this.manual = null, this.manualInitial = "", this.sort = "completed_at", this.descending = !0, this.generation++, this.info = null, this.rows = [], this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.sessions = null, this.pending = null, this.history = [], this.nextCursor = null, this.cursor = void 0, this.page = 1, this.query = "", this.status = "", this.searchText = "", this.filterStatus = "", this.confirmDelete = !1, this.saving = !1, this.loading = !1, this.detailLoading = !1, this.sessionError = "", this.notice = "", this.playbackPlayer = "", this.activePage = "journal", this.databaseNavigation = void 0, this.navigationReady = !1, this.settingsBusy = this.maintenanceBusy = !1, this.fuzzySearch = !0, this.journalView = "list", this.calendarSize = 180, this.calendarFit = !1, this.calendarHoverPreview = !1, this.pageSize = 25, this.calendarTotals = { ...St }, this.calendarStatus = void 0, this.journalMovie = void 0, this.libraryTitleId = void 0, this.libraryCriterion = void 0, this.journalReady = !1;
 	}
 	bind(e) {
 		this.api !== e && (this.clearPrivate(), this.api = e, this.error = "", this.requestUpdate(), e && this.refresh());
@@ -21205,11 +21547,11 @@ var Ka = class extends S {
 	discard() {
 		return (!this.dirty() || window.confirm("Discard your unsaved changes?")) && (this.activePage !== "library" || (this.renderRoot.querySelector("kaleidescape-library")?.confirmNavigation() ?? !0)) && (this.activePage !== "database" || (this.renderRoot.querySelector("kaleidescape-database")?.confirmNavigation() ?? !0)) && (this.activePage !== "settings" || (this.renderRoot.querySelector("kaleidescape-settings")?.confirmNavigation() ?? !0));
 	}
-	async switchPage(e, t) {
-		e === "library" && !this.info?.library_enabled || e === this.activePage && !(e === "journal" && this.journalMovie) || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || this.controlLocked || !this.discard() || (this.closeEditor(), this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, e === "journal" && (this.journalMovie = t?.movie, this.query = this.searchText = "", this.status = this.filterStatus = ""), this.activePage = e, Ji(e), this.error = this.notice = "", this.requestUpdate(), e === "journal" && (this.page = 1, this.history = [], await this.loadList()));
+	async switchPage(e, t, n = !1) {
+		e === "library" && !this.info?.library_enabled || e === this.activePage && !(e === "journal" && this.journalMovie) || this.loading || this.saving || this.pending || this.maintenanceBusy || this.settingsBusy || this.controlLocked || !this.discard() || (this.navigationScroll.save(this.activePage), this.activePage === "database" && (this.databaseNavigation = this.renderRoot.querySelector("kaleidescape-database")?.snapshotNavigation()), this.closeEditor(), this.libraryTitleId = t?.libraryTitleId, this.libraryCriterion = t?.libraryCriterion, e === "journal" && (this.journalMovie = t?.movie, t?.movie && (this.query = this.searchText = "", this.status = this.filterStatus = "")), this.activePage = e, n || K(e, !0), this.error = this.notice = "", this.requestUpdate(), this.updateComplete.then(() => this.navigationScroll.restore(e)), e === "journal" && (t?.movie && (this.page = 1, this.history = [], this.cursor = void 0), await this.loadList(this.cursor)));
 	}
 	pageKey(e) {
-		let t = Gi.filter((e) => e.id !== "library" || this.info?.library_enabled), n = t.findIndex((e) => e.id === this.activePage), r = e.key === "ArrowRight" ? (n + 1) % t.length : e.key === "ArrowLeft" ? (n + t.length - 1) % t.length : e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : -1;
+		let t = Xn.filter((e) => e.id !== "library" || this.info?.library_enabled), n = t.findIndex((e) => e.id === this.activePage), r = e.key === "ArrowRight" ? (n + 1) % t.length : e.key === "ArrowLeft" ? (n + t.length - 1) % t.length : e.key === "Home" ? 0 : e.key === "End" ? t.length - 1 : -1;
 		r < 0 || (e.preventDefault(), this.switchPage(t[r].id).then(() => this.updateComplete).then(() => this.renderRoot.querySelector(`#page-${this.activePage}`)?.focus()));
 	}
 	async refresh(e = !1) {
@@ -21236,7 +21578,7 @@ var Ka = class extends S {
 				if (n !== this.generation) return;
 				this.advancedView = r.advanced_view === !0, this.modeReady = !0;
 			}
-			this.navigationReady || (this.activePage = qi(this.info.ui_defaults?.default_landing_page, !0, !!this.info.library_enabled), this.navigationReady = !0, Ji(this.activePage)), this.activePage === "library" && !this.info.library_enabled && (this.activePage = "journal", Ji(this.activePage)), this.history = [], this.cursor = void 0, this.page = 1, this.advancedView && await this.loadList();
+			this.navigationReady || (this.activePage = qn(this.info.ui_defaults?.default_landing_page, !0, !!this.info.library_enabled), this.navigationReady = !0, K(this.activePage)), this.activePage === "library" && !this.info.library_enabled && (this.activePage = "journal", K(this.activePage)), this.history = [], this.cursor = void 0, this.page = 1, this.advancedView && await this.loadList();
 		} catch (e) {
 			n === this.generation && this.fail(e);
 		} finally {
@@ -21302,7 +21644,7 @@ var Ka = class extends S {
 		this.timingAnchor = void 0, this.renderRoot.querySelectorAll("dialog").forEach((e) => e.close()), this.manual = null, this.manualInitial = "", this.detailRequest++, this.selected = null, this.editMovieId = null, this.editTitleTouched = !1, this.draft = null, this.initial = null, this.sessions = null, this.sessionError = "", this.confirmDelete = !1, this.detailLoading = !1;
 	}
 	newRecord() {
-		!this.pending && this.discard() && (this.closeEditor(), this.draft = Ii(), this.initial = { ...this.draft }, this.manual = Vi(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
+		!this.pending && this.discard() && (this.closeEditor(), this.draft = Ui(), this.initial = { ...this.draft }, this.manual = Ji(), this.manualInitial = JSON.stringify(this.manual), this.error = "", this.notice = "", this.requestUpdate(), this.updateComplete.then(async () => {
 			this.renderRoot.querySelector("#journal-editor")?.showModal();
 			let e = this.renderRoot.querySelector("kaleidescape-manual-viewing");
 			await e?.updateComplete;
@@ -21311,7 +21653,7 @@ var Ka = class extends S {
 		}));
 	}
 	input(e, t) {
-		this.draft && (this.draft = Li(this.draft, e, t.target.value, this.timingAnchor ?? this.draft), Number.isFinite(new Date(this.draft.started_at).getTime()) ? this.timingAnchor = {
+		this.draft && (this.draft = Wi(this.draft, e, t.target.value, this.timingAnchor ?? this.draft), Number.isFinite(new Date(this.draft.started_at).getTime()) ? this.timingAnchor = {
 			started_at: this.draft.started_at,
 			ended_at: this.draft.ended_at
 		} : e === "ended_at" && this.timingAnchor && (this.timingAnchor = {
@@ -21323,8 +21665,8 @@ var Ka = class extends S {
 		if (e.preventDefault(), this.api && this.info && this.draft && !this.pending && !this.saving && e.target.reportValidity()) {
 			if (!this.manual && this.editTitleTouched && !this.editMovieId) this.error = "Select a Library movie from the suggestions.", this.requestUpdate();
 			else try {
-				let e = this.manual ? Hi(this.manual) : {
-					...Ri(this.draft, this.selected ? this.initial : void 0),
+				let e = this.manual ? Yi(this.manual) : {
+					...Gi(this.draft, this.selected ? this.initial : void 0),
 					...this.editTitleTouched ? { library_title_id: this.editMovieId } : {}
 				};
 				if (this.manual || delete e.title, this.selected && !Object.keys(e).length) {
@@ -21403,9 +21745,9 @@ var Ka = class extends S {
 		}
 	}
 	renderEditor() {
-		return this.detailLoading ? v`<div class="empty" role="status">Loading entry…</div>` : this.draft ? v`<form class="editor" @submit=${this.save}>
+		return this.detailLoading ? _`<div class="empty" role="status">Loading entry…</div>` : this.draft ? _`<form class="editor" @submit=${this.save}>
       <fieldset ?disabled=${this.saving || !!this.pending}>
-        ${this.manual ? v`<kaleidescape-manual-viewing
+        ${this.manual ? _`<kaleidescape-manual-viewing
                 .client=${this.api}
                 .scope=${this.info}
                 .draft=${this.manual}
@@ -21415,7 +21757,7 @@ var Ka = class extends S {
 			this.manual = e.detail, this.requestUpdate();
 		}}
                 @access-denied=${() => this.fail(new D("unauthorized"))}
-              ></kaleidescape-manual-viewing>` : zi(this.draft, (e, t) => this.input(e, t), v`<kaleidescape-library-title-picker
+              ></kaleidescape-manual-viewing>` : Ki(this.draft, (e, t) => this.input(e, t), _`<kaleidescape-library-title-picker
                     .client=${this.api}
                     .scope=${this.info}
                     .initialTitle=${this.initial?.title ?? ""}
@@ -21436,16 +21778,16 @@ var Ka = class extends S {
                     watched minutes. Adjust those fields separately if
                     needed.</small
                   >
-                  ${this.info?.library_enabled ? x : v`<small>Enable Library to change the movie. Existing timing and notes can still be corrected.</small>`}`)}
-        ${this.selected?.origin === "observed" ? v`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : x}
+                  ${this.info?.library_enabled ? b : _`<small>Enable Library to change the movie. Existing timing and notes can still be corrected.</small>`}`)}
+        ${this.selected?.origin === "observed" ? _`<small>Only fields you change are marked as manual corrections. Session evidence is retained.</small>` : b}
         <div class="actions dialog-footer">
-          ${this.selected && !this.manual ? v`<button type="button" class="danger delete-viewing" @click=${this.openDelete}>Delete entry</button>` : x}
+          ${this.selected && !this.manual ? _`<button type="button" class="danger delete-viewing" @click=${this.openDelete}>Delete entry</button>` : b}
           <button type="submit" class="primary">
             ${this.saving ? "Saving…" : this.selected ? "Save changes" : "Add entry"}
           </button>
         </div>
       </fieldset>
-    </form>` : v`<div class="empty">
+    </form>` : _`<div class="empty">
         <strong>Select an entry</strong>
         <p>Review its details, make corrections, or add a manual viewing.</p>
       </div>`;
@@ -21461,7 +21803,7 @@ var Ka = class extends S {
 		await i, t.isConnected && n === this.generation && a === this.detailRequest && r === this.activePage && this.advancedView && this.info?.permissions.edit && this.selected?.id === e && !this.draft && this.editRecord();
 	}
 	editRecord() {
-		!this.selected || this.pending || this.saving || (this.draft = Ii(this.selected), this.timingAnchor = {
+		!this.selected || this.pending || this.saving || (this.draft = Ui(this.selected), this.timingAnchor = {
 			started_at: this.draft.started_at,
 			ended_at: this.draft.ended_at
 		}, this.editMovieId = null, this.editTitleTouched = !1, this.initial = { ...this.draft }, this.error = this.notice = "", this.requestUpdate(), this.updateComplete.then(() => this.renderRoot.querySelector("#journal-editor")?.showModal()));
@@ -21481,8 +21823,8 @@ var Ka = class extends S {
 		e?.preventDefault(), this.mutationEpoch++, this.saving = !1, this.pending = null, this.confirmDelete = !1, this.renderRoot.querySelector("#journal-delete")?.close(), this.requestUpdate();
 	}
 	renderEvidence() {
-		return v`
-      ${this.selected ? v`<details>
+		return _`
+      ${this.selected ? _`<details>
               <summary>Record details & sessions</summary>
               <div class="metadata">
                 Record ${this.selected.id}<br />Origin: ${this.selected.origin}
@@ -21490,33 +21832,33 @@ var Ka = class extends S {
                 ${this.date(this.selected.updated_at)}<br />Completion:
                 ${this.selected.completion_reason ?? "Not completed"}
               </div>
-              ${this.sessionError ? v`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? v` ${this.sessions.items.map((e) => v`<div class="session">${this.date(e.started_at)}<br />${(e.watched_seconds / 60).toFixed(2)} min watched · ${e.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${B(e.gap_count, "timing gap")}<br />${e.end_reason ?? "Open session"}</div>`)}
-                        ${this.sessions.has_more ? v`<small>Showing the latest 100 sessions.</small>` : x}` : v`<p class="muted">
+              ${this.sessionError ? _`<p>${this.sessionError}</p>` : this.sessions ? this.sessions.items.length ? _` ${this.sessions.items.map((e) => _`<div class="session">${this.date(e.started_at)}<br />${(e.watched_seconds / 60).toFixed(2)} min watched · ${e.credits_confirmed ? "Credits confirmed" : "Credits unconfirmed"} · ${B(e.gap_count, "timing gap")}<br />${e.end_reason ?? "Open session"}</div>`)}
+                        ${this.sessions.has_more ? _`<small>Showing the latest 100 sessions.</small>` : b}` : _`<p class="muted">
                           No recorded sessions for this entry.
-                        </p>` : v`<p class="muted">
+                        </p>` : _`<p class="muted">
                         Session details have not been loaded. Reopen the entry
                         to load them.
                       </p>`}
-            </details>` : x}
+            </details>` : b}
     `;
 	}
 	clearJournalSearch() {
 		this.query = this.searchText = "", this.page = 1, this.history = [], this.loadList(), this.requestUpdate();
 	}
 	renderJournal() {
-		let e = this.journalView === "calendar" && !this.query.trim(), t = window.innerWidth <= 700 ? Mi`dialog` : Mi`section`, n = this.loading || this.saving || !!this.pending, r = v`<span class="journal-system-details"
+		let e = this.journalView === "calendar" && !this.query.trim(), t = window.innerWidth <= 700 ? zi`dialog` : zi`section`, n = this.loading || this.saving || !!this.pending, r = _`<span class="journal-system-details"
       >${this.bytes(this.info?.database_bytes ?? 0)} /
       ${this.bytes(this.info?.database_limit_bytes ?? 0)} database · Recording:
       ${this.info?.tracking_enabled ? "Enabled" : "Manual only"} ·
       ${this.info?.backup_in_progress ? "Backing up" : "Storage ready"} · Schema
       ${this.info?.schema_version} · Revision ${this.info?.revision}</span
     >`;
-		return v`<section
+		return _`<section
       class=${`card journal${e ? " journal-calendar-mode" : ""}`}
       aria-label="Journal"
     >
       <div class="entries-header">
-        ${e ? x : v`<kaleidescape-journal-shortcuts
+        ${e ? b : _`<kaleidescape-journal-shortcuts
                 @journal-refresh=${() => this.refresh()}
                 .disabled=${n}
                 .allowAdd=${!0}
@@ -21527,8 +21869,8 @@ var Ka = class extends S {
                 @journal-clear-movie=${() => this.switchPage("journal")}
                 @journal-open-options=${() => this.renderRoot.querySelector("kaleidescape-journal-options")?.open()}
               ></kaleidescape-journal-shortcuts>`}
-        ${this.journalMovie ? v`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button ?disabled=${n} @click=${() => this.switchPage("journal")}>Show all viewings</button></p>` : x}
-        ${this.query.trim() ? v`<button type="button" class="journal-search-chip" aria-label=${`Clear search: ${this.query}`} ?disabled=${n} @click=${this.clearJournalSearch}><span>${this.query}</span><span aria-hidden="true">×</span></button>` : x}
+        ${this.journalMovie ? _`<p class="journal-movie-filter">Viewings for ${this.journalMovie.title} <button ?disabled=${n} @click=${() => this.switchPage("journal")}>Show all viewings</button></p>` : b}
+        ${this.query.trim() ? _`<button type="button" class="journal-search-chip" aria-label=${`Clear search: ${this.query}`} ?disabled=${n} @click=${this.clearJournalSearch}><span>${this.query}</span><span aria-hidden="true">×</span></button>` : b}
         <form
           class="filters journal-filters"
           @submit=${(e) => {
@@ -21546,11 +21888,11 @@ var Ka = class extends S {
                 @input=${(e) => {
 			this.searchText = e.target.value, !this.searchText && this.query && this.clearJournalSearch();
 		}}
-              />${this.query.trim() ? v`<button type="button" class="journal-clear-search" aria-label="Clear Journal search" title="Clear search" ?disabled=${n} @click=${this.clearJournalSearch}>×</button>` : x}</span
+              />${this.query.trim() ? _`<button type="button" class="journal-clear-search" aria-label="Clear Journal search" title="Clear search" ?disabled=${n} @click=${this.clearJournalSearch}>×</button>` : b}</span
             ></label
           >
           <div class="journal-filter-tools">
-            ${e ? x : v`<label
+            ${e ? b : _`<label
                     >Status<select
                       name="filter_status"
                       .value=${this.status}
@@ -21632,7 +21974,7 @@ var Ka = class extends S {
           </div>
         </form>
       </div>
-      ${e ? v`<kaleidescape-journal-calendar
+      ${e ? _`<kaleidescape-journal-calendar
               @calendar-status=${(e) => {
 			this.calendarStatus = e.detail, this.requestUpdate();
 		}}
@@ -21672,21 +22014,21 @@ var Ka = class extends S {
               >
                 ${F("options")}
               </button></kaleidescape-journal-calendar
-            >` : v`
+            >` : _`
               <div class="entries-layout">
                 <section class="entries-list" aria-label="Journal entries">
                   <div class="card-head">
                     <h2>Viewings (${this.info?.viewing_count ?? 0})</h2>
                   </div>
-                  ${this.loading ? v`<div class="empty" role="status">
+                  ${this.loading ? _`<div class="empty" role="status">
                           Loading viewings…
-                        </div>` : this.rows.length ? v`<ul
+                        </div>` : this.rows.length ? _`<ul
                             class="entry-list"
                             tabindex="0"
                             aria-label="Viewings"
                           >
                             ${this.rows.map((e) => Dt(e, this.selected?.id, (e) => void this.selectJournalEntry(e), this.saving || !!this.pending))}
-                          </ul>` : v`<div class="empty">
+                          </ul>` : _`<div class="empty">
                             <strong
                               >${this.query || this.status ? "No matching viewings" : "Your journal is empty"}</strong
                             >
@@ -21695,7 +22037,7 @@ var Ka = class extends S {
                             </p>
                           </div>`}
                 </section>
-                ${Pi`<${t}
+                ${Vi`<${t}
                   class="entries-detail journal-detail-dialog"
                   @click=${R}
                   aria-label="Viewing details"
@@ -21703,12 +22045,12 @@ var Ka = class extends S {
                 >
                   <div class="card-head">
                     <h2>Viewing details</h2>
-                    ${window.innerWidth <= 700 ? L(() => this.renderRoot.querySelector("dialog.journal-detail-dialog")?.close()) : x}
-                    ${this.selected ? v`<span class="desktop-detail-actions"><button ?disabled=${n} @click=${this.editRecord}>Edit viewing</button><button class="danger" ?disabled=${n} @click=${this.openDelete}>Delete entry</button></span>` : x}
+                    ${window.innerWidth <= 700 ? L(() => this.renderRoot.querySelector("dialog.journal-detail-dialog")?.close()) : b}
+                    ${this.selected ? _`<span class="desktop-detail-actions"><button ?disabled=${n} @click=${this.editRecord}>Edit viewing</button><button class="danger" ?disabled=${n} @click=${this.openDelete}>Delete entry</button></span>` : b}
                   </div>
-                  ${this.detailLoading ? v`<div class="empty" role="status">
+                  ${this.detailLoading ? _`<div class="empty" role="status">
                           Loading entry…
-                        </div>` : this.selected ? v`${Ot(this.selected, (e) => this.date(e), !n && this.linkedViewingId === this.selected.id ? () => this.renderRoot.querySelector("kaleidescape-viewing-library")?.openLibrary() : void 0)}
+                        </div>` : this.selected ? _`${Ot(this.selected, (e) => this.date(e), !n && this.linkedViewingId === this.selected.id ? () => this.renderRoot.querySelector("kaleidescape-viewing-library")?.openLibrary() : void 0)}
                             <div class="journal-detail-artwork-row">
                               <kaleidescape-viewing-library
                                 .client=${this.api}
@@ -21745,11 +22087,11 @@ var Ka = class extends S {
                                 </button>
                               </div>
                             </div>
-                            ${this.selected.notes ? v`<h3>Notes</h3>
+                            ${this.selected.notes ? _`<h3>Notes</h3>
                                     <p class="journal-notes">
                                       ${this.selected.notes}
-                                    </p>` : x}
-                            ${this.renderEvidence()}` : v`<div class="empty">
+                                    </p>` : b}
+                            ${this.renderEvidence()}` : _`<div class="empty">
                             <strong>Select an entry</strong>
                             <p>Review its details or add a manual viewing.</p>
                           </div>`}
@@ -21757,13 +22099,13 @@ var Ka = class extends S {
               </div>
             `}
       <footer class="entries-footer journal-status">
-        ${e ? v`${wt(this.info, this.calendarStatus, !0, this.calendarTotals)}${r}` : v`<span class="journal-full-total">
+        ${e ? _`${wt(this.info, this.calendarStatus, !0, this.calendarTotals)}${r}` : _`<span class="journal-full-total">
                   ${wt(this.info)} · ${r}</span
                 ><span class="journal-mobile-total"
                   >Total Viewings ${this.info?.viewing_count ?? 0}</span
                 >`}${e ? Et(this.calendarStatus, () => {
 			this.renderRoot.querySelector("kaleidescape-journal-calendar")?.refresh();
-		}) : x}
+		}) : b}
 
         <div class="pagination" ?hidden=${e}>
           <small
@@ -21805,7 +22147,7 @@ var Ka = class extends S {
             </button>
           </div>
         </div>
-        ${e && this.journalMovie ? v`<button class="journal-mobile-movie-clear" type="button" ?disabled=${n} @click=${() => this.switchPage("journal")}>Show all viewings</button>` : x}
+        ${e && this.journalMovie ? _`<button class="journal-mobile-movie-clear" type="button" ?disabled=${n} @click=${() => this.switchPage("journal")}>Show all viewings</button>` : b}
         ${Tt(this.searchText, n, (e) => {
 			this.searchText = e, !e && this.query && this.clearJournalSearch(), this.requestUpdate();
 		}, () => {
@@ -21815,7 +22157,7 @@ var Ka = class extends S {
     </section> `;
 	}
 	renderJournalDialogs() {
-		let e = this.pending && !this.saving ? v`<p class="warning">
+		let e = this.pending && !this.saving ? _`<p class="warning">
               The result is unconfirmed. Retry the same change before making
               another change.
             </p>
@@ -21824,8 +22166,8 @@ var Ka = class extends S {
               ><button @click=${this.inspectJournal}>
                 Discard retry & inspect journal
               </button>
-            </div>` : x;
-		return v`<dialog
+            </div>` : b;
+		return _`<dialog
         id="journal-editor"
         data-admin-dialog
         class="database-dialog journal-dialog"
@@ -21839,10 +22181,10 @@ var Ka = class extends S {
           </h2>
           ${L((e) => this.cancelEdit(e))}
         </div>
-        ${this.notice ? v`<p class="notice" role="status">${this.notice}</p>` : x}
-        ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}
-        ${this.lastError === "conflict" && this.selected ? v`<button @click=${this.reloadSelected}>Reload entry</button>` : x}
-        ${this.draft ? e : x}${this.draft ? this.renderEditor() : x}
+        ${this.notice ? _`<p class="notice" role="status">${this.notice}</p>` : b}
+        ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}
+        ${this.lastError === "conflict" && this.selected ? _`<button @click=${this.reloadSelected}>Reload entry</button>` : b}
+        ${this.draft ? e : b}${this.draft ? this.renderEditor() : b}
       </dialog>
       <dialog
         id="journal-delete"
@@ -21861,7 +22203,7 @@ var Ka = class extends S {
           Stored history and backup copies are retained. This does not
           permanently erase the data.
         </p>
-        ${this.error ? v`<p class="error" role="alert">${this.error}</p>` : x}${this.confirmDelete ? e : x}
+        ${this.error ? _`<p class="error" role="alert">${this.error}</p>` : b}${this.confirmDelete ? e : b}
         <div class="dialog-footer">
           <button
             class="danger"
@@ -21874,16 +22216,16 @@ var Ka = class extends S {
       </dialog>`;
 	}
 	render() {
-		if (this.hass?.user && !this.hass.user.is_admin || this.info && !this.info.permissions.edit) return v`<kaleidescape-reader
+		if (this.hass?.user && !this.hass.user.is_admin || this.info && !this.info.permissions.edit) return _`<kaleidescape-reader
         .hass=${this.hass}
         .client=${this.hass ? void 0 : this.client}
         .narrow=${this.narrow}
       ></kaleidescape-reader>`;
-		if (this.info?.permissions.edit && !this.modeReady) return v`<main>
+		if (this.info?.permissions.edit && !this.modeReady) return _`<main>
         <p role="status">${this.error || "Loading view preference…"}</p>
-        ${this.error ? v`<button @click=${() => this.refresh()}>Retry</button>` : x}
+        ${this.error ? _`<button @click=${() => this.refresh()}>Retry</button>` : b}
       </main>`;
-		if (this.info?.permissions.edit && !this.advancedView) return v`<kaleidescape-reader
+		if (this.info?.permissions.edit && !this.advancedView) return _`<kaleidescape-reader
         .hass=${this.hass}
         .client=${this.hass ? void 0 : this.client}
         .narrow=${this.narrow}
@@ -21900,39 +22242,39 @@ var Ka = class extends S {
         >${this.modeControl(this.controlLocked)}</kaleidescape-reader
       >`;
 		let e = this.loading || this.saving || !!this.pending || this.maintenanceBusy || this.settingsBusy || this.controlLocked;
-		return v`<main>
+		return _`<main>
       <header>
-        ${this.hass && this.narrow ? v`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", {
+        ${this.hass && this.narrow ? _`<button class="menu" aria-label="Open sidebar" @click=${() => this.dispatchEvent(new CustomEvent("hass-toggle-menu", {
 			bubbles: !0,
 			composed: !0
-		}))}>☰</button>` : x}
+		}))}>☰</button>` : b}
         <img
           class="companion-icon"
-          src=${Ln}
+          src=${Rn}
           alt=""
           aria-hidden="true"
         />
         <div class="grow">
           <h1>Kaleidescape Companion</h1>
           <p>
-            ${Gi.find((e) => e.id === this.activePage).description}
+            ${Xn.find((e) => e.id === this.activePage).description}
           </p>
         </div>
-        ${this.info?.permissions.edit ? this.modeControl(e) : x}
+        ${this.info?.permissions.edit ? this.modeControl(e) : b}
       </header>
-      ${this.info?.permissions.edit ? v`<div class="page-navigation">
+      ${this.info?.permissions.edit ? _`<div class="page-navigation">
               <div
                 class="page-tabs"
                 role="tablist"
                 aria-label="Companion pages"
                 @keydown=${(e) => this.pageKey(e)}
               >
-                ${Gi.map((t) => v`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : x} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
+                ${Xn.map((t) => _`<button id=${`page-${t.id}`} role="tab" aria-selected=${this.activePage === t.id} aria-controls="companion-page" tabindex=${this.activePage === t.id ? "0" : "-1"} ?disabled=${e || t.id === "library" && !this.info?.library_enabled} title=${t.id === "library" && !this.info?.library_enabled ? "Enable library sync in Settings" : b} @click=${() => this.switchPage(t.id)}>${t.label}</button>`)}
               </div>
-            </div>` : x}
-      ${this.error ? v`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? v` <button ?disabled=${e} @click=${this.reloadSelected}>Reload entry</button>` : x}</div>` : x}
-      ${this.notice ? v`<div class="notice" role="status">${this.notice}</div>` : x}
-      ${this.api ? this.info ? v`<section
+            </div>` : b}
+      ${this.error ? _`<div class="error" role="alert">${this.error}${this.lastError === "conflict" && this.selected ? _` <button ?disabled=${e} @click=${this.reloadSelected}>Reload entry</button>` : b}</div>` : b}
+      ${this.notice ? _`<div class="notice" role="status">${this.notice}</div>` : b}
+      ${this.api ? this.info ? _`<section
                 id="companion-page"
                 @edit-journal=${(e) => {
 			let t = e.composedPath()[0];
@@ -21947,7 +22289,7 @@ var Ka = class extends S {
                 role="tabpanel"
                 aria-labelledby=${`page-${this.activePage}`}
               >
-                ${this.activePage === "library" ? v`<kaleidescape-library
+                ${this.activePage === "library" ? _`<kaleidescape-library
                         .client=${this.api}
                         .scope=${this.info}
                         .advanced=${!0}
@@ -21960,47 +22302,49 @@ var Ka = class extends S {
                         @library-disabled=${() => {
 			this.activePage = "journal", this.refresh();
 		}}
-                      ></kaleidescape-library>` : this.activePage === "database" ? v`<kaleidescape-database
+                      ></kaleidescape-library>` : this.activePage === "database" ? _`<kaleidescape-database
                           .client=${this.api}
                           .scope=${this.info}
+                          .navigationState=${this.databaseNavigation}
                           @access-denied=${() => this.fail(new D("unauthorized"))}
                           @maintenance-busy=${(e) => {
 			this.maintenanceBusy !== e.detail && (this.maintenanceBusy = e.detail, this.requestUpdate());
 		}}
                           @database-changed=${() => this.refreshInfo()}
-                        ></kaleidescape-database>` : this.activePage === "settings" ? v`<kaleidescape-settings
+                        ></kaleidescape-database>` : this.activePage === "settings" ? _`<kaleidescape-settings
                             .client=${this.api}
                             .scope=${this.info}
+                            .navigationUser=${this.hass?.user?.id}
                             @access-denied=${() => this.fail(new D("unauthorized"))}
                             @settings-busy=${(e) => {
 			this.settingsBusy !== e.detail && (this.settingsBusy = e.detail, this.requestUpdate());
 		}}
                             @settings-saved=${() => {
-			this.activePage = "settings", Ji("settings"), this.notice = "Settings saved. Reloading the integration…";
+			this.activePage = "settings", K("settings"), this.notice = "Settings saved. Reloading the integration…";
 			let e = this.api;
-			this.refresh(!0).then(() => {
-				this.api === e && this.info && (this.notice = "Settings saved.", this.requestUpdate());
+			this.navigationScroll.save("settings"), this.refresh(!0).then(() => {
+				this.updateComplete.then(() => this.navigationScroll.restore("settings")), this.api === e && this.info && (this.notice = "Settings saved.", this.requestUpdate());
 			});
 		}}
-                          ></kaleidescape-settings>` : this.activePage === "now-playing" ? v`<kaleidescape-now-playing
+                          ></kaleidescape-settings>` : this.activePage === "now-playing" ? _`<kaleidescape-now-playing
                               .playerId=${this.playbackPlayer}
                               .client=${this.api}
                               .scope=${this.info}
                             ></kaleidescape-now-playing>` : this.renderJournal()}
-              </section>` : v`<div class="empty" role="status">
+              </section>` : _`<div class="empty" role="status">
                 <strong
                   >${this.loading ? "Connecting to the journal…" : "Journal unavailable"}</strong
-                >${this.loading ? x : v`<button @click=${() => this.refresh()}>Reload connection</button>`}
-              </div>` : v`<div class="empty">
+                >${this.loading ? b : _`<button @click=${() => this.refresh()}>Reload connection</button>`}
+              </div>` : _`<div class="empty">
               <strong>Connect through Home Assistant</strong>
               <p>
                 Open Kaleidescape Companion in HA with an administrator account,
                 or connect the local development preview.
               </p>
             </div>`}
-      ${this.info ? this.renderJournalDialogs() : x}
+      ${this.info ? this.renderJournalDialogs() : b}
     </main>`;
 	}
 };
-customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Ka);
-export { Ka as KaleidescapePanel };
+customElements.get("kaleidescape-panel") || customElements.define("kaleidescape-panel", Za);
+export { Za as KaleidescapePanel };

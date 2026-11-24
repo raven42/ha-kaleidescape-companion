@@ -88,6 +88,7 @@ def async_register_commands(hass: HomeAssistant) -> None:
             p.Optional("request_id", default=""): str,
         },
         "info": {},
+        "about/sensors": scoped,
         "journal/create": {**mutations, p.Required("data"): dict},
         "journal/get": {**scoped, p.Required("viewing_id"): str},
         "journal/calendar": {
@@ -488,6 +489,10 @@ async def async_handle(
             runtime = get_runtime(hass, msg["entry_id"], msg["dataset_id"])
             repository = runtime.repository
             match operation:
+                case "about/sensors":
+                    from .about_sensors import sensor_states
+
+                    result = sensor_states(hass, msg["entry_id"], msg["dataset_id"])
                 case "dashboard/preview":
                     from .test_dashboard import prepare
 

@@ -952,11 +952,24 @@ export type MetadataReview = Omit<MetadataRepairResult, "revision"> & {
   token: string;
 };
 
+export interface AboutSensorState {
+  entity_id: string | null;
+  state: string | null;
+  unit: string | null;
+  attributes: Record<string, unknown>;
+}
+
 export class JournalClient {
   constructor(private readonly transport: Transport) {}
 
   call<T>(message: ApiMessage): Promise<T> {
     return withRequestDeadline(this.transport.callWS<T>(message));
+  }
+  aboutSensors(scope: Scope): Promise<Record<string, AboutSensorState>> {
+    return this.call({
+      type: `${DOMAIN}/about/sensors`,
+      ...scopeFields(scope),
+    });
   }
   automationStatuses(scope: Scope): Promise<
     Record<

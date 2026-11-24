@@ -30,6 +30,7 @@ import { entryLayoutStyles } from "./entry-layout.styles";
 import { journalStyles, viewingDetails, viewingListRow } from "./journal-view";
 import { closeButton, dismissBackdrop } from "./dialog";
 import { landingPage, rememberPage, PAGES } from "./navigation";
+import { NavigationScroll } from "./navigation-scroll";
 import { isLibraryLocation, readLibraryFilters } from "../library/url-filters";
 import "../library/library";
 import "../playback/now-playing";
@@ -55,6 +56,11 @@ export class KaleidescapeReader extends LitElement {
   narrow = false;
   private api: JournalClient | null = null;
   private coverSession = new CoverSession();
+  private navigationScroll = new NavigationScroll(
+    this,
+    () =>
+      `${this.hass?.user?.id ?? "preview"}:${this.scope?.entry_id ?? ""}:${this.scope?.dataset_id ?? ""}`,
+  );
   private connection?: Hass["connection"];
   private userKey = "";
   private generation = 0;
@@ -91,7 +97,23 @@ export class KaleidescapeReader extends LitElement {
   private activePage: "now-playing" | "journal" | "library" = "journal";
   private navigationReady = false;
   private controlLocked = false;
-  private locationChanged = () => {
+  private locationChanged = (event: Event) => {
+    if (event.type === "popstate" && this.navigationReady && this.scope) {
+      const page = landingPage(
+        this.scope.ui_defaults?.default_landing_page,
+        false,
+        !!this.scope.library_enabled,
+      );
+      if (page !== this.activePage) {
+        this.selectPage(
+          page as "now-playing" | "journal" | "library",
+          undefined,
+          true,
+        );
+        if (this.activePage !== page) rememberPage(this.activePage);
+      }
+      return;
+    }
     if (
       this.navigationReady &&
       this.scope?.library_enabled &&
@@ -150,6 +172,7 @@ export class KaleidescapeReader extends LitElement {
     this.requestUpdate("client");
   }
   disconnectedCallback() {
+    this.navigationScroll.stop();
     super.disconnectedCallback();
     window.removeEventListener("location-changed", this.locationChanged);
     window.removeEventListener("popstate", this.locationChanged);
@@ -333,12 +356,14 @@ export class KaleidescapeReader extends LitElement {
       libraryTitleId?: string;
       libraryCriterion?: LibraryCriterion;
     },
+    fromHistory = false,
   ) {
     if (
       this.controlLocked ||
       (page === "library" && !this.scope?.library_enabled)
     )
       return;
+    this.navigationScroll.save(this.activePage);
     this.selected = null;
     this.detailLoading = false;
     this.detailRequest++;
@@ -347,14 +372,18 @@ export class KaleidescapeReader extends LitElement {
     this.activePage = page;
     if (page === "journal") {
       this.journalMovie = target?.movie;
-      this.query = this.searchText = this.status = this.filterStatus = "";
-      this.page = 1;
-      this.history = [];
-      void this.load();
+      if (target?.movie) {
+        this.query = this.searchText = this.status = this.filterStatus = "";
+        this.page = 1;
+        this.history = [];
+        this.cursor = undefined;
+      }
+      void this.load(this.cursor);
     }
-    rememberPage(page);
+    if (!fromHistory) rememberPage(page, true);
     this.announcePage();
     this.requestUpdate();
+    void this.updateComplete.then(() => this.navigationScroll.restore(page));
   }
   private tabKey(event: KeyboardEvent) {
     if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;

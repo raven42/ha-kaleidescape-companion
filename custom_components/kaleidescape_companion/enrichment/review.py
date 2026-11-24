@@ -146,7 +146,7 @@ class TitleReviews:
         )
         if current["snapshot"] != staged["snapshot"]:
             raise JournalError("refresh_required", "Movie changed; search again")
-        async with self.worker(actor, title) as client:
+        async with self.worker(actor, title, provider) as client:
             result = await client.providers.resolve(provider, reference(candidate))
         if len(json.dumps(result).encode()) > 128 * 1024:
             raise JournalError("metadata_limit", "Provider metadata is too large")
@@ -165,7 +165,7 @@ class TitleReviews:
             and provider == "tmdb"
             and self.parent.config.get("library_sync_artwork")
         ):
-            async with self.worker(actor, target["id"]) as client:
+            async with self.worker(actor, target["id"], provider) as client:
                 images = await client.providers.images(provider, metadata)
         choices = {
             f"{image['kind']}-{index}": image for index, image in enumerate(images)
@@ -310,7 +310,7 @@ class TitleReviews:
         if choices:
             if not self.parent.config.get("library_sync_artwork"):
                 raise invalid("Enable artwork sync first")
-            async with self.worker(actor, data["title_id"]) as client:
+            async with self.worker(actor, data["title_id"], "tmdb") as client:
                 for kind, choice in choices.items():
                     images[kind] = await client.providers.image("tmdb", choice)
         for token in [
@@ -377,7 +377,7 @@ class TitleReviews:
         return result
 
     @asynccontextmanager
-    async def worker(self, actor, title):
+    async def worker(self, actor, title, provider):
         from .sync import MetadataSync
 
         self.ready(actor)
@@ -429,7 +429,14 @@ class TitleReviews:
                 child.session = None
             self.jobs.pop(task, None)
             if completed or failed:
-                await self.parent.record_activity(failed)
+                await self.parent.record_activity(
+                    failed,
+                    {
+                        "operation": "review",
+                        "status": "failed" if failed else "completed",
+                        "providers": [provider],
+                    },
+                )
 
     def plan(self, actor, token):
         self.ready(actor)
@@ -486,7 +493,7 @@ class TitleReviews:
             staged, result = selected(self, actor, title, provider, search_id, choice)
             if target["snapshot"] != staged["snapshot"]:
                 raise JournalError("refresh_required", "Movie changed; search again")
-        async with self.worker(actor, title) as client:
+        async with self.worker(actor, title, provider) as client:
             if result is None:
                 try:
                     saved = target["matches"].get(provider)
@@ -562,7 +569,7 @@ class TitleReviews:
         image = plan["images"].get(choice)
         if image is None or not self.parent.config.get("library_sync_artwork"):
             raise JournalError("not_found", "Image is unavailable")
-        async with self.worker(actor, plan["target"]["id"]) as client:
+        async with self.worker(actor, plan["target"]["id"], plan["provider"]) as client:
             client.review_token = token
             body = await client.providers.image(plan["provider"], image, thumbnail=True)
         self.plan(actor, token)
@@ -605,7 +612,9 @@ class TitleReviews:
         if data["images"]:
             if not self.parent.config.get("library_sync_artwork"):
                 raise invalid("Enable artwork sync first")
-            async with self.worker(actor, plan["target"]["id"]) as client:
+            async with self.worker(
+                actor, plan["target"]["id"], plan["provider"]
+            ) as client:
                 client.review_token = data["plan_id"]
                 for kind, choice in data["images"].items():
                     image = plan["images"].get(choice)

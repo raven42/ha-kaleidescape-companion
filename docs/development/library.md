@@ -210,9 +210,10 @@ search. Repeated `library_collection`, `library_actor`, `library_director`,
 for older links. Repeated `library_system_filters` values select the advanced
 System Filters. System filters and the legacy purchase filter require an
 administrator. The URL contains the selected search and facet values; sharing it
-shares those values too. A `library_filters=1` marker represents an explicitly
-unfiltered view. Parameter values are bounded before use and backend
-authorization and filter validation still apply.
+shares those values too. A Library URL without filter parameters opens an
+unfiltered view; older `library_filters=1` links remain supported. Parameter
+values are bounded before use and backend authorization and filter validation
+still apply.
 
 The summary shows the union of visible collections/formats/content
 ratings/years, minimum–maximum known runtime, earliest detection and known
@@ -950,26 +951,31 @@ Requests start within 600 pixels of the viewport; one background worker also
 warms the rest of the current page. Visible requests take priority, with at most
 three concurrent requests and five-second network budgets. Selecting All warms
 all returned covers in the background, subject to cache limits. Warming stops on
-navigation or when the browser is hidden. Library Options saves a personal,
-per-display-profile retention mode:
+navigation or when the browser is hidden. Library Options saves one retention
+mode in browser local storage, shared by users and display widths in that
+browser. Other browsers choose independently. If storage is unavailable, the
+choice lasts only for the current panel session. Existing server-saved profile
+choices are removed on startup; browsers start with Balanced until a choice is
+saved:
 
 - **Balanced:** retain up to 4,096 covers and 512 MiB of compressed bytes in a
   least-recently-used in-memory cache, preferring offscreen entries for
   eviction.
-- **Keep for panel session:** retain every loaded cover in memory without an
-  eviction limit until the panel closes. Large libraries can consume substantial
-  memory; decoded images add to compressed-byte use.
+- **Keep for session:** retain every loaded cover in memory without an eviction
+  limit until the panel closes. Large libraries can consume substantial memory;
+  decoded images add to compressed-byte use.
 - **Keep across restarts:** retain loaded cover blobs in this browser's
   IndexedDB and reuse them after reopening the panel. In-memory objects remain
   bounded as in Balanced mode. Browser quota, private browsing, site-data
   deletion, or storage eviction can prevent or remove persistent storage;
   network loading remains the fallback. This mode needs a signed-in HA user.
 
-**Clear Library and cover cache** removes in-memory and browser-saved Library
-results and covers for the current user and Library dataset. Visible covers can
-reload after clearing. It does not remove the separate server artwork cache,
-which has its own configured storage limit and can evict covers before the
-browser fetches them.
+Changing retention modes does not erase previously saved data. **Clear Library
+and cover cache** removes in-memory and browser-saved Library results and covers
+for the current user and Library dataset. Visible covers can reload after
+clearing. It does not remove the separate server artwork cache, which has its
+own configured storage limit and can evict covers before the browser fetches
+them.
 
 Persistent entries are partitioned by HA user, integration entry and dataset,
 and keyed by content-hash artwork key. They remain on the browser after logout

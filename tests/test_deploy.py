@@ -632,7 +632,7 @@ assert not any(name == 'scripts' or name.startswith('scripts.') for name in sys.
 
         for name in tasks:
             dependencies(name)
-        for name in ("Setup", "Build", "Lint", "Format", "Test", "Check", "Package"):
+        for name in ("Build", "Post-build checks", "Package"):
             self.assertFalse(
                 any(item.startswith("Maintainer:") for item in dependencies(name))
             )
@@ -644,8 +644,8 @@ assert not any(name == 'scripts' or name.startswith('scripts.') for name in sys.
         self.assertEqual(
             composite["dependsOn"],
             [
-                "Build and check",
-                "Package",
+                "Build",
+                "Post-build checks",
                 "Maintainer: Deploy prepared artifact",
                 "Maintainer: Check configuration and restart",
             ],

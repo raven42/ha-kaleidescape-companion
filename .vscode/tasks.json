@@ -5,12 +5,6 @@
   },
   "tasks": [
     {
-      "label": "Setup",
-      "type": "process",
-      "command": "${workspaceFolder}/scripts/setup",
-      "problemMatcher": []
-    },
-    {
       "label": "Build",
       "type": "process",
       "command": "${workspaceFolder}/scripts/build",
@@ -18,127 +12,43 @@
       "group": {
         "kind": "build",
         "isDefault": true
-      }
-    },
-    {
-      "label": "Build and check",
-      "dependsOn": ["Build", "Post-build checks"],
-      "dependsOrder": "sequence",
-      "problemMatcher": []
+      },
+      "hide": true
     },
     {
       "label": "Post-build checks",
       "dependsOn": [
         "Post-build: Python tests",
         "Post-build: Frontend tests",
-        "Post-build: Reconstruct pyk",
-        "Post-build: Project checks",
-        "Post-build: Verify assets"
+        "Package"
       ],
       "dependsOrder": "parallel",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "hide": true
     },
     {
       "label": "Post-build: Python tests",
       "type": "process",
       "command": "${workspaceFolder}/scripts/test",
       "args": ["--python-only"],
-      "problemMatcher": []
+      "problemMatcher": [],
+      "hide": true
     },
     {
       "label": "Post-build: Frontend tests",
       "type": "process",
       "command": "${workspaceFolder}/scripts/test",
       "args": ["--frontend-only"],
-      "problemMatcher": []
-    },
-    {
-      "label": "Post-build: Reconstruct pyk",
-      "type": "process",
-      "command": "${workspaceFolder}/scripts/check-pyk",
-      "args": ["--reconstruct"],
-      "problemMatcher": []
-    },
-    {
-      "label": "Post-build: Project checks",
-      "type": "process",
-      "command": "${workspaceFolder}/scripts/check-project",
-      "problemMatcher": []
-    },
-    {
-      "label": "Post-build: Verify assets",
-      "type": "process",
-      "command": "npm",
-      "args": ["--prefix", "${workspaceFolder}/frontend", "run", "build:check"],
-      "problemMatcher": ["$tsc"]
-    },
-    {
-      "label": "Lint",
-      "type": "process",
-      "command": "${workspaceFolder}/scripts/lint",
-      "problemMatcher": []
-    },
-    {
-      "label": "Format",
-      "type": "process",
-      "command": "${workspaceFolder}/scripts/format",
-      "problemMatcher": []
-    },
-    {
-      "label": "Test",
-      "type": "process",
-      "command": "${workspaceFolder}/scripts/test",
       "problemMatcher": [],
-      "group": "test"
-    },
-    {
-      "label": "Check",
-      "type": "process",
-      "command": "${workspaceFolder}/scripts/check",
-      "problemMatcher": ["$tsc"],
-      "group": {
-        "kind": "test",
-        "isDefault": true
-      }
+      "hide": true
     },
     {
       "label": "Package",
       "type": "process",
       "command": "${workspaceFolder}/scripts/package",
       "problemMatcher": [],
-      "group": "build"
-    },
-    {
-      "label": "Frontend preview",
-      "type": "process",
-      "command": "${workspaceFolder}/scripts/preview",
-      "problemMatcher": [],
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "always"
-      },
-      "runOptions": {
-        "instanceLimit": 1
-      }
-    },
-    {
-      "label": "Local Home Assistant",
-      "type": "process",
-      "command": "${workspaceFolder}/scripts/ha",
-      "problemMatcher": [],
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "always"
-      },
-      "runOptions": {
-        "instanceLimit": 1
-      }
-    },
-    {
-      "label": "Dependency audit (network)",
-      "type": "process",
-      "command": "${workspaceFolder}/scripts/dependency-audit",
-      "problemMatcher": []
+      "group": "build",
+      "hide": true
     },
     {
       "label": "Maintainer: Deploy frontend",
@@ -150,21 +60,7 @@
       "problemMatcher": [],
       "presentation": {
         "panel": "dedicated",
-        "reveal": "always"
-      },
-      "runOptions": {
-        "instanceLimit": 1
-      }
-    },
-    {
-      "label": "Maintainer: Preview deployment",
-      "type": "process",
-      "command": "${workspaceFolder}/scripts/deploy",
-      "problemMatcher": [],
-      "args": ["plan"],
-      "presentation": {
-        "panel": "dedicated",
-        "reveal": "always"
+        "reveal": "silent"
       },
       "runOptions": {
         "instanceLimit": 1
@@ -177,11 +73,12 @@
       "problemMatcher": [],
       "presentation": {
         "panel": "dedicated",
-        "reveal": "always"
+        "reveal": "silent"
       },
       "runOptions": {
         "instanceLimit": 1
-      }
+      },
+      "hide": true
     },
     {
       "label": "Maintainer: Check configuration and restart",
@@ -190,17 +87,18 @@
       "problemMatcher": [],
       "presentation": {
         "panel": "dedicated",
-        "reveal": "always"
+        "reveal": "silent"
       },
       "runOptions": {
         "instanceLimit": 1
-      }
+      },
+      "hide": true
     },
     {
       "label": "Maintainer: Build, check, package, deploy and restart",
       "dependsOn": [
-        "Build and check",
-        "Package",
+        "Build",
+        "Post-build checks",
         "Maintainer: Deploy prepared artifact",
         "Maintainer: Check configuration and restart"
       ],

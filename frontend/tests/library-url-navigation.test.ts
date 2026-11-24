@@ -132,6 +132,15 @@ it.each(["kaleidescape-panel", "kaleidescape-reader"] as const)(
       }),
     );
     expect(library()).toBe(existing);
+    history.pushState(
+      null,
+      "",
+      "/kaleidescape-companion?companion_page=library",
+    );
+    window.dispatchEvent(new Event("location-changed"));
+    await vi.waitFor(() =>
+      expect(lastFilters(transport)).toMatchObject({ query: "", status: [] }),
+    );
     const requests = transport.calls.filter((call) =>
       call.type.endsWith("/library/list"),
     ).length;

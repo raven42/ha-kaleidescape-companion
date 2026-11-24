@@ -50,9 +50,25 @@ export function landingPage(
       ? fallback
       : "journal";
 }
-export function rememberPage(page: Page) {
+export function rememberPage(page: Page, push = false) {
   const url = new URL(location.href);
   url.searchParams.set("companion_page", page);
-  if (page !== "journal") url.searchParams.delete("companion_month");
-  history.replaceState(history.state, "", url);
+  if (push) history.pushState(history.state, "", url);
+  else history.replaceState(history.state, "", url);
+}
+
+/** Non-sensitive navigation state lasts for this browser tab, not the account. */
+export function readNavigationValue(key: string): string | null {
+  try {
+    return sessionStorage.getItem(`companion:navigation:${key}`);
+  } catch {
+    return null;
+  }
+}
+export function writeNavigationValue(key: string, value: string) {
+  try {
+    sessionStorage.setItem(`companion:navigation:${key}`, value);
+  } catch {
+    /* Storage is optional. */
+  }
 }
