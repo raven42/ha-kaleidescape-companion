@@ -20,25 +20,25 @@ Library sync or a completed viewing, inspect the related sensors below. Their
 refresh reads cached data, normally every 30 seconds while subscribed; it does
 not trigger a device scan or provider request.
 
-| Sensor name                  | Meaning                                                                                         |
-| ---------------------------- | ----------------------------------------------------------------------------------------------- |
-| Last watched movie           | Latest completed title; `movie` and `watched_at` retain the full title and UTC completion time. |
-| Movies watched last 7 days   | Number of completed viewings in the rolling seven-day window.                                   |
-| Movies watched last 30 days  | Number of completed viewings in the rolling 30-day window.                                      |
-| Movies watched last 365 days | Number of completed viewings in the rolling 365-day window.                                     |
-| Partially watched movies     | Number of unfinished partial viewings, without an age cutoff.                                   |
-| Total movies                 | Available movie groups from the selected Library source, grouping editions.                     |
-| Database size                | Main SQLite database size in MiB, excluding its sidecar files.                                  |
-| Last library sync            | Last committed catalog sync time, not proof that all detail/artwork work finished.              |
-| Artwork cache size           | Indexed cached artwork payload size in MiB.                                                     |
-| Watched movies               | Available movie groups in the source's Played collection.                                       |
-| Unwatched movies             | Available movie groups in the source's New collection.                                          |
-| Recently added movies        | Count in the most recent batch of newly discovered movie groups.                                |
-| Last scrape date             | Most recently finished enrichment attempt, including a failed attempt.                          |
-| Scraper conflicts            | Movie groups with unresolved enabled-provider matching conflicts.                               |
-| Missing metadata             | Movie groups missing expected saved data from enabled providers.                                |
-| Missing artwork              | Movie groups missing expected selected poster/backdrop cache data.                              |
-| Missing purchase information | Movie groups missing required date/paid/retail evidence, except those marked unavailable.       |
+| Sensor name                  | Meaning                                                                                              |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Last watched movie           | Latest completed title; `movie` and `watched_at` retain the full title and UTC completion time.      |
+| Movies watched last 7 days   | Number of completed viewings in the rolling seven-day window.                                        |
+| Movies watched last 30 days  | Number of completed viewings in the rolling 30-day window.                                           |
+| Movies watched last 365 days | Number of completed viewings in the rolling 365-day window.                                          |
+| Partially watched movies     | Number of unfinished partial viewings, without an age cutoff.                                        |
+| Total movies                 | Available movie groups from the selected Library source, grouping editions.                          |
+| Database size                | Main SQLite database size in MiB, excluding its sidecar files.                                       |
+| Last library sync            | Last committed catalog sync time, not proof that all detail/artwork work finished.                   |
+| Artwork cache size           | Indexed cached artwork payload size in MiB.                                                          |
+| Watched movies               | Available movie groups in the source's Played collection.                                            |
+| Unwatched movies             | Available movie groups in the source's New collection.                                               |
+| Recently added movies        | Count in the most recent batch of newly discovered movie groups.                                     |
+| Last scrape date             | Most recently finished enrichment attempt; attributes summarize providers, outcome and batch counts. |
+| Scraper conflicts            | Movie groups with unresolved enabled-provider matching conflicts.                                    |
+| Missing metadata             | Movie groups missing expected saved data from enabled providers.                                     |
+| Missing artwork              | Movie groups missing expected selected poster/backdrop cache data.                                   |
+| Missing purchase information | Movie groups missing required date/paid/retail evidence, except those marked unavailable.            |
 
 History counts are viewings, not distinct titles: a rewatch counts again.
 Windows are rolling UTC 24-hour periods, not calendar weeks/months. Deleted and

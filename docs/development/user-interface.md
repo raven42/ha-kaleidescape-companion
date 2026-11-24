@@ -48,7 +48,16 @@ keys and hints, then opens the category and focuses the matching control.
 | Calendar    | Publishing opt-in, destination, title/description templates, dedicated-calendar Full Sync acknowledgement/window and export                                     |
 | Automations | One installed/bundled blueprint inventory, installation, update review, change logs and HA setup guidance                                                       |
 | Maintenance | Configuration transfer, metadata repair, test-dashboard generation and reload                                                                                   |
-| About       | Companion/pyk/API/schema versions, Library and purchase summaries, documentation, release notes and support links                                               |
+| About       | Companion/pyk/API/schema versions, status, sensor states and attributes, Library and purchase summaries, documentation, release notes and support links         |
+
+Page and Settings category changes create browser history entries. Back and
+Forward restore accessible views and keep the existing unsaved-change
+safeguards. The URL retains shareable Library filters and the Journal month.
+Browser-tab session storage retains the selected Settings category, Library page
+and scroll positions for the current user and dataset; it does not store form
+drafts. The Database search/page and Journal search/page remain in memory while
+the panel is open. Dialogs and unsaved forms are not restored. Opening a
+different filter URL continues to select that URL's filters.
 
 Switching categories preserves drafts. A sticky save bar shows the number of
 changed native settings, with markers beside affected categories. Save is
@@ -133,15 +142,20 @@ choices have independent profile values. Shared fuzzy search is a native
 household setting; legacy personal search values are retained for compatibility
 but no longer determine behavior.
 
-| Area             | Stored choices                                                                                                                              |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| `interface`      | Administrator Basic/Advanced presentation                                                                                                   |
-| `library`        | List/covers, page size, badge style, cover/cast presentation, cache retention, sort/direction, column widths and administrator cost display |
-| `journal`        | List/calendar, day size and fit-to-screen                                                                                                   |
-| `database`       | Table, count mode, system-table visibility and per-table sort/order                                                                         |
-| `search`         | Legacy personal fuzzy-search values retained for compatibility; no longer used by the views                                                 |
-| `library_random` | One random seed shared across the user's display profiles                                                                                   |
-| Shared UI        | Administrator-maintained hidden collection names and initial inherited defaults                                                             |
+| Area             | Stored choices                                                                                                             |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `interface`      | Administrator Basic/Advanced presentation                                                                                  |
+| `library`        | List/covers, page size, badge style, cover/cast presentation, sort/direction, column widths and administrator cost display |
+| `journal`        | List/calendar, day size and fit-to-screen                                                                                  |
+| `database`       | Table, count mode, system-table visibility and per-table sort/order                                                        |
+| `search`         | Legacy personal fuzzy-search values retained for compatibility; no longer used by the views                                |
+| `library_random` | One random seed shared across the user's display profiles                                                                  |
+| Shared UI        | Administrator-maintained hidden collection names and initial inherited defaults                                            |
+
+The Library cache retention mode is stored separately in browser local storage,
+shared across users and width profiles in that browser. Cached data remains
+partitioned by user and dataset. Legacy server-saved cache modes are removed on
+startup and omitted from imports.
 
 Updates use entry/dataset scope, a cryptographic request UUID, row revision and
 validated field patch. The worker patches the latest row, preserving unrelated
@@ -191,8 +205,8 @@ Journal Options saves list/calendar (Calendar for new profiles), 60–320 pixel
 day height (default 180) and fit-to-screen (default off). Slider release saves
 the size; fitting temporarily uses the available viewport and disabling it
 restores the saved value. Month selection is retained as
-`companion_month=YYYY-MM` in the panel URL while the Journal is active, falling
-back to the current local month; navigating away removes it. It is not a
+`companion_month=YYYY-MM` in the panel URL, falling back to the current local
+month; the month remains available when navigating away and back. It is not a
 personal settings field. Dashboard month navigation remains local to the card.
 Search/status state and displayed month must not be confused with persisted
 layout.
@@ -246,3 +260,8 @@ focus/keyboard, responsive profiles, dirty/pending dialogs, empty/loading/error
 states and reload persistence. Use the concrete preview URLs in the development
 guide; automated checks do not launch a real browser or send real player
 commands.
+
+Settings → About shows the current Companion sensor states and their documented
+attributes, resolving entity IDs from the Home Assistant registry. It refreshes
+every 30 seconds while open and offers a manual refresh. The scoped sensor
+endpoint is administrator-only and returns only Companion sensor attributes.

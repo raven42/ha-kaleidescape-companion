@@ -24,7 +24,7 @@ async def search(manager, actor, title, provider, query, year=None):
     target = await manager.parent.repository.async_enrichment(
         "review_target", manager.parent.source, title
     )
-    async with manager.worker(actor, title) as client:
+    async with manager.worker(actor, title, provider) as client:
         rows = await client.providers.search(
             provider, phrase(query) if quoted(query) else query, year
         )

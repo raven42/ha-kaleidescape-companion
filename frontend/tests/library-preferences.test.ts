@@ -53,6 +53,7 @@ function change(root: ShadowRoot, name: string, value: string) {
 afterEach(() => {
   element?.remove();
   element = undefined;
+  localStorage.clear();
 });
 
 it("restores view and sort from preferences and search from the URL", async () => {
@@ -1047,10 +1048,21 @@ it("saves the cover cache mode and clears this user's Library cache", async () =
   await element!.updateComplete;
   button(root, "Options").click();
   await flush();
+  const cacheOptions = [
+    ...root.querySelectorAll<HTMLOptionElement>('[name="cover_cache"] option'),
+  ];
+  expect(
+    cacheOptions.map((option) => [option.value, option.textContent?.trim()]),
+  ).toEqual([
+    ["balanced", "Balanced"],
+    ["session", "Keep for session"],
+    ["persistent", "Keep across restarts"],
+  ]);
   change(root, "cover_cache", "persistent");
-  await vi.waitFor(() =>
-    expect(transport.uiPreferences.cover_cache).toBe("persistent"),
+  expect(localStorage.getItem("kaleidescape-companion:cover-cache-mode")).toBe(
+    "persistent",
   );
+  expect(transport.uiPreferences.cover_cache).toBeUndefined();
   const clear = vi.spyOn(queue.cache, "clear").mockResolvedValue();
   button(root, "Clear Library and cover cache").click();
   await vi.waitFor(() =>
@@ -1062,6 +1074,26 @@ it("saves the cover cache mode and clears this user's Library cache", async () =
     expect(root.textContent).toContain("Library and cover caches cleared"),
   );
   queue.cache.dispose();
+});
+
+it("uses the browser cache mode across users and ignores old profile choices", async () => {
+  const first = new FixtureTransport();
+  first.uiPreferences.cover_cache = "session";
+  let root = await mount(first);
+  button(root, "Options").click();
+  await flush();
+  expect(
+    root.querySelector<HTMLSelectElement>('[name="cover_cache"]')!.value,
+  ).toBe("balanced");
+  change(root, "cover_cache", "session");
+  element!.remove();
+  const second = new FixtureTransport();
+  root = await mount(second);
+  button(root, "Options").click();
+  await flush();
+  expect(
+    root.querySelector<HTMLSelectElement>('[name="cover_cache"]')!.value,
+  ).toBe("session");
 });
 
 it("warms page covers in the background and cancels on navigation", async () => {
@@ -1079,4 +1111,55 @@ it("warms page covers in the background and cancels on navigation", async () => 
   element!.remove();
   expect(signal.aborted).toBe(true);
   prefetch.mockRestore();
+});
+
+it("restores the Library page for the same browser session and filters", async () => {
+  history.replaceState(
+    null,
+    "",
+    "/kaleidescape-companion?companion_page=library",
+  );
+  const transport = new FixtureTransport();
+  transport.uiPreferences.page_size = 25;
+  transport.uiPreferences.view = "list";
+  transport.libraryTitles = Array.from({ length: 60 }, (_, index) =>
+    libraryTitle({
+      id: String(index).padStart(64, "0"),
+      title: `Film ${index}`,
+    }),
+  );
+  const create = async () => {
+    element = document.createElement(
+      "kaleidescape-library",
+    ) as KaleidescapeLibrary;
+    element.client = transport.client();
+    element.scope = { ...info, library_enabled: true };
+    element.cacheUser = "fictional-user";
+    document.body.append(element);
+    await vi.waitFor(() =>
+      expect(element!.shadowRoot?.querySelector("tbody tr")).toBeTruthy(),
+    );
+    return element.shadowRoot!;
+  };
+  let root = await create();
+  await vi.waitFor(() => expect(button(root, "Next").disabled).toBe(false));
+  button(root, "Next").click();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)?.filters,
+    ).toMatchObject({ offset: 25 }),
+  );
+  await vi.waitFor(() => expect(Object.values(sessionStorage)).toContain("25"));
+  element!.remove();
+  root = await create();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls
+        .filter((call) => call.type.endsWith("library/list"))
+        .at(-1)?.filters,
+    ).toMatchObject({ offset: 25 }),
+  );
+  expect(button(root, "Previous").disabled).toBe(false);
 });

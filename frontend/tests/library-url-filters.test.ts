@@ -29,6 +29,9 @@ it("round trips every Library search and filter option without changing other UR
   writeLibraryFilters(filters);
   expect(readLibraryFilters(undefined, true)).toEqual(filters);
   expect(new URL(location.href).searchParams.get("unrelated")).toBe("kept");
+  expect(new URL(location.href).searchParams.has("library_filters")).toBe(
+    false,
+  );
   expect(readLibraryFilters(undefined, false)).toMatchObject({
     missing_metadata_artwork: false,
     missing_purchase_information: false,
@@ -58,7 +61,7 @@ it("rejects unsupported, oversized, malformed and non-panel filter inputs", () =
   expect(location.search).toBe("?keep=1");
 });
 
-it("forgets the Journal month on navigation to another view", () => {
+it("keeps the Journal month when navigating to another view", () => {
   history.replaceState(
     null,
     "",
@@ -70,7 +73,25 @@ it("forgets the Journal month on navigation to another view", () => {
   );
   rememberPage("library");
   const params = new URL(location.href).searchParams;
-  expect(params.has("companion_month")).toBe(false);
+  expect(params.get("companion_month")).toBe("2026-11");
   expect(params.get("library_status")).toBe("watched");
   expect(params.get("other")).toBe("kept");
+});
+
+it("writes a clean unfiltered URL and accepts legacy marker links", () => {
+  history.replaceState(
+    null,
+    "",
+    "/kaleidescape-companion?companion_page=library&library_filters=1&library_rating=G&other=kept",
+  );
+  writeLibraryFilters(emptyLibraryFilters());
+  const params = new URL(location.href).searchParams;
+  expect(params.has("library_filters")).toBe(false);
+  expect(params.has("library_rating")).toBe(false);
+  expect(params.get("other")).toBe("kept");
+  expect(readLibraryFilters()).toEqual(emptyLibraryFilters());
+  const legacy = new URL(
+    "https://example.invalid/kaleidescape-companion?companion_page=library&library_filters=1",
+  );
+  expect(readLibraryFilters(legacy)).toEqual(emptyLibraryFilters());
 });

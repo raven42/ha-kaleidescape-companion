@@ -224,6 +224,7 @@ def library_summary(db, source):
         "collections_synced_at": None,
         "last_library_sync": None,
         "last_scrape_date": None,
+        "last_scrape_details": None,
         "scraper_failures": 0,
         "scraper_conflicts": None,
         "missing_metadata": None,
@@ -301,6 +302,9 @@ def library_summary(db, source):
         "missing_purchase_information_truncated": len(purchase_names)
         < len(missing_purchases),
         "last_scrape_date": max(stamps, default=None),
+        "last_scrape_details": activity.get("last_scrape_details")
+        if activity.get("last_scrape_date") == max(stamps, default=None)
+        else None,
         "scraper_conflicts": len(conflicts),
         "missing_metadata": len(missing_metadata),
         "missing_metadata_movies": metadata_names,

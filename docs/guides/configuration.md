@@ -48,7 +48,7 @@ category list or **Find a setting** to locate another feature.
 | Calendar    | Publication target/templates and separately acknowledged Full Sync                   |
 | Automations | Installed/bundled blueprint review and links to HA automation setup                  |
 | Maintenance | Settings transfer, metadata repair, cleanup, dashboard generation and reload         |
-| About       | Versions, bounded summaries and support links                                        |
+| About       | Versions, status, sensor states and attributes, summaries and support links          |
 
 A minimal configuration change is **Settings → General → Default landing page →
 Journal**, followed by **Save settings**. Opening the panel without a selected
@@ -57,7 +57,8 @@ precedence; disabled or inaccessible pages fall back to an available household
 view.
 
 Settings marked **saves immediately** are different from native configuration.
-Per-view Options save personal preferences immediately. Shared hidden collection
+Per-view Options save personal preferences immediately, except the Library cache
+retention mode, which is shared in the current browser. Shared hidden collection
 names use **Save visibility**; save or discard that draft before saving native
 settings. Hiding a collection name does not hide its movies or change device
 membership.

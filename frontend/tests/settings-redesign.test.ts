@@ -388,3 +388,73 @@ it("shows library and purchase summaries in About and loads totals on demand", a
     "excluded from savings because the paid and retail prices use different currencies",
   );
 });
+
+it("shows current sensor states, attributes and reference information in About", async () => {
+  await mount({ library_enabled: true, calendar_enabled: true });
+  const fetchSensors = vi
+    .spyOn(element.client!, "aboutSensors")
+    .mockResolvedValue({
+      movies_7_days: {
+        entity_id: "sensor.renamed_history",
+        state: "2",
+        unit: null,
+        attributes: { movies: ["A fictional movie"], truncated: false },
+      },
+    });
+  await select("about");
+  await vi.waitFor(() => expect(fetchSensors).toHaveBeenCalledOnce());
+  const details = [...root().querySelectorAll("details")].find((item) =>
+    item.textContent?.includes("Movies watched last 7 days"),
+  )!;
+  expect(details.textContent).toContain("sensor.renamed_history");
+  expect(details.textContent).toContain("A fictional movie");
+  expect(details.textContent).toContain("rolling seven-day window");
+  expect(root().textContent).toContain("Integration status");
+  expect(root().querySelectorAll(".sensor-detail")).toHaveLength(17);
+});
+
+it("restores the settings category after remount and supports browser Back", async () => {
+  history.replaceState(
+    null,
+    "",
+    "/kaleidescape-companion?companion_page=settings",
+  );
+  await mount();
+  await select("library");
+  expect(new URL(location.href).searchParams.get("companion_settings")).toBe(
+    "library",
+  );
+  element.remove();
+  await mount();
+  expect(
+    root()
+      .querySelector("#settings-tab-library")
+      ?.getAttribute("aria-selected"),
+  ).toBe("true");
+  history.replaceState(
+    null,
+    "",
+    "/kaleidescape-companion?companion_page=settings&companion_settings=general",
+  );
+  window.dispatchEvent(new PopStateEvent("popstate"));
+  await flush();
+  expect(
+    root()
+      .querySelector("#settings-tab-general")
+      ?.getAttribute("aria-selected"),
+  ).toBe("true");
+});
+
+it("starts the sensor inventory collapsed", async () => {
+  await mount();
+  await select("about");
+  const section = root().querySelector<HTMLDetailsElement>(".sensors-section")!;
+  expect(section.open).toBe(false);
+  expect(section.querySelector("summary")?.textContent?.trim()).toBe(
+    "Sensor details",
+  );
+  expect(
+    section.closest(".settings-card")?.querySelector("h3")?.textContent,
+  ).toBe("Home Assistant sensors");
+  expect(section.querySelectorAll(".sensor-detail")).toHaveLength(17);
+});

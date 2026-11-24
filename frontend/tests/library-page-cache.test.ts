@@ -8,6 +8,7 @@ import { FixtureTransport, info, libraryTitle } from "./fixture";
 
 afterEach(() => {
   document.body.replaceChildren();
+  localStorage.clear();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -119,7 +120,10 @@ it.each(["name", "random"])(
   async (sort) => {
     vi.stubGlobal("indexedDB", new IDBFactory());
     const transport = new FixtureTransport();
-    transport.uiPreferences.cover_cache = "persistent";
+    localStorage.setItem(
+      "kaleidescape-companion:cover-cache-mode",
+      "persistent",
+    );
     transport.uiPreferences.sort = sort;
     transport.uiPreferences.random_seed = "a".repeat(32);
     const client = transport.client();

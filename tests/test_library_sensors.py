@@ -107,11 +107,24 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         initial = await self.summary()
         self.assertEqual(initial["scraper_failures"], 0)
         self.assertIsNone(initial["last_scrape_date"])
+        details = {
+            "operation": "refresh",
+            "status": "failed",
+            "providers": ["tmdb"],
+            "processed": 4,
+            "total": 8,
+            "updated": 3,
+            "skipped": 2,
+            "provider_attempts": 5,
+        }
         for failed in (True, False, True):
-            await self.repository.async_enrichment("activity", library.SOURCE, failed)
+            await self.repository.async_enrichment(
+                "activity", library.SOURCE, failed, details
+            )
         await self.repository.async_enrichment("activity", "other-source", True)
         value = await self.summary()
         self.assertEqual(value["scraper_failures"], 2)
+        self.assertEqual(value["last_scrape_details"], details)
         self.assertIsNotNone(
             datetime.fromisoformat(value["last_scrape_date"]).utcoffset()
         )
@@ -120,6 +133,7 @@ class LibrarySummaryTest(unittest.IsolatedAsyncioTestCase):
         self.addAsyncCleanup(self.repository.async_close)
         await self.repository.async_open()
         self.assertEqual((await self.summary())["scraper_failures"], 2)
+        self.assertEqual((await self.summary())["last_scrape_details"], details)
         self.assertEqual(
             (await self.summary())["last_scrape_date"], value["last_scrape_date"]
         )
@@ -665,6 +679,24 @@ class LibrarySensorTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(
             sensors["last_scrape_date"].device_class, SensorDeviceClass.TIMESTAMP
         )
+        self.assertIsNone(
+            sensors["last_scrape_date"].extra_state_attributes["providers"]
+        )
+        details = {
+            "operation": "refresh",
+            "status": "completed",
+            "providers": ["kaleidescape", "tmdb"],
+            "processed": 2,
+            "total": 2,
+            "updated": 3,
+            "skipped": 1,
+            "provider_attempts": 3,
+        }
+        await self.repository.async_enrichment(
+            "activity", library.SOURCE, False, details
+        )
+        await total.coordinator.async_refresh()
+        self.assertEqual(sensors["last_scrape_date"].extra_state_attributes, details)
         stamp = sensors["last_library_sync"]
         self.assertEqual(stamp.device_class, SensorDeviceClass.TIMESTAMP)
         self.assertIsInstance(stamp.native_value, datetime)

@@ -77,6 +77,13 @@ function systemGroup(table: string) {
   return SYSTEM_GROUPS.find(([, matches]) => matches(table))![0];
 }
 type Row = Record<string, unknown>;
+export interface DatabaseNavigationState {
+  entryId: string;
+  datasetId: string;
+  table: string;
+  filters: DatabaseQuery;
+  offset: number;
+}
 interface ResizeAnchor {
   row: Row;
   index: number;
@@ -122,10 +129,22 @@ export class KaleidescapeDatabase extends LitElement {
   static properties = {
     client: { attribute: false },
     scope: { attribute: false },
+    navigationState: { attribute: false },
   };
   static styles = [styles, entryLayoutStyles, databaseStyles];
   client?: JournalClient;
   scope?: JournalInfo;
+  navigationState?: DatabaseNavigationState;
+  snapshotNavigation(): DatabaseNavigationState | undefined {
+    if (!this.ready || !this.page || !this.scope) return undefined;
+    return {
+      entryId: this.scope.entry_id,
+      datasetId: this.scope.dataset_id,
+      table: this.table,
+      filters: { ...this.filters },
+      offset: this.allMode ? 0 : this.page.offset,
+    };
+  }
   private boundClient?: JournalClient;
   private bound = "";
   private generation = 0;
@@ -295,11 +314,24 @@ export class KaleidescapeDatabase extends LitElement {
         this.filters = { ...anchor.filters, limit: this.filters.limit };
         this.search = this.filters.query;
       }
+      const saved =
+        !anchor &&
+        this.navigationState?.entryId === this.scope?.entry_id &&
+        this.navigationState?.datasetId === this.scope?.dataset_id
+          ? this.navigationState
+          : undefined;
+      if (saved && (this.showSystem || MAIN.includes(saved.table))) {
+        this.table = saved.table;
+        this.filters = { ...saved.filters, limit: this.filters.limit };
+        this.search = this.filters.query;
+      }
       this.ready = true;
       await this.load(
         anchor && !this.allMode
           ? Math.floor(anchor.index / this.filters.limit) * this.filters.limit
-          : 0,
+          : saved && !this.allMode
+            ? Math.floor(saved.offset / this.filters.limit) * this.filters.limit
+            : 0,
         anchor?.revision,
         this.allMode ? undefined : anchor?.row,
       );

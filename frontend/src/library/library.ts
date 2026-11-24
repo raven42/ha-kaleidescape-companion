@@ -34,6 +34,7 @@ import {
 import "../playback/controls";
 import { CoverQueue } from "./cover";
 import { responsivePreferences } from "../ui/profile-controller";
+import { readNavigationValue, writeNavigationValue } from "../ui/navigation";
 import { PreferenceStore } from "../ui/preference-store";
 import {
   formatBadges,
@@ -210,7 +211,8 @@ export class KaleidescapeLibrary extends LitElement {
   private initialStatus?: Promise<void>;
   private cachedUnverified = false;
   cacheUser?: string;
-  private coverCacheMode: "balanced" | "session" | "persistent" = "balanced";
+  private coverCacheMode: "balanced" | "session" | "persistent" =
+    this.readCoverCacheMode();
   private clearingCovers = false;
   private coverCacheMessage = "";
   private boundClient?: JournalClient;
@@ -672,10 +674,6 @@ export class KaleidescapeLibrary extends LitElement {
       this.mode = values.view as "list" | "covers";
       this.entriesPerPage = values.page_size as number | "all";
       this.coverSize = values.cover_size as number;
-      this.coverCacheMode =
-        values.cover_cache === "session" || values.cover_cache === "persistent"
-          ? values.cover_cache
-          : "balanced";
       this.configureCoverCache();
       this.movieStatusLabels =
         values.movie_status_labels === "kaleidescape"
@@ -722,7 +720,7 @@ export class KaleidescapeLibrary extends LitElement {
       this.preferencesReady = true;
       if (this.openCriterion)
         this.fromDetails(this.openCriterion.key, this.openCriterion.value);
-      else await this.load();
+      else await this.load(this.readNavigationOffset());
       if (this.openTitleId && generation === this.generation)
         void this.openLinkedTitle(this.openTitleId);
     } catch (error) {
@@ -767,6 +765,16 @@ export class KaleidescapeLibrary extends LitElement {
           this.scope.dataset_id,
         ])
       : undefined;
+  }
+  private readCoverCacheMode(): "balanced" | "session" | "persistent" {
+    try {
+      const mode = localStorage.getItem(
+        "kaleidescape-companion:cover-cache-mode",
+      );
+      return mode === "session" || mode === "persistent" ? mode : "balanced";
+    } catch {
+      return "balanced";
+    }
   }
   private configureCoverCache() {
     const cache = (this.coverQueue ?? this.covers).cache;
@@ -1009,6 +1017,31 @@ export class KaleidescapeLibrary extends LitElement {
       );
     this.requestUpdate();
   }
+  private navigationOffsetKey() {
+    if (!this.cacheUser || !this.scope || this.dashboard || this.dialogOnly)
+      return undefined;
+    const input = JSON.stringify([
+      this.scope.entry_id,
+      this.scope.dataset_id,
+      this.cacheUser,
+      this.applied,
+      this.mode,
+      this.entriesPerPage,
+      this.pageSize,
+    ]);
+    let hash = 2166136261;
+    for (let index = 0; index < input.length; index++)
+      hash = Math.imul(hash ^ input.charCodeAt(index), 16777619);
+    return `library-offset:${(hash >>> 0).toString(36)}`;
+  }
+  private readNavigationOffset() {
+    const key = this.navigationOffsetKey();
+    const value = key ? readNavigationValue(key) : null;
+    const offset = value === null ? 0 : Number(value);
+    return Number.isSafeInteger(offset) && offset >= 0 && offset <= 1000000
+      ? offset
+      : 0;
+  }
   private async load(offset = 0, preserveSelection = false) {
     if (this.detailsLocked) return;
     this.closePreview();
@@ -1131,6 +1164,9 @@ export class KaleidescapeLibrary extends LitElement {
       )
         this.previewCache.clear();
       this.page = page;
+      const navigationKey = this.navigationOffsetKey();
+      if (navigationKey)
+        writeNavigationValue(navigationKey, String(page.offset));
       this.cachedUnverified = false;
       if (
         cacheable &&
@@ -1902,22 +1938,32 @@ export class KaleidescapeLibrary extends LitElement {
                 return;
               this.coverCacheMode = mode;
               this.configureCoverCache();
-              this.preferences?.set({ cover_cache: mode });
+              try {
+                localStorage.setItem(
+                  "kaleidescape-companion:cover-cache-mode",
+                  mode,
+                );
+                this.coverCacheMessage = "";
+              } catch {
+                this.coverCacheMessage =
+                  "This browser could not save the cache choice; it applies until the panel closes.";
+              }
               this.requestUpdate();
             }}
           >
             <option value="balanced">Balanced</option>
-            <option value="session">Keep for panel session</option>
+            <option value="session">Keep for session</option>
             <option value="persistent" ?disabled=${!this.cacheUser}>
               Keep across restarts
             </option>
           </select></label
         >
         <small
-          >Balanced limits memory. Session retains all loaded covers in memory
-          until the panel closes. Across restarts also saves Library results and
-          covers in this browser; browser storage can be cleared or evicted. The
-          server artwork cache has a separate limit.</small
+          >Balanced limits memory. Keep for session retains loaded covers in
+          memory until the panel closes and can use substantial memory. Keep
+          across restarts saves Library results and covers in this browser.
+          Changing modes does not clear saved data. The server artwork cache has
+          a separate limit.</small
         >
         <button
           type="button"

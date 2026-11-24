@@ -1,0 +1,105 @@
+/** Sensor descriptions mirror Companion's Home Assistant entity contract. */
+export const ABOUT_SENSORS = [
+  [
+    "last_watched_movie",
+    "Last watched movie",
+    "Latest completed movie title.",
+    "movie: full title; watched_at: completion time.",
+  ],
+  [
+    "movies_7_days",
+    "Movies watched last 7 days",
+    "Completed viewings in the rolling seven-day window.",
+    "movies: titles; truncated: whether the list is incomplete.",
+  ],
+  [
+    "movies_30_days",
+    "Movies watched last 30 days",
+    "Completed viewings in the rolling 30-day window.",
+    "movies: titles; truncated: whether the list is incomplete.",
+  ],
+  [
+    "movies_365_days",
+    "Movies watched last 365 days",
+    "Completed viewings in the rolling 365-day window.",
+    "None.",
+  ],
+  [
+    "partial_movies",
+    "Partially watched movies",
+    "Unfinished partial viewings.",
+    "movies: titles; truncated: whether the list is incomplete.",
+  ],
+  [
+    "total_movies",
+    "Total movies",
+    "Available Library movie groups, with editions grouped together.",
+    "None.",
+  ],
+  [
+    "database_size",
+    "Database size",
+    "Size of the main Companion database, excluding sidecars.",
+    "None.",
+  ],
+  [
+    "last_library_sync",
+    "Last library sync",
+    "Time of the last completed catalog snapshot.",
+    "None.",
+  ],
+  [
+    "artwork_cache_size",
+    "Artwork cache size",
+    "Size of indexed cached artwork.",
+    "None.",
+  ],
+  [
+    "watched_movies",
+    "Watched movies",
+    "Movie groups in the source Played collection.",
+    "unknown_movies: groups with unknown status; collections_synced_at: collection snapshot time.",
+  ],
+  [
+    "unwatched_movies",
+    "Unwatched movies",
+    "Movie groups in the source New collection.",
+    "unknown_movies: groups with unknown status; collections_synced_at: collection snapshot time.",
+  ],
+  [
+    "recently_added",
+    "Recently added movies",
+    "Count in the latest newly discovered movie batch.",
+    "movies: titles; truncated: whether the list is incomplete; added_at: discovery time.",
+  ],
+  [
+    "last_scrape_date",
+    "Last scrape date",
+    "Last completed enrichment attempt, including failures.",
+    "operation: refresh or review; status: completed or failed; providers: involved scrapers; processed and total: movie groups; updated, skipped and provider_attempts: provider-level counts for a refresh.",
+  ],
+  [
+    "scraper_conflicts",
+    "Scraper conflicts",
+    "Movie groups with unresolved enabled-provider matching conflicts.",
+    "movies: titles; truncated: whether the list is incomplete.",
+  ],
+  [
+    "missing_metadata",
+    "Missing metadata",
+    "Movie groups missing expected enabled-provider data.",
+    "movies: titles; truncated: whether the list is incomplete.",
+  ],
+  [
+    "missing_artwork",
+    "Missing artwork",
+    "Movie groups missing expected poster or backdrop artwork.",
+    "movies: titles; truncated: whether the list is incomplete.",
+  ],
+  [
+    "missing_purchase_information",
+    "Missing purchase information",
+    "Movie groups missing expected purchase date or prices.",
+    "movies: titles; truncated: whether the list is incomplete.",
+  ],
+] as const;

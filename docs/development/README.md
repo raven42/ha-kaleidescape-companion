@@ -106,15 +106,16 @@ rerun Check before packaging.
 | `scripts/check`          | Run the complete local validation gate                             |
 | `scripts/package`        | Verify assets and produce the installable runtime artifact         |
 
-VS Code's Setup, Build, Lint, Format, Test, Check and Package tasks invoke these
-same commands. No editor task defines additional correctness prerequisites.
-Package does not run the full release gate; release publication requires Check
-and the qualification work in [releasing](releasing.md). Dependency scans,
-frontend preview and local HA remain separate operations. The explicitly labeled
-maintainer composite runs Build, Check, Package, deploy and restart in sequence;
-see [deployment](deployment.md) before selecting it. The **Maintainer: Deploy
-frontend** task builds and uploads the panel bundle separately for frontend-only
-changes.
+VS Code exposes the maintainer deployment workflows; their supporting Build,
+test and Package tasks are hidden from the task picker. The full workflow builds
+first, then runs the Python tests, frontend tests and independently verified
+package in parallel. Deployment begins only after all three succeed. Package
+includes generated-asset, pyk reconstruction and project checks, avoiding a
+second copy of those checks in this workflow. The standalone commands above
+remain available. Package does not run the full release gate; release
+publication requires Check and the qualification work in
+[releasing](releasing.md). See [deployment](deployment.md) before using the
+maintainer tasks.
 
 See [testing](testing.md) for suite selection and validation limits. The
 wrappers use normal `unittest` discovery and set Python's isolated-asyncio

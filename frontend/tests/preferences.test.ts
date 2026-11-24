@@ -263,3 +263,86 @@ it("dismisses a backdrop through the Escape guard, but keeps inside clicks and p
   dialog.dispatchEvent(new MouseEvent("click", { clientX: 0, clientY: 0 }));
   expect(dialog.open).toBe(false);
 });
+
+it("returns to a prior Companion page on browser Back", async () => {
+  history.replaceState(
+    null,
+    "",
+    "/kaleidescape-companion?companion_page=journal",
+  );
+  transport.options.library_enabled = true;
+  const panel = document.createElement(
+    "kaleidescape-panel",
+  ) as KaleidescapePanel;
+  panel.client = transport.client();
+  element = panel;
+  document.body.append(panel);
+  await vi.waitFor(() =>
+    expect(button(panel.shadowRoot!, "Library").disabled).toBe(false),
+  );
+  button(panel.shadowRoot!, "Library").click();
+  await vi.waitFor(() =>
+    expect(
+      panel.shadowRoot!.querySelector("kaleidescape-library"),
+    ).toBeTruthy(),
+  );
+  history.replaceState(
+    null,
+    "",
+    "/kaleidescape-companion?companion_page=journal",
+  );
+  window.dispatchEvent(new PopStateEvent("popstate"));
+  await vi.waitFor(() =>
+    expect(panel.shadowRoot!.querySelector("kaleidescape-library")).toBeNull(),
+  );
+  expect(location.search).toContain("companion_page=journal");
+});
+
+it("keeps the Settings category after saving and integration reload", async () => {
+  history.replaceState(
+    null,
+    "",
+    "/kaleidescape-companion?companion_page=settings",
+  );
+  vi.spyOn(HTMLFormElement.prototype, "reportValidity").mockReturnValue(true);
+  const panel = document.createElement(
+    "kaleidescape-panel",
+  ) as KaleidescapePanel;
+  panel.client = transport.client();
+  element = panel;
+  document.body.append(panel);
+  const settings = () =>
+    panel.shadowRoot!.querySelector<KaleidescapeSettings>(
+      "kaleidescape-settings",
+    )!;
+  await vi.waitFor(() =>
+    expect(
+      settings()?.shadowRoot?.querySelector("#settings-tab-journal"),
+    ).toBeTruthy(),
+  );
+  settings()
+    .shadowRoot!.querySelector<HTMLButtonElement>("#settings-tab-journal")!
+    .click();
+  const input = settings().shadowRoot!.querySelector<HTMLInputElement>(
+    '[name="minimum_runtime_minutes"]',
+  )!;
+  input.value = "20";
+  input.dispatchEvent(new Event("input", { bubbles: true }));
+  await settings().updateComplete;
+  button(settings().shadowRoot!, "Save settings").click();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls.some((call) => call.type.endsWith("settings/submit")),
+    ).toBe(true),
+  );
+  await vi.waitFor(() =>
+    expect(panel.shadowRoot!.textContent).toContain("Settings saved."),
+  );
+  await vi.waitFor(() =>
+    expect(
+      settings()
+        ?.shadowRoot?.querySelector("#settings-tab-journal")
+        ?.getAttribute("aria-selected"),
+    ).toBe("true"),
+  );
+});

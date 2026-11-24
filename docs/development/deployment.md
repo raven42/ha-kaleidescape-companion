@@ -111,10 +111,11 @@ Code tasks use the same CLI operations. No normal setup, build, check, test or
 package command deploys or restarts HA.
 
 VS Code also offers **Maintainer: Build, check, package, deploy and restart**.
-It runs Build, Check, Package, deployment and configuration-check/restart in
-that order, stopping at the first failed task. It uses the standard artifact
-created by Package. It intentionally does not include the deployment preview:
-run **Maintainer: Preview deployment** first when reviewing a target or archive.
+It runs Build first, then runs Python tests, frontend tests and Package in
+parallel. Package verifies the generated assets, pyk reconstruction and project
+invariants. Deployment starts only after all three succeed, followed by the
+configuration check and restart. It uses the standard artifact created by
+Package. For a deployment preview, run `scripts/deploy plan` in the terminal.
 This composite task contacts the configured target and restarts HA; it is never
 a dependency of routine contributor tasks.
 

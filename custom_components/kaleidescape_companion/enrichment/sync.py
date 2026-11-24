@@ -145,11 +145,13 @@ class MetadataSync:
             "last_finished": self.last_finished,
         }
 
-    async def record_activity(self, failed):
+    async def record_activity(self, failed, details=None):
         """Telemetry must not mask a provider failure or break an accepted review."""
         try:
             self._ready()
-            await self.repository.async_enrichment("activity", self.source, failed)
+            await self.repository.async_enrichment(
+                "activity", self.source, failed, details
+            )
         except JournalError:
             pass
 
@@ -393,6 +395,10 @@ class MetadataSync:
         self.providers.refresh_adapters()
         self.processed = self.updated = self.skipped = 0
         skipped_reasons = Counter()
+        attempted_providers = set()
+        provider_attempts = 0
+        self.total = 0
+        total_known = False
         failure, cancelled = None, False
         try:
             self.session = self.create_session()
@@ -402,6 +408,7 @@ class MetadataSync:
                 else await self.repository.async_enrichment("candidates", self.source)
             )
             self.total = len(rows)
+            total_known = True
             async with asyncio.timeout(3600):
                 for row in rows:
                     self._ready()
@@ -476,6 +483,8 @@ class MetadataSync:
                                     continue
                             except ValueError, TypeError:
                                 pass
+                        attempted_providers.add(provider)
+                        provider_attempts += 1
                         try:
                             discovered = False
                             if reference:
@@ -648,7 +657,19 @@ class MetadataSync:
                 self.session = None
             self.last_finished = datetime.now(UTC).isoformat()
             if not cancelled:
-                await self.record_activity(failure is not None)
+                await self.record_activity(
+                    failure is not None,
+                    {
+                        "operation": "refresh",
+                        "status": "failed" if failure is not None else "completed",
+                        "providers": sorted(attempted_providers),
+                        "processed": self.processed,
+                        "total": self.total if total_known else None,
+                        "updated": self.updated,
+                        "skipped": self.skipped,
+                        "provider_attempts": provider_attempts,
+                    },
+                )
                 if failure is not None:
                     category = type(failure).__name__
                     if self.actor is not None or category != self._reported_failure:

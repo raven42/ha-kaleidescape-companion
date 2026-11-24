@@ -14,12 +14,13 @@ def read(db, source):
     )
 
 
-def record(db, source, failed):
+def record(db, source, failed, details=None):
     """Count failed top-level operations, not nested requests or cancellations."""
     value = read(db, source)
     stamp = datetime.now(UTC).isoformat()
     value["last_scrape_date"] = stamp
     value["scraper_failures"] += int(failed)
+    value["last_scrape_details"] = details
     with db:
         db.execute(
             "INSERT INTO settings(owner,key,value,revision,updated_at) "

@@ -35,6 +35,7 @@ def seed(db, legacy):
     )
     with db:
         migrate_search(db)
+        remove_legacy_cover_cache(db)
         for key, value in (("library_defaults", defaults), ("library_shared", shared)):
             changed = db.execute(
                 "INSERT OR IGNORE INTO settings VALUES (?,?,?,?,?)",
@@ -44,6 +45,24 @@ def seed(db, legacy):
                 db.execute(
                     "UPDATE schema_metadata SET settings_revision=settings_revision+1"
                 )
+
+
+def remove_legacy_cover_cache(db):
+    """Remove the retired server-side cache mode from Library preference rows."""
+    rows = db.execute(
+        "SELECT owner,key,value FROM settings WHERE key IN "
+        "('library','library_defaults','library:desktop','library:tablet','library:mobile')"
+    ).fetchall()
+    for row in rows:
+        values = json.loads(row["value"])
+        if "cover_cache" not in values:
+            continue
+        del values["cover_cache"]
+        db.execute(
+            "UPDATE settings SET value=?,revision=revision+1 WHERE owner=? AND key=?",
+            (json.dumps(values), row["owner"], row["key"]),
+        )
+        db.execute("UPDATE schema_metadata SET settings_revision=settings_revision+1")
 
 
 def migrate_search(db):

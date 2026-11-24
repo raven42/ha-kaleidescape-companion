@@ -208,6 +208,11 @@ class TitleReviewTest(unittest.IsolatedAsyncioTestCase):
                 self.admin, self.id, "tmdb", "Fictional Film", 2025
             )
             search.assert_awaited_once_with("tmdb", "Fictional Film", 2025)
+            activity = await self.repo.async_library_summary(self.source)
+            self.assertEqual(
+                activity["last_scrape_details"],
+                {"operation": "review", "status": "completed", "providers": ["tmdb"]},
+            )
             with self.assertRaises(JournalError) as error:
                 await self.manager.search(
                     self.admin, self.id, "tmdb", "Fictional Film", 2101

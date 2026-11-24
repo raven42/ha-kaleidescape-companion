@@ -15,6 +15,7 @@ const warn = console.warn.bind(console),
 // Each simulated page starts at a fresh URL; navigation tests opt into restoration.
 beforeEach(() => {
   history.replaceState(null, "", "/");
+  sessionStorage.clear();
   warnings.length = errors.length = 0;
   vi.spyOn(console, "warn").mockImplementation((...args) => {
     warnings.push(args);

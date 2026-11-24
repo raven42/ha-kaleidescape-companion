@@ -515,3 +515,9 @@ ruff format --check custom_components/kaleidescape_companion/scrapers tests/scra
 
 Run these from the workspace root. Edit the integration's `scrapers/` package
 directly. Offline provider tests use that source and run without HA.
+
+The Last scrape date sensor records a bounded summary of the latest completed or
+failed refresh or individual review request. Batch counts distinguish movie
+groups processed from provider attempts, updates and skips; review requests do
+not claim batch counts. The sensor reference describes its attributes and
+historical fallback.

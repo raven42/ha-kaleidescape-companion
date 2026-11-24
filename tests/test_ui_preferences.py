@@ -30,28 +30,42 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
                 "a", False, str(uuid4()), 0, {"limit": "everything"}, "database"
             )
 
-    async def test_cover_cache_mode_is_private_and_validated(self):
-        self.assertEqual(validate_library({})["cover_cache"], "balanced")
-        for mode in ("balanced", "session", "persistent"):
-            self.assertEqual(
-                validate_library({"cover_cache": mode})["cover_cache"], mode
-            )
-        with self.assert_error("invalid_request"):
-            validate_library({"cover_cache": "other"})
-        await self.repository.async_ui_preferences_update(
-            "a", False, str(uuid4()), 0, {"cover_cache": "persistent"}, "library"
+    async def test_retired_cover_cache_is_removed_from_saved_preferences(self):
+        from custom_components.kaleidescape_companion.core import preferences
+
+        def migrate():
+            db = self.repository._db()
+            with db:
+                for key in ("library", "library:desktop", "library:mobile"):
+                    db.execute(
+                        "INSERT INTO settings VALUES (?,?,?,?,?)",
+                        (
+                            "user:legacy",
+                            key,
+                            json.dumps({"cover_cache": "persistent", "view": "list"}),
+                            1,
+                            "2026",
+                        ),
+                    )
+                preferences.remove_legacy_cover_cache(db)
+                return db.execute(
+                    "SELECT value, revision FROM settings WHERE owner='user:legacy'"
+                ).fetchall()
+
+        rows = await self.repository._call(migrate)
+        self.assertEqual(len(rows), 3)
+        for row in rows:
+            self.assertEqual(json.loads(row["value"]), {"view": "list"})
+            self.assertEqual(row["revision"], 2)
+        self.assertNotIn("cover_cache", validate_library({"cover_cache": "persistent"}))
+        self.assertNotIn(
+            "cover_cache", validate_library({}, {"cover_cache": "session"})
         )
-        self.assertEqual(
-            (await self.repository.async_ui_preferences("a", area="library"))["values"][
-                "cover_cache"
+        self.assertNotIn(
+            "cover_cache",
+            (await self.repository.async_ui_preferences("legacy", area="library"))[
+                "values"
             ],
-            "persistent",
-        )
-        self.assertEqual(
-            (await self.repository.async_ui_preferences("b", area="library"))["values"][
-                "cover_cache"
-            ],
-            "balanced",
         )
 
     async def test_recent_purchase_badges_use_all_linked_versions_and_dates(self):
