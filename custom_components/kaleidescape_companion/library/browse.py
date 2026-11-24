@@ -292,6 +292,9 @@ def library_info(db, source, excluded=""):
             (source, collection),
         ).fetchone()[0]
     return {
+        "cache_revision": db.execute("SELECT revision FROM schema_metadata").fetchone()[
+            0
+        ],
         "status_counts": {
             key: statuses.get(key, 0)
             for key in ("unwatched", "watched", "in_progress", "unknown", "none")
@@ -735,6 +738,7 @@ def library_list(
             "limit": limit,
             "has_more": len(rows) > limit,
             "revision": info["revision"],
+            "cache_revision": info["cache_revision"],
             "preferences_key": info["preferences_key"],
             "facets": facets,
             "truncated_facets": truncated,
@@ -1051,6 +1055,7 @@ def grouped_page(
             "limit": limit,
             "has_more": len(groups) > limit,
             "revision": info["revision"],
+            "cache_revision": info["cache_revision"],
             "preferences_key": info["preferences_key"],
             "facets": facets,
             "truncated_facets": truncated,

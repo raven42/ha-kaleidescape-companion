@@ -932,9 +932,22 @@ class LibraryApiTest(unittest.IsolatedAsyncioTestCase):
             ORIGIN, ROWS, {"Played": [], "Paused": []}
         )
         reader = SimpleNamespace(id="fictional-reader", is_active=True, is_admin=False)
+        await runtime.repository.async_ui_preferences_update(
+            reader.id,
+            False,
+            repository_tests.request_id(),
+            0,
+            {"random_seed": "a" * 32},
+        )
         info = (await self.call("info", user=reader))["result"]["entries"][0]
         self.assertTrue(info["library_enabled"])
         result = (await self.call("library/info", user=reader, **self.scope))["result"]
+        self.assertEqual(result["random_seed"], "a" * 32)
+        other = SimpleNamespace(id="another-reader", is_active=True, is_admin=False)
+        other_info = (await self.call("library/info", user=other, **self.scope))[
+            "result"
+        ]
+        self.assertEqual(other_info["random_seed"], "")
         self.assertEqual(
             set(result),
             {
@@ -945,6 +958,9 @@ class LibraryApiTest(unittest.IsolatedAsyncioTestCase):
                 "preferences_key",
                 "collection_count",
                 "revision",
+                "cache_revision",
+                "cache_context",
+                "random_seed",
                 "last_synced_at",
                 "collections_synced_at",
             },
@@ -952,6 +968,8 @@ class LibraryApiTest(unittest.IsolatedAsyncioTestCase):
         runtime.library.status.assert_not_called()
         page = (await self.call("library/list", user=reader, **self.scope))["result"]
         self.assertEqual(page["total"], 3)
+        self.assertEqual(page["cache_revision"], result["cache_revision"])
+        self.assertEqual(page["cache_context"], result["cache_context"])
         for row in page["items"]:
             self.assertFalse(
                 set(row)

@@ -714,6 +714,12 @@ it("enables the Library tab after opting in and clears its content on navigation
   page("journal");
   await settle();
   expect(panel.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
+  page("library");
+  await settle();
+  const returned = panel.shadowRoot!.querySelector("kaleidescape-library")!;
+  expect((returned as unknown as { coverQueue: unknown }).coverQueue).toBe(
+    (library as unknown as { coverQueue: unknown }).coverQueue,
+  );
 });
 
 it("applies shared search changes to an already-open New entry picker", async () => {

@@ -1,5 +1,11 @@
 # Development instructions
 
+AI agents must start every commit message, pull request title, and pull request
+description with a descriptive category prefix followed by a colon and a space,
+for example `dev: ...`, `bugfix: ...`, or `doc: ...`. Choose a prefix that fits
+the change; these examples are not an exhaustive list. This requirement applies
+to messages agents create or propose, including merge commits.
+
 Follow [CONTRIBUTING.md](CONTRIBUTING.md) and the
 [development guide](docs/development/README.md). Read the
 [architecture](docs/development/architecture.md),

@@ -1,5 +1,7 @@
 """Household journal reads and administrator management through HA authentication."""
 
+import hashlib
+import json
 import logging
 from typing import Any
 
@@ -28,6 +30,14 @@ from .settings import fingerprint, options_request
 from .settings_transfer import transfer as settings_transfer
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def _library_cache_context(today, weeks, timezone, source):
+    """Represent time-sensitive Library options without exposing their values."""
+    encoded = json.dumps(
+        [today, weeks, timezone, source], separators=(",", ":")
+    ).encode()
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def pyk_version() -> str:
@@ -856,10 +866,22 @@ async def async_handle(
                                     "preferences_key",
                                     "collection_count",
                                     "revision",
+                                    "cache_revision",
                                     "last_synced_at",
                                     "collections_synced_at",
                                 )
                             }
+                        )
+                        result["random_seed"] = (
+                            await repository.async_ui_preferences(user.id)
+                        )["values"]["random_seed"]
+                        result["cache_context"] = _library_cache_context(
+                            dt_util.now().date().isoformat(),
+                            (entry.options or entry.data).get(
+                                "library_recent_purchase_weeks", 2
+                            ),
+                            hass.config.time_zone,
+                            library.source,
                         )
                     elif operation == "library/purchases/summary":
                         result = await repository.async_purchase_totals(library.source)
@@ -938,15 +960,23 @@ async def async_handle(
                                     "refresh the first page",
                                 )
                             filters["random_seed"] = seed
+                        cache_context = [
+                            dt_util.now().date().isoformat(),
+                            (entry.options or entry.data).get(
+                                "library_recent_purchase_weeks", 2
+                            ),
+                            hass.config.time_zone,
+                        ]
                         result = await repository.async_library_list(
                             library.source,
                             filters,
                             excluded,
-                            (entry.options or entry.data).get(
-                                "library_recent_purchase_weeks", 2
-                            ),
-                            dt_util.now().date().isoformat(),
-                            hass.config.time_zone,
+                            cache_context[1],
+                            cache_context[0],
+                            cache_context[2],
+                        )
+                        result["cache_context"] = _library_cache_context(
+                            *cache_context, library.source
                         )
                         if filters.get("sort") == "random":
                             result["random_seed"] = seed

@@ -582,6 +582,8 @@ export type LibrarySummary = Pick<
   | "duration_seconds"
 >;
 export interface LibraryPage {
+  cache_revision?: number;
+  cache_context?: string;
   random_seed?: string;
   limit?: number;
   preferences_key?: string;
@@ -603,6 +605,9 @@ export interface LibraryVersionPage {
   revision: number;
 }
 export interface LibraryInfo {
+  random_seed?: string;
+  cache_revision?: number;
+  cache_context?: string;
   status_counts?: Record<string, number>;
   metadata?: MetadataStatus;
   collection_add_enabled?: boolean;
@@ -2089,6 +2094,7 @@ export class JournalClient {
     let page: LibraryPage | undefined;
     const items: LibrarySummary[] = [];
     let bytes = 0;
+    let cacheConsistent = true;
     while (current()) {
       const next = await this.libraryList(scope, {
         ...filters,
@@ -2112,6 +2118,13 @@ export class JournalClient {
           next.preferences_key !== page.preferences_key)
       )
         throw new ApiError("refresh_required");
+      if (
+        page &&
+        (next.cache_revision !== page.cache_revision ||
+          JSON.stringify(next.cache_context) !==
+            JSON.stringify(page.cache_context))
+      )
+        cacheConsistent = false;
       bytes += new TextEncoder().encode(JSON.stringify(next.items)).byteLength;
       if (items.length + next.items.length > 10000 || bytes > 32 * 1024 * 1024)
         throw new ApiError("library_page_too_large");
@@ -2120,6 +2133,8 @@ export class JournalClient {
       if (!next.has_more)
         return {
           ...next,
+          cache_revision: cacheConsistent ? next.cache_revision : undefined,
+          cache_context: cacheConsistent ? next.cache_context : undefined,
           items,
           offset: 0,
           limit: items.length,

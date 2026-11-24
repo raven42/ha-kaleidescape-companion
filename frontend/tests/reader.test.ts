@@ -220,6 +220,12 @@ it("offers enabled Library browsing to readers without sync/settings and unmount
   await reader.updateComplete;
   expect(reader.shadowRoot!.querySelector("kaleidescape-library")).toBeNull();
   await waitFor("The Lantern Voyage");
+  button("Library").click();
+  await reader.updateComplete;
+  const returned = reader.shadowRoot!.querySelector("kaleidescape-library")!;
+  expect((returned as unknown as { coverQueue: unknown }).coverQueue).toBe(
+    (library as unknown as { coverQueue: unknown }).coverQueue,
+  );
 });
 
 it("opens exact Library details in place for a household reader", async () => {

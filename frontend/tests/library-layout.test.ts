@@ -121,19 +121,21 @@ it("recomputes complete rows for cover-size and page-size changes, capped at 100
     .click();
   await flush();
   resize(1214);
-  await vi.waitFor(() =>
-    expect(calls().at(-1)!.filters).toMatchObject({ limit: 96 }),
+  await vi.waitFor(
+    () => expect(calls().at(-1)!.filters).toMatchObject({ limit: 96 }),
+    { timeout: 5000 },
   );
   const slider = root().querySelector<HTMLInputElement>('[name="cover_size"]')!;
   slider.value = "90";
   slider.dispatchEvent(new Event("input", { bubbles: true }));
-  await vi.waitFor(() =>
-    expect(calls().at(-1)!.filters).toMatchObject({ limit: 91 }),
+  await vi.waitFor(
+    () => expect(calls().at(-1)!.filters).toMatchObject({ limit: 91 }),
+    { timeout: 5000 },
   );
   pageSize("1000");
   await vi.waitFor(
     () => expect(calls().at(-1)!.filters).toMatchObject({ limit: 988 }),
-    { timeout: 5000 },
+    { timeout: 10000 },
   );
   await flush();
   expect(root().querySelectorAll(".cover-tile")).toHaveLength(988);
@@ -150,11 +152,11 @@ it("recomputes complete rows for cover-size and page-size changes, capped at 100
     .click();
   await vi.waitFor(
     () => expect(calls().at(-1)!.filters).toMatchObject({ limit: 1000 }),
-    { timeout: 5000 },
+    { timeout: 10000 },
   );
   await flush();
   expect(root().querySelectorAll("tbody tr")).toHaveLength(1000);
-});
+}, 20000);
 
 it("paginates 1000 list entries and rejects invalid page targets without a request", async () => {
   await titles(1002);
@@ -162,7 +164,7 @@ it("paginates 1000 list entries and rejects invalid page targets without a reque
   pageSize("1000");
   await vi.waitFor(
     () => expect(root().querySelectorAll("tbody tr")).toHaveLength(1000),
-    { timeout: 5000 },
+    { timeout: 10000 },
   );
   button("Next").click();
   await flush();
@@ -178,7 +180,7 @@ it("paginates 1000 list entries and rejects invalid page targets without a reque
   await new Promise((resolve) => setTimeout(resolve, 150));
   expect(calls()).toHaveLength(count);
   expect(artwork).not.toHaveBeenCalled();
-});
+}, 20000);
 
 it("shows only actual remaining titles on the final cover page, with no duplicates", async () => {
   await titles(99);

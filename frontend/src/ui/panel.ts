@@ -1,3 +1,4 @@
+import { CoverSession } from "../library/cover";
 import "./journal-shortcuts";
 import "../cards/cards";
 import "./journal-calendar";
@@ -98,6 +99,7 @@ export class KaleidescapePanel extends LitElement {
   client?: JournalClient;
   narrow = false;
   private api: JournalClient | null = null;
+  private coverSession = new CoverSession();
   private haClient?: JournalClient;
   private haConnection?: Hass["connection"];
   private haUser?: string;
@@ -282,6 +284,7 @@ export class KaleidescapePanel extends LitElement {
     this.bind(null);
   }
   private clearPrivate() {
+    this.coverSession.reset();
     this.modePreferences?.dispose();
     this.modePreferences = undefined;
     this.modeScope = this.modeError = "";
@@ -463,6 +466,7 @@ export class KaleidescapePanel extends LitElement {
       if (generation !== this.generation) return;
       if (!entries.length) throw new ApiError("not_ready");
       if (entries[0].api_version !== 1) throw new ApiError("not_ready");
+      this.coverSession.bind(entries[0]);
       this.info = entries[0];
       if (!this.info.permissions.edit) return;
       const modeScope = `${this.info.entry_id}:${this.info.dataset_id}`;
@@ -779,8 +783,10 @@ export class KaleidescapePanel extends LitElement {
           generation === this.generation &&
           epoch === this.mutationEpoch &&
           entries[0]?.dataset_id === this.info?.dataset_id
-        )
+        ) {
+          this.coverSession.bind(entries[0]);
           this.info = entries[0];
+        }
       } catch (error) {
         if (generation === this.generation && epoch === this.mutationEpoch)
           this.fail(error);
@@ -835,6 +841,7 @@ export class KaleidescapePanel extends LitElement {
         generation === this.generation &&
         entries[0]?.dataset_id === this.info?.dataset_id
       ) {
+        this.coverSession.bind(entries[0]);
         this.info = entries[0];
         this.requestUpdate();
       }
@@ -1678,6 +1685,9 @@ export class KaleidescapePanel extends LitElement {
                         .client=${this.api}
                         .scope=${this.info}
                         .advanced=${true}
+                        .coverQueue=${this.coverSession.queue}
+                        .pageCache=${this.coverSession.pages}
+                        .cacheUser=${this.hass?.user?.id}
                         .openTitleId=${this.libraryTitleId}
                         .openCriterion=${this.libraryCriterion}
                         @access-denied=${() => this.fail(new ApiError("unauthorized"))}

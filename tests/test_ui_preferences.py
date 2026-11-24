@@ -30,6 +30,30 @@ class UISettingsStorageTest(unittest.IsolatedAsyncioTestCase):
                 "a", False, str(uuid4()), 0, {"limit": "everything"}, "database"
             )
 
+    async def test_cover_cache_mode_is_private_and_validated(self):
+        self.assertEqual(validate_library({})["cover_cache"], "balanced")
+        for mode in ("balanced", "session", "persistent"):
+            self.assertEqual(
+                validate_library({"cover_cache": mode})["cover_cache"], mode
+            )
+        with self.assert_error("invalid_request"):
+            validate_library({"cover_cache": "other"})
+        await self.repository.async_ui_preferences_update(
+            "a", False, str(uuid4()), 0, {"cover_cache": "persistent"}, "library"
+        )
+        self.assertEqual(
+            (await self.repository.async_ui_preferences("a", area="library"))["values"][
+                "cover_cache"
+            ],
+            "persistent",
+        )
+        self.assertEqual(
+            (await self.repository.async_ui_preferences("b", area="library"))["values"][
+                "cover_cache"
+            ],
+            "balanced",
+        )
+
     async def test_recent_purchase_badges_use_all_linked_versions_and_dates(self):
         remake = {
             **library.ROWS[0],

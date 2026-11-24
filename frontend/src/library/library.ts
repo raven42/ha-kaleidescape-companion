@@ -1,3 +1,4 @@
+import type { LibraryPageCache } from "./page-cache";
 import { renderRatings } from "../enrichment/ratings";
 import { metadataDetails } from "../enrichment/details";
 import "../enrichment/title-scrape";
@@ -192,6 +193,9 @@ export class KaleidescapeLibrary extends LitElement {
     dashboard: { attribute: false },
     dialogOnly: { type: Boolean },
     advanced: { type: Boolean },
+    coverQueue: { attribute: false },
+    pageCache: { attribute: false },
+    cacheUser: { attribute: false },
   };
   static styles = [styles, libraryStyles, moviePreviewStyles];
   client?: JournalClient;
@@ -201,6 +205,14 @@ export class KaleidescapeLibrary extends LitElement {
   dashboard?: DashboardLibrary;
   dialogOnly = false;
   advanced = false;
+  coverQueue?: CoverQueue;
+  pageCache?: LibraryPageCache;
+  private initialStatus?: Promise<void>;
+  private cachedUnverified = false;
+  cacheUser?: string;
+  private coverCacheMode: "balanced" | "session" | "persistent" = "balanced";
+  private clearingCovers = false;
+  private coverCacheMessage = "";
   private boundClient?: JournalClient;
   private bound = "";
   private generation = 0;
@@ -284,6 +296,8 @@ export class KaleidescapeLibrary extends LitElement {
   private notifiedCollectionJobs = new Set<string>();
   private timer?: ReturnType<typeof setTimeout>;
   private covers = new CoverQueue();
+  private coverPrefetch?: AbortController;
+  private coverPrefetchTimer?: ReturnType<typeof setTimeout>;
   private fuzzySearch = true;
   private mode: "list" | "covers" = "list";
   private coverSize = 150;
@@ -430,6 +444,7 @@ export class KaleidescapeLibrary extends LitElement {
   private visibility = () => {
     clearTimeout(this.timer);
     if (document.hidden) {
+      this.stopCoverPrefetch();
       this.closePreview();
       clearTimeout(this.layoutTimer);
       this.layoutTimer = undefined;
@@ -437,6 +452,7 @@ export class KaleidescapeLibrary extends LitElement {
     } else {
       void this.refreshStatus();
       this.scheduleLayoutPage();
+      this.startCoverPrefetch();
     }
   };
   private readViewFilters() {
@@ -552,12 +568,17 @@ export class KaleidescapeLibrary extends LitElement {
             });
           if (this.openTitleId) void this.openLinkedTitle(this.openTitleId);
         } else {
+          this.initialStatus = this.refreshStatus();
           void this.initializePreferences();
-          void this.refreshStatus();
         }
       }
       return;
     }
+    if (
+      (changed.has("coverQueue") || changed.has("cacheUser")) &&
+      this.preferencesReady
+    )
+      this.configureCoverCache();
     if (changed.has("dashboard") && this.preferencesReady) {
       void this.initializePreferences();
       return;
@@ -651,6 +672,11 @@ export class KaleidescapeLibrary extends LitElement {
       this.mode = values.view as "list" | "covers";
       this.entriesPerPage = values.page_size as number | "all";
       this.coverSize = values.cover_size as number;
+      this.coverCacheMode =
+        values.cover_cache === "session" || values.cover_cache === "persistent"
+          ? values.cover_cache
+          : "balanced";
+      this.configureCoverCache();
       this.movieStatusLabels =
         values.movie_status_labels === "kaleidescape"
           ? "kaleidescape"
@@ -703,6 +729,77 @@ export class KaleidescapeLibrary extends LitElement {
       if (generation === this.generation) this.fail(error);
     }
   }
+  private stopCoverPrefetch() {
+    clearTimeout(this.coverPrefetchTimer);
+    this.coverPrefetchTimer = undefined;
+    this.coverPrefetch?.abort();
+    this.coverPrefetch = undefined;
+  }
+  private startCoverPrefetch() {
+    this.stopCoverPrefetch();
+    if (
+      !this.client ||
+      !this.scope?.library_enabled ||
+      !this.page ||
+      this.mode !== "covers" ||
+      document.hidden ||
+      !this.isConnected
+    )
+      return;
+    const client = this.client,
+      scope = this.scope,
+      queue = this.coverQueue ?? this.covers;
+    const keys = this.page.items
+      .map((item) => item.artwork_key)
+      .filter((key): key is string => !!key);
+    const controller = (this.coverPrefetch = new AbortController());
+    this.coverPrefetchTimer = setTimeout(() => {
+      void queue.prefetch(client, scope, keys, controller.signal, () =>
+        this.fail(new ApiError("unauthorized")),
+      );
+    }, 250);
+  }
+  private coverNamespace() {
+    return this.cacheUser && this.scope
+      ? JSON.stringify([
+          this.cacheUser,
+          this.scope.entry_id,
+          this.scope.dataset_id,
+        ])
+      : undefined;
+  }
+  private configureCoverCache() {
+    const cache = (this.coverQueue ?? this.covers).cache;
+    cache.setUnlimited(this.coverCacheMode === "session");
+    const namespace =
+      this.coverCacheMode === "persistent" ? this.coverNamespace() : undefined;
+    cache.setPersistent(namespace);
+    this.pageCache?.setPersistent(namespace);
+  }
+  private async clearCoverCache() {
+    if (this.clearingCovers) return;
+    this.clearingCovers = true;
+    this.stopCoverPrefetch();
+    this.coverCacheMessage = "";
+    this.requestUpdate();
+    try {
+      const results = await Promise.allSettled([
+        (this.coverQueue ?? this.covers).cache.clear(this.coverNamespace()),
+        this.pageCache?.clear(this.coverNamespace()) ?? Promise.resolve(),
+      ]);
+      if (results.some((result) => result.status === "rejected"))
+        throw new Error("Cache clear failed");
+      this.coverCacheMessage =
+        "Library and cover caches cleared. Covers reload as needed.";
+    } catch {
+      this.coverCacheMessage =
+        "Memory cleared, but saved Library data could not be cleared from this browser.";
+    } finally {
+      this.clearingCovers = false;
+      this.startCoverPrefetch();
+      this.requestUpdate();
+    }
+  }
   private saveFilters() {
     if (!this.dashboard && !this.dialogOnly) writeLibraryFilters(this.applied);
   }
@@ -712,7 +809,10 @@ export class KaleidescapeLibrary extends LitElement {
     this.preferences?.set({ widths: [...this.widths] });
   }
   private clear() {
+    this.stopCoverPrefetch();
     this.closePreview();
+    this.initialStatus = undefined;
+    this.cachedUnverified = false;
     this.previewPointerAnchor = undefined;
     this.previewCache.clear();
     clearTimeout(this.collectionToastTimer);
@@ -872,6 +972,7 @@ export class KaleidescapeLibrary extends LitElement {
   private async setMode(mode: "list" | "covers") {
     if (this.mode === mode) return;
     this.mode = mode;
+    this.startCoverPrefetch();
     this.preferences?.set({ view: mode });
     this.requestUpdate();
     await this.updateComplete;
@@ -912,6 +1013,7 @@ export class KaleidescapeLibrary extends LitElement {
     if (this.detailsLocked) return;
     this.closePreview();
     if (!this.client || !this.scope?.library_enabled) return;
+    this.stopCoverPrefetch();
     this.saveFilters();
     clearTimeout(this.layoutTimer);
     this.layoutTimer = undefined;
@@ -919,12 +1021,76 @@ export class KaleidescapeLibrary extends LitElement {
     const generation = this.generation,
       request = ++this.listRequest,
       limit = this.pageSize;
+    const keyFor = (filters: Filters) =>
+      JSON.stringify([
+        this.scope!.entry_id,
+        this.scope!.dataset_id,
+        this.scope!.permissions.edit,
+        filters,
+        this.fuzzySearch,
+        this.mode,
+        this.entriesPerPage,
+        limit,
+      ]);
+    const cacheKey = keyFor(this.applied);
+    const cacheable = offset === 0 && !this.dashboard && !this.dialogOnly;
+    if (this.cachedUnverified) {
+      this.page = undefined;
+      this.cachedUnverified = false;
+    }
+    let cached =
+      cacheable && !this.page ? this.pageCache?.get(cacheKey) : undefined;
+    if (cached) {
+      this.page = cached;
+      this.cachedUnverified = true;
+    }
     this.requestLimit = limit;
     this.requestedOffset = offset;
     this.loading = true;
     this.error = "";
     this.requestUpdate();
     try {
+      if (!cached && cacheable && !this.page && this.pageCache) {
+        cached = await this.pageCache.restore(cacheKey);
+        if (
+          generation !== this.generation ||
+          request !== this.listRequest ||
+          limit !== this.pageSize
+        )
+          return;
+        if (cached) {
+          this.page = cached;
+          this.cachedUnverified = true;
+          this.requestUpdate();
+        }
+      }
+      if (cached) {
+        await this.initialStatus;
+        if (
+          generation !== this.generation ||
+          request !== this.listRequest ||
+          limit !== this.pageSize
+        )
+          return;
+        if (
+          this.info &&
+          this.info.revision === cached.revision &&
+          typeof cached.cache_revision === "number" &&
+          this.info.cache_revision === cached.cache_revision &&
+          typeof cached.cache_context === "string" &&
+          JSON.stringify(this.info.cache_context) ===
+            JSON.stringify(cached.cache_context) &&
+          this.info.preferences_key === cached.preferences_key &&
+          (this.applied.sort !== "random" ||
+            (typeof cached.random_seed === "string" &&
+              cached.random_seed === this.applied.random_seed &&
+              cached.random_seed === this.info.random_seed))
+        ) {
+          this.cachedUnverified = false;
+          this.startCoverPrefetch();
+          return;
+        }
+      }
       const page =
         this.entriesPerPage === "all"
           ? await this.client.libraryAll(
@@ -965,6 +1131,20 @@ export class KaleidescapeLibrary extends LitElement {
       )
         this.previewCache.clear();
       this.page = page;
+      this.cachedUnverified = false;
+      if (
+        cacheable &&
+        typeof page.cache_revision === "number" &&
+        typeof page.cache_context === "string" &&
+        (this.applied.sort !== "random" || typeof page.random_seed === "string")
+      ) {
+        const actualFilters =
+          this.applied.sort === "random"
+            ? { ...this.applied, random_seed: page.random_seed ?? "" }
+            : this.applied;
+        this.pageCache?.put(keyFor(actualFilters), page);
+      }
+      this.startCoverPrefetch();
       if (page.random_seed !== undefined && this.applied.sort === "random") {
         this.applied.random_seed = page.random_seed;
         this.filters.random_seed = page.random_seed;
@@ -1043,6 +1223,9 @@ export class KaleidescapeLibrary extends LitElement {
             collection_count: info.collection_count,
             name_count: info.name_count,
             revision: info.revision,
+            cache_revision: info.cache_revision,
+            cache_context: info.cache_context,
+            random_seed: info.random_seed,
             preferences_key: info.preferences_key,
             last_synced_at: info.last_synced_at,
             collections_synced_at: info.collections_synced_at,
@@ -1050,8 +1233,26 @@ export class KaleidescapeLibrary extends LitElement {
       if (this.display.show_library_cost) void this.loadPurchaseTotals();
       if (
         this.page &&
+        this.applied.sort === "random" &&
+        typeof info.random_seed === "string" &&
+        this.page.random_seed !== info.random_seed &&
+        !this.loading &&
+        !this.preferences?.unsettled &&
+        !this.detailsLocked
+      ) {
+        this.applied.random_seed = info.random_seed;
+        this.filters.random_seed = info.random_seed;
+        void this.load(0, true);
+      } else if (
+        this.page &&
         (this.page.revision !== info.revision ||
-          this.page.preferences_key !== info.preferences_key) &&
+          this.page.preferences_key !== info.preferences_key ||
+          (typeof this.page.cache_revision === "number" &&
+            typeof info.cache_revision === "number" &&
+            this.page.cache_revision !== info.cache_revision) ||
+          (typeof this.page.cache_context === "string" &&
+            typeof info.cache_context === "string" &&
+            this.page.cache_context !== info.cache_context)) &&
         !this.loading
       )
         if (this.selected) {
@@ -1156,6 +1357,7 @@ export class KaleidescapeLibrary extends LitElement {
     }
   }
   private select(row: LibrarySummary) {
+    if (this.cachedUnverified) return;
     this.closePreview();
     this.clearVersions();
     this.selected = row;
@@ -1463,7 +1665,7 @@ export class KaleidescapeLibrary extends LitElement {
     return html`<kaleidescape-library-cover
       .client=${this.client}
       .scope=${this.scope}
-      .queue=${this.covers}
+      .queue=${this.coverQueue ?? this.covers}
       .artworkKey=${artworkKey}
       .title=${row.title}
     ></kaleidescape-library-cover>`;
@@ -1686,6 +1888,45 @@ export class KaleidescapeLibrary extends LitElement {
             ${[25, 100, 1000, "all"].map((value) => html`<option value=${value} ?selected=${value === this.entriesPerPage}>${value === "all" ? "All" : value}</option>`)}
           </select></label
         >
+        <label
+          >Library and cover cache<select
+            name="cover_cache"
+            .value=${this.coverCacheMode}
+            @change=${(event: Event) => {
+              const mode = (event.target as HTMLSelectElement).value;
+              if (
+                mode !== "balanced" &&
+                mode !== "session" &&
+                mode !== "persistent"
+              )
+                return;
+              this.coverCacheMode = mode;
+              this.configureCoverCache();
+              this.preferences?.set({ cover_cache: mode });
+              this.requestUpdate();
+            }}
+          >
+            <option value="balanced">Balanced</option>
+            <option value="session">Keep for panel session</option>
+            <option value="persistent" ?disabled=${!this.cacheUser}>
+              Keep across restarts
+            </option>
+          </select></label
+        >
+        <small
+          >Balanced limits memory. Session retains all loaded covers in memory
+          until the panel closes. Across restarts also saves Library results and
+          covers in this browser; browser storage can be cleared or evicted. The
+          server artwork cache has a separate limit.</small
+        >
+        <button
+          type="button"
+          ?disabled=${this.clearingCovers}
+          @click=${this.clearCoverCache}
+        >
+          Clear Library and cover cache
+        </button>
+        ${this.coverCacheMessage ? html`<small role="status">${this.coverCacheMessage}</small>` : nothing}
         ${
           this.mode === "covers"
             ? html`<label
@@ -2485,6 +2726,7 @@ export class KaleidescapeLibrary extends LitElement {
       }}
     >
       <div class="library-notifications" aria-label="Library notifications">
+        ${this.cachedUnverified ? html`<p role="status">${this.loading ? "Checking cached Library…" : "Cached Library could not be refreshed. Use Refresh cached data to retry."}</p>` : nothing}
         ${
           this.preferenceError
             ? html`<div
@@ -2778,6 +3020,7 @@ export class KaleidescapeLibrary extends LitElement {
                 ${coverItems.map(
                   (item) =>
                     html`<button
+                      ?disabled=${this.cachedUnverified}
                       class=${`cover-tile${this.display.show_titles ? " has-title" : ""}${this.display.show_rating && item.rating ? " has-rating" : ""}`}
                       aria-label=${`Details for ${item.title}${item.year ? ` (${item.year})` : ""}${this.warningMessage(item) ? `; ${this.warningMessage(item)}` : ""}`}
                       aria-describedby=${this.previewItem?.id === item.id && this.previewAnchor ? "library-movie-preview" : nothing}
@@ -2923,6 +3166,7 @@ export class KaleidescapeLibrary extends LitElement {
                           <td>
                             <button
                               class="link"
+                              ?disabled=${this.cachedUnverified}
                               @click=${() => this.select(item)}
                             >
                               ${item.title}
