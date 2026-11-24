@@ -46,3 +46,11 @@ the current state and choose a compatible backup. Retain pending-operation and
 uncertainty evidence during recovery; it prevents duplicate external writes. See
 [data management](../development/data-management.md) and
 [backup contracts](../development/journal.md#exports-backups-and-restore).
+
+## Known bugs
+
+- **A receipt can link to the wrong remake.** When the initial import has no
+  usable release-year evidence, it may automatically link the only matching
+  Library title. Correct the association under **Database → Purchases → Edit
+  entry**, or unlink it and reconcile it after the correct movie is scanned. See
+  [purchase matching and workarounds](../development/data-management.md#import-a-purchase-email-from-an-automation).

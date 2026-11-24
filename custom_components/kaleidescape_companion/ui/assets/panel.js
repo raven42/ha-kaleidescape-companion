@@ -19408,7 +19408,7 @@ function ka(e, t, n) {
 }
 var Aa = class extends C {
 	constructor(...e) {
-		super(...e), this.row = {}, this.token = "", this.reverse = !1, this.editOnly = !1, this.action = "correct", this.draft = {}, this.query = "", this.results = [], this.owner = null, this.ownerLabel = "", this.confirmed = !1, this.busy = !1, this.error = "", this.fieldErrors = {}, this.generation = 0;
+		super(...e), this.row = {}, this.token = "", this.reverse = !1, this.editOnly = !1, this.action = "correct", this.draft = {}, this.query = "", this.results = [], this.owner = null, this.ownerLabel = "", this.confirmed = !1, this.busy = !1, this.error = "", this.fieldErrors = {}, this.generation = 0, this.searchGeneration = 0, this.searching = !1, this.searched = !1;
 	}
 	static {
 		this.properties = {
@@ -19459,9 +19459,13 @@ var Aa = class extends C {
         background: rgba(36, 145, 76, 0.2);
         border-left: 3px solid #319653;
       }
-      .search-results {
-        max-height: 16rem;
-        overflow: auto;
+      .association-controls {
+        display: grid;
+        gap: 0.8rem;
+        justify-items: start;
+      }
+      .association-controls label {
+        width: 100%;
       }
     `];
 	}
@@ -19472,7 +19476,7 @@ var Aa = class extends C {
 		this.renderRoot.querySelector("dialog")?.showModal();
 	}
 	disconnectedCallback() {
-		this.generation++, super.disconnectedCallback();
+		this.generation++, this.searchGeneration++, clearTimeout(this.searchTimer), super.disconnectedCallback();
 	}
 	confirmNavigation() {
 		return this.busy || this.pending ? !1 : !this.review && (this.reverse || !Object.keys(this.changes()).length) || window.confirm("Discard this purchase repair review?");
@@ -19496,18 +19500,19 @@ var Aa = class extends C {
 			composed: !0
 		})));
 	}
-	async search() {
-		if (!this.client || !this.scope || this.busy) return;
-		let e = ++this.generation;
-		this.busy = !0, this.notifyBusy(), this.error = "", this.requestUpdate();
-		try {
-			let t = await this.client.librarySearch(this.scope, this.query, !1);
-			e === this.generation && (this.results = t.items);
-		} catch (t) {
-			e === this.generation && this.report(t);
-		} finally {
-			e === this.generation && (this.busy = !1, this.notifyBusy(), this.requestUpdate());
-		}
+	search(e) {
+		this.query = e, clearTimeout(this.searchTimer);
+		let t = ++this.searchGeneration;
+		this.results = [], this.searched = !1, this.searching = !1, e.trim().length >= 3 && this.client && this.scope && (this.searching = !0, this.searchTimer = setTimeout(async () => {
+			try {
+				let n = await this.client.librarySearch(this.scope, e.trim(), !1);
+				t === this.searchGeneration && this.isConnected && (this.results = n.items, this.searched = !0);
+			} catch (e) {
+				t === this.searchGeneration && this.isConnected && this.report(e);
+			} finally {
+				t === this.searchGeneration && this.isConnected && (this.searching = !1, this.requestUpdate());
+			}
+		}, 200)), this.requestUpdate();
 	}
 	changes() {
 		let e = {};
@@ -19515,7 +19520,7 @@ var Aa = class extends C {
 			let n = this.draft[t] || null;
 			n !== (this.row[t] ?? null) && (e[t] = n);
 		}
-		return !this.editOnly && this.owner !== (this.row.library_id ?? null) && (e.library_id = this.owner), e;
+		return this.owner !== (this.row.library_id ?? null) && (e.library_id = this.owner), e;
 	}
 	validate() {
 		let e = {}, t = this.draft.title ?? "";
@@ -19537,7 +19542,7 @@ var Aa = class extends C {
 			} catch {}
 			(!t || [...i].length > 2048 || [...i].some((e) => e.charCodeAt(0) < 32)) && (e.href = "Enter an HTTP(S) link without credentials or a /movie-store/ path, or leave it empty.");
 		}
-		return this.fieldErrors = e, Object.keys(e).length ? (this.error = "Correct the highlighted fields before reviewing the change.", !1) : Object.keys(this.changes()).length ? !0 : (this.error = this.editOnly ? "Change a purchase field before reviewing." : "Change a purchase field or its Library association before reviewing.", !1);
+		return this.fieldErrors = e, Object.keys(e).length ? (this.error = "Correct the highlighted fields before reviewing the change.", !1) : Object.keys(this.changes()).length ? !0 : (this.error = "Change a purchase field or its Library association before reviewing.", !1);
 	}
 	async preview() {
 		if (!this.client || !this.scope || this.busy) return;
@@ -19668,44 +19673,48 @@ var Aa = class extends C {
                                     `)}
                                 </div>
                                 <p>Library association: ${this.ownerLabel}</p>
-                                ${this.editOnly ? x : v`<label
-                                          >Find a Library movie<input
-                                            type="search"
-                                            .value=${this.query}
+                                <div class="association-controls">
+                                  <label
+                                    >Find a Library movie
+                                    <input
+                                      type="search"
+                                      .value=${this.query}
+                                      ?disabled=${this.busy}
+                                      aria-describedby="library-search-hint"
+                                      @input=${(e) => this.search(e.target.value)}
+                                    />
+                                  </label>
+                                  <small id="library-search-hint"
+                                    >Enter at least 3 characters to
+                                    search.</small
+                                  >
+                                  ${this.searching ? v`<small role="status">Searching Library…</small>` : x}
+                                  ${this.searched ? v`<label
+                                          >Matching Library movies
+                                          <select
                                             ?disabled=${this.busy}
-                                            @input=${(e) => {
-			this.query = e.target.value;
+                                            .value=${""}
+                                            @change=${(e) => {
+			let t = this.results.find((t) => t.id === e.target.value);
+			t && (this.owner = t.id, this.ownerLabel = `${t.title}${t.year ? ` (${t.year})` : ""}`, this.search(""));
 		}}
-                                        /></label>
-                                        <button
-                                          type="button"
-                                          ?disabled=${this.busy}
-                                          @click=${this.search}
-                                        >
-                                          Search Library
-                                        </button>
-                                        <button
-                                          type="button"
-                                          ?disabled=${this.busy}
-                                          @click=${() => {
-			this.owner = null, this.ownerLabel = "Unlinked", this.requestUpdate();
+                                          >
+                                            <option value="">
+                                              ${this.results.length ? "Select a movie" : "No matching movies"}
+                                            </option>
+                                            ${this.results.map((e) => v`<option value=${e.id}>${e.title} ${e.year ? `(${e.year})` : ""}</option>`)}
+                                          </select>
+                                        </label>` : x}
+                                  <button
+                                    type="button"
+                                    ?disabled=${this.busy || !this.owner}
+                                    @click=${() => {
+			this.owner = null, this.ownerLabel = "Unlinked", this.search("");
 		}}
-                                        >
-                                          Unlink purchase
-                                        </button>
-                                        <div class="search-results">
-                                          ${this.results.map((e) => v`
-                                              <button
-                                                type="button"
-                                                ?disabled=${this.busy}
-                                                @click=${() => {
-			this.owner = e.id, this.ownerLabel = e.title, this.results = [], this.requestUpdate();
-		}}
-                                              >
-                                                ${e.title} ${e.year ?? ""}
-                                              </button>
-                                            `)}
-                                        </div>`}
+                                  >
+                                    Unlink purchase
+                                  </button>
+                                </div>
                               ` : v`<p class="warning">
                                 Voiding removes this invoice from active totals
                                 and prevents its identity from being imported

@@ -123,9 +123,13 @@ export class KaleidescapePurchaseRepair extends LitElement {
         background: rgba(36, 145, 76, 0.2);
         border-left: 3px solid #319653;
       }
-      .search-results {
-        max-height: 16rem;
-        overflow: auto;
+      .association-controls {
+        display: grid;
+        gap: 0.8rem;
+        justify-items: start;
+      }
+      .association-controls label {
+        width: 100%;
       }
     `,
   ];
@@ -148,6 +152,10 @@ export class KaleidescapePurchaseRepair extends LitElement {
   private error = "";
   private fieldErrors: Record<string, string> = {};
   private generation = 0;
+  private searchGeneration = 0;
+  private searchTimer?: ReturnType<typeof setTimeout>;
+  private searching = false;
+  private searched = false;
 
   connectedCallback() {
     super.connectedCallback();
@@ -163,6 +171,8 @@ export class KaleidescapePurchaseRepair extends LitElement {
   }
   disconnectedCallback() {
     this.generation++;
+    this.searchGeneration++;
+    clearTimeout(this.searchTimer);
     super.disconnectedCallback();
   }
   confirmNavigation() {
@@ -198,29 +208,38 @@ export class KaleidescapePurchaseRepair extends LitElement {
       );
     }
   }
-  private async search() {
-    if (!this.client || !this.scope || this.busy) return;
-    const generation = ++this.generation;
-    this.busy = true;
-    this.notifyBusy();
-    this.error = "";
-    this.requestUpdate();
-    try {
-      const result = await this.client.librarySearch(
-        this.scope,
-        this.query,
-        false,
-      );
-      if (generation === this.generation) this.results = result.items;
-    } catch (error) {
-      if (generation === this.generation) this.report(error);
-    } finally {
-      if (generation === this.generation) {
-        this.busy = false;
-        this.notifyBusy();
-        this.requestUpdate();
-      }
+  private search(value: string) {
+    this.query = value;
+    clearTimeout(this.searchTimer);
+    const generation = ++this.searchGeneration;
+    this.results = [];
+    this.searched = false;
+    this.searching = false;
+    if (value.trim().length >= 3 && this.client && this.scope) {
+      this.searching = true;
+      this.searchTimer = setTimeout(async () => {
+        try {
+          const result = await this.client!.librarySearch(
+            this.scope!,
+            value.trim(),
+            false,
+          );
+          if (generation === this.searchGeneration && this.isConnected) {
+            this.results = result.items;
+            this.searched = true;
+          }
+        } catch (error) {
+          if (generation === this.searchGeneration && this.isConnected)
+            this.report(error);
+        } finally {
+          if (generation === this.searchGeneration && this.isConnected) {
+            this.searching = false;
+            this.requestUpdate();
+          }
+        }
+      }, 200);
     }
+    this.requestUpdate();
   }
   private changes(): Record<string, unknown> {
     const changes: Record<string, unknown> = {};
@@ -228,7 +247,7 @@ export class KaleidescapePurchaseRepair extends LitElement {
       const value = this.draft[key] || null;
       if (value !== (this.row[key] ?? null)) changes[key] = value;
     }
-    if (!this.editOnly && this.owner !== (this.row.library_id ?? null))
+    if (this.owner !== (this.row.library_id ?? null))
       changes.library_id = this.owner;
     return changes;
   }
@@ -294,9 +313,8 @@ export class KaleidescapePurchaseRepair extends LitElement {
       return false;
     }
     if (!Object.keys(this.changes()).length) {
-      this.error = this.editOnly
-        ? "Change a purchase field before reviewing."
-        : "Change a purchase field or its Library association before reviewing.";
+      this.error =
+        "Change a purchase field or its Library association before reviewing.";
       return false;
     }
     return true;
@@ -451,57 +469,64 @@ export class KaleidescapePurchaseRepair extends LitElement {
                                   )}
                                 </div>
                                 <p>Library association: ${this.ownerLabel}</p>
-                                ${
-                                  !this.editOnly
-                                    ? html`<label
-                                          >Find a Library movie<input
-                                            type="search"
-                                            .value=${this.query}
+                                <div class="association-controls">
+                                  <label
+                                    >Find a Library movie
+                                    <input
+                                      type="search"
+                                      .value=${this.query}
+                                      ?disabled=${this.busy}
+                                      aria-describedby="library-search-hint"
+                                      @input=${(event: Event) => this.search((event.target as HTMLInputElement).value)}
+                                    />
+                                  </label>
+                                  <small id="library-search-hint"
+                                    >Enter at least 3 characters to
+                                    search.</small
+                                  >
+                                  ${this.searching ? html`<small role="status">Searching Library…</small>` : nothing}
+                                  ${
+                                    this.searched
+                                      ? html`<label
+                                          >Matching Library movies
+                                          <select
                                             ?disabled=${this.busy}
-                                            @input=${(event: Event) => {
-                                              this.query = (
-                                                event.target as HTMLInputElement
-                                              ).value;
+                                            .value=${""}
+                                            @change=${(event: Event) => {
+                                              const item = this.results.find(
+                                                (entry) =>
+                                                  entry.id ===
+                                                  (
+                                                    event.target as HTMLSelectElement
+                                                  ).value,
+                                              );
+                                              if (item) {
+                                                this.owner = item.id;
+                                                this.ownerLabel = `${item.title}${item.year ? ` (${item.year})` : ""}`;
+                                                this.search("");
+                                              }
                                             }}
-                                        /></label>
-                                        <button
-                                          type="button"
-                                          ?disabled=${this.busy}
-                                          @click=${this.search}
-                                        >
-                                          Search Library
-                                        </button>
-                                        <button
-                                          type="button"
-                                          ?disabled=${this.busy}
-                                          @click=${() => {
-                                            this.owner = null;
-                                            this.ownerLabel = "Unlinked";
-                                            this.requestUpdate();
-                                          }}
-                                        >
-                                          Unlink purchase
-                                        </button>
-                                        <div class="search-results">
-                                          ${this.results.map(
-                                            (item) => html`
-                                              <button
-                                                type="button"
-                                                ?disabled=${this.busy}
-                                                @click=${() => {
-                                                  this.owner = item.id;
-                                                  this.ownerLabel = item.title;
-                                                  this.results = [];
-                                                  this.requestUpdate();
-                                                }}
-                                              >
-                                                ${item.title} ${item.year ?? ""}
-                                              </button>
-                                            `,
-                                          )}
-                                        </div>`
-                                    : nothing
-                                }
+                                          >
+                                            <option value="">
+                                              ${this.results.length ? "Select a movie" : "No matching movies"}
+                                            </option>
+                                            ${this.results.map((item) => html`<option value=${item.id}>${item.title} ${item.year ? `(${item.year})` : ""}</option>`)}
+                                          </select>
+                                        </label>`
+                                      : nothing
+                                  }
+                                  <button
+                                    type="button"
+                                    ?disabled=${this.busy || !this.owner}
+                                    @click=${() => {
+                                      this.owner = null;
+                                      this.ownerLabel = "Unlinked";
+                                      this.search("");
+                                    }}
+                                  >
+                                    Unlink purchase
+                                  </button>
+                                </div>
                               `
                             : html`<p class="warning">
                                 Voiding removes this invoice from active totals

@@ -105,7 +105,44 @@ it("opens the selected purchase in the reviewed repair panel", async () => {
   ).toBe("Fictional purchase");
   expect(repair.shadowRoot!.textContent).toContain("Edit purchase");
   expect(repair.shadowRoot!.textContent).not.toContain("Void purchase");
-  expect(repair.shadowRoot!.textContent).not.toContain("Unlink purchase");
+  expect(repair.shadowRoot!.textContent).toContain("Unlink purchase");
+  const panel = repair.shadowRoot!;
+  const search = panel.querySelector<HTMLInputElement>('input[type="search"]')!;
+  search.value = "Mi";
+  search.dispatchEvent(new Event("input"));
+  await new Promise((resolve) => setTimeout(resolve, 250));
+  expect(
+    transport.calls.some((call) => call.type.endsWith("/library/search")),
+  ).toBe(false);
+  search.value = "Midnight at the Observatory";
+  search.dispatchEvent(new Event("input"));
+  await vi.waitFor(() =>
+    expect(
+      panel.querySelector('option[value="' + "b".repeat(64) + '"]'),
+    ).not.toBeNull(),
+  );
+  const matches = panel.querySelector<HTMLSelectElement>(
+    ".association-controls select",
+  )!;
+  matches.value = "b".repeat(64);
+  matches.dispatchEvent(new Event("change"));
+  await (repair as HTMLElement & { updateComplete: Promise<unknown> })
+    .updateComplete;
+  [...panel.querySelectorAll("button")]
+    .find((node) => node.textContent?.trim() === "Review change")!
+    .click();
+  await vi.waitFor(() =>
+    expect(
+      transport.calls.some((call) =>
+        call.type.endsWith("/purchases/repair/preview"),
+      ),
+    ).toBe(true),
+  );
+  expect(
+    transport.calls.find((call) =>
+      call.type.endsWith("/purchases/repair/preview"),
+    ),
+  ).toMatchObject({ changes: { library_id: "b".repeat(64) } });
   expect(
     root().querySelector<HTMLButtonElement>("#table-viewings")!.disabled,
   ).toBe(true);
