@@ -3,7 +3,7 @@
 Entries record development history. Later entries can supersede earlier
 behavior; the [documentation index](docs/README.md) owns current contracts.
 
-## Unreleased — Breaking change: player action targets
+## 0.7.0-alpha — Breaking change: player action targets
 
 - Player actions now target devices from Home Assistant's built-in Kaleidescape
   integration. Companion removes its former player device entries; actions saved
@@ -14,6 +14,15 @@ behavior; the [documentation index](docs/README.md) owns current contracts.
   are removed, listing related loaded automations and scripts when HA can
   identify them. The Repair can check again after updates and links to editors
   when registry information is available.
+
+## 0.7.0-alpha — Library, navigation and diagnostics
+
+- Cache Library data in the browser and retain view, filter and scroll context
+  across navigation and Settings saves.
+- Show internal sensor values and attributes in About, with scrape providers and
+  counts on the Last scrape date sensor.
+- Allow purchase records to be reassigned or unlinked from Library entries.
+- Simplify maintainer build and deployment tasks and update dependencies.
 
 ## Unreleased — Alpha preparation tooling and documentation
 

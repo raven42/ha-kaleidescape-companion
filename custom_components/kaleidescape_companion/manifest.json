@@ -28,5 +28,5 @@
     "pykaleidescape>=1.2.0"
   ],
   "single_config_entry": true,
-  "version": "0.6.0-alpha"
+  "version": "0.7.0-alpha"
 }
