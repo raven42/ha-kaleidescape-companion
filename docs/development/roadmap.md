@@ -184,7 +184,7 @@ archive inspection do not close these external gates.
 ## Release readiness
 
 - Declare and test supported HA releases. Manifest repository URLs and ownership
-  are populated; `0.6.0-alpha` identifies the next unqualified alpha candidate
+  are populated; `0.7.0-alpha` identifies the next unqualified alpha candidate
   across the integration, project and frontend. Original project work uses
   Apache-2.0; the bundled pyk MIT license covers that dependency only. Publish a
   new matching tag after the applicable external qualification gates pass. HA

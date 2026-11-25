@@ -1,7 +1,7 @@
 # Preparing a release
 
 Companion is preparing for a public alpha custom-repository release.
-`0.6.0-alpha` is the current alpha candidate. Original Companion code is
+`0.7.0-alpha` is the current alpha candidate. Original Companion code is
 Apache-2.0 licensed; [NOTICE](../../NOTICE) identifies retained third-party
 material, including the bundled pyk dependency under its own MIT license.
 Hardware, restore and HACS qualification remain explicit release gates in the
