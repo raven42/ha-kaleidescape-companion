@@ -92,7 +92,7 @@ class ToolingTest(unittest.TestCase):
                 pyk.assert_not_called()
                 npm.assert_not_called()
 
-    def test_ci_requires_quality_gate_before_test_jobs(self):
+    def test_ci_runs_quality_and_test_jobs_independently(self):
         import yaml
 
         workflow = yaml.safe_load((tasks.ROOT / ".github/workflows/ci.yml").read_text())
@@ -101,7 +101,7 @@ class ToolingTest(unittest.TestCase):
         self.assertIn("scripts/lint", commands)
         self.assertIn("scripts/format --check", commands)
         for name in ("providers", "python", "frontend"):
-            self.assertEqual(jobs[name]["needs"], "lint")
+            self.assertNotIn("needs", jobs[name])
 
     def test_combined_build_and_check_runs_quality_once_before_build_and_tests(self):
         order = Mock()

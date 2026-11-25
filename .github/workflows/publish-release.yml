@@ -7,10 +7,23 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   checks:
-    uses: ./.github/workflows/ci.yml
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Wait for successful CI on the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SHA: ${{ github.sha }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
+        run: python scripts/src/release_ci.py
 
   hassfest:
     runs-on: ubuntu-latest

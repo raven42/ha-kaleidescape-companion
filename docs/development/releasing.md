@@ -74,8 +74,11 @@ current qualification evidence before a separately authorized alpha prerelease.
 
 After every release gate is satisfied, push a tag exactly matching the candidate
 version, for example `v0.6.0-alpha`. The **Publish tagged release** workflow
-checks that match, runs **CI** checks, hassfest, HACS validation and the runtime
-package inspection. It then creates the GitHub Release and attaches:
+checks that match and waits for the latest **CI** push run on `main` for the
+exact tagged commit to succeed. If no matching run appears or it does not finish
+within 15 minutes, publication fails. The workflow also runs hassfest, HACS
+validation and the runtime package inspection in the tag context. It then
+creates the GitHub Release and attaches:
 
 - `kaleidescape-companion.tar.gz` — the deployable Home Assistant integration;
 - its SHA-256 checksum; and
