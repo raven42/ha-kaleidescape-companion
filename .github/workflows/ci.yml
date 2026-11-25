@@ -33,7 +33,6 @@ jobs:
       - run: .venv/bin/python -c "from scripts.src.tasks import shell_check; shell_check()"
 
   providers:
-    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -45,7 +44,6 @@ jobs:
       - run: scripts/test --live-player-only
 
   python:
-    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -61,7 +59,6 @@ jobs:
       - run: scripts/check-project
 
   frontend:
-    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

@@ -3,6 +3,12 @@
 Entries record development history. Later entries can supersede earlier
 behavior; the [documentation index](docs/README.md) owns current contracts.
 
+## Unreleased — Release workflow
+
+- Run CI jobs in parallel and reuse the successful main-branch CI result for the
+  exact tagged commit before publishing, while retaining tag-specific
+  validation.
+
 ## 0.7.0-alpha — Breaking change: player action targets
 
 - Player actions now target devices from Home Assistant's built-in Kaleidescape
