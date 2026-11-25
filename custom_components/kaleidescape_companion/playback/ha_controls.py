@@ -5,10 +5,10 @@ from uuid import uuid4
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import device_registry as dr
 
-from ..const import DOMAIN
 from ..core.models import JournalError
 from ..core.security import is_active_user
 from .control_config import COMMANDS, fingerprint
+from .identity import normalize_serial
 
 # Fixed, button-compatible pyk and Companion commands.
 FIXED_ACTIONS = {
@@ -56,23 +56,33 @@ FIXED_ACTIONS = {
 }
 
 
-def player_identifier(dataset, serial):
-    """Identify Companion's device entry for a discovered player."""
-    return f"{dataset}:player:{serial}"
-
-
 def resolve_player(hass, runtime, device_id):
-    """Resolve a selected HA device to a currently discovered movie player."""
+    """Match a built-in Kaleidescape device to one discovered Companion player."""
     device = dr.async_get(hass).async_get(device_id)
-    if device is not None:
-        for player in runtime.controls.devices:
-            if (
-                player["is_player"]
-                and (DOMAIN, player_identifier(runtime.dataset_id, player["serial"]))
-                in device.identifiers
-            ):
-                return player["serial"]
-    raise HomeAssistantError("Select a discovered Companion movie player")
+    entry = (
+        hass.config_entries.async_get_entry(device.config_entry_id)
+        if device is not None and device.config_entry_id
+        else None
+    )
+    if entry is not None and entry.domain == "kaleidescape":
+        serials = set()
+        for domain, identity in device.identifiers:
+            if domain != "kaleidescape":
+                continue
+            try:
+                serials.add(normalize_serial(identity))
+            except ValueError:
+                continue
+        matches = {
+            player["serial"]
+            for player in runtime.controls.devices
+            if player["is_player"] and normalize_serial(player["serial"]) in serials
+        }
+        if len(matches) == 1:
+            return matches.pop()
+    raise HomeAssistantError(
+        "Select a built-in Kaleidescape player discovered in Companion settings"
+    )
 
 
 async def authorize_control(hass, entry, serial, context):

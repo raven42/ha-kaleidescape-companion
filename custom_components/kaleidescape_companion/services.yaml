@@ -90,7 +90,7 @@ play_movie:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
     title:
       name: Movie title
       description: Exact Library title. Provide this or a version ID.
@@ -111,7 +111,7 @@ keyboard_character:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
     value:
       name: Character
       required: true
@@ -127,7 +127,7 @@ set_player_input:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
     value:
       name: Input text
       required: true
@@ -143,7 +143,7 @@ open_movie_collection:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
     value:
       name: Collection name
       required: true
@@ -159,7 +159,7 @@ player_power_on:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_power_off:
   name: Player Standby
@@ -170,7 +170,7 @@ player_power_off:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_play:
   name: Player Play
@@ -181,7 +181,7 @@ player_play:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_pause:
   name: Player Pause
@@ -192,7 +192,7 @@ player_pause:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_resume:
   name: Player Resume
@@ -203,7 +203,7 @@ player_resume:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_pause_toggle:
   name: Player Toggle pause
@@ -214,7 +214,7 @@ player_pause_toggle:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_play_pause:
   name: Player Play or pause
@@ -225,7 +225,7 @@ player_play_pause:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_stop:
   name: Player Stop
@@ -236,7 +236,7 @@ player_stop:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_next:
   name: Player Next chapter
@@ -247,7 +247,7 @@ player_next:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_previous:
   name: Player Previous chapter
@@ -258,7 +258,7 @@ player_previous:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_replay:
   name: Player Replay
@@ -269,7 +269,7 @@ player_replay:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_scan_forward:
   name: Player Scan forward
@@ -280,7 +280,7 @@ player_scan_forward:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_scan_reverse:
   name: Player Scan reverse
@@ -291,7 +291,7 @@ player_scan_reverse:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_up:
   name: Player Up
@@ -302,7 +302,7 @@ player_up:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_down:
   name: Player Down
@@ -313,7 +313,7 @@ player_down:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_left:
   name: Player Left
@@ -324,7 +324,7 @@ player_left:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_right:
   name: Player Right
@@ -335,7 +335,7 @@ player_right:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_select:
   name: Player Select
@@ -346,7 +346,7 @@ player_select:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_back:
   name: Player Back
@@ -357,7 +357,7 @@ player_back:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_cancel:
   name: Player Cancel
@@ -368,7 +368,7 @@ player_cancel:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_backspace:
   name: Player Backspace
@@ -379,7 +379,7 @@ player_backspace:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_page_up:
   name: Player Page up
@@ -390,7 +390,7 @@ player_page_up:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_page_down:
   name: Player Page down
@@ -401,7 +401,7 @@ player_page_down:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_menu:
   name: Player Toggle menu
@@ -412,7 +412,7 @@ player_menu:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_menu_on:
   name: Player Open menu
@@ -423,7 +423,7 @@ player_menu_on:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_menu_off:
   name: Player Close menu
@@ -434,7 +434,7 @@ player_menu_off:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_details:
   name: Player Details
@@ -445,7 +445,7 @@ player_details:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_status_and_settings:
   name: Player Status and settings
@@ -456,7 +456,7 @@ player_status_and_settings:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_go_movies:
   name: Player Go to movies
@@ -467,7 +467,7 @@ player_go_movies:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_movies:
   name: Player Movie covers
@@ -478,7 +478,7 @@ player_movies:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_movie_list:
   name: Player Movie list
@@ -489,7 +489,7 @@ player_movie_list:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_movie_collections:
   name: Player Movie collections
@@ -500,7 +500,7 @@ player_movie_collections:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_movie_store:
   name: Player Movie Store
@@ -511,7 +511,7 @@ player_movie_store:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_search:
   name: Player Search
@@ -522,7 +522,7 @@ player_search:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_screensaver:
   name: Player Start screensaver
@@ -533,7 +533,7 @@ player_screensaver:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_screensaver_off:
   name: Player Stop screensaver
@@ -544,7 +544,7 @@ player_screensaver_off:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_intermission:
   name: Player Toggle intermission
@@ -555,7 +555,7 @@ player_intermission:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_collection_paused:
   name: Player Paused collection
@@ -566,7 +566,7 @@ player_collection_paused:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_collection_watch_soon:
   name: Player Watch Soon collection
@@ -577,7 +577,7 @@ player_collection_watch_soon:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_collection_new:
   name: Player New collection
@@ -588,7 +588,7 @@ player_collection_new:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 
 player_collection_favorites:
   name: Player Favorites collection
@@ -599,5 +599,5 @@ player_collection_favorites:
       required: true
       selector:
         device:
-          integration: kaleidescape_companion
+          integration: kaleidescape
 

@@ -261,5 +261,26 @@
         "name": "Enable library sync"
       }
     }
+  },
+  "issues": {
+    "player_action_device_migration": {
+      "title": "Update Kaleidescape Companion player actions",
+      "fix_flow": {
+        "step": {
+          "init": {
+            "title": "Review player action migration",
+            "description": "Companion player actions now use the built-in Kaleidescape player device. Update actions that refer to the old Companion device.\n\n{scan_status}\n\n{references}\n\nTemplates, invalid or unloaded configurations, dashboards and external clients may not be detected. Use the migration guide to review those separately.",
+            "menu_options": {
+              "check_again": "Check again",
+              "dismiss": "Dismiss warning"
+            }
+          },
+          "dismiss": {
+            "title": "Dismiss the migration warning",
+            "description": "Confirm after reviewing your configurations. A recheck cannot detect every possible reference."
+          }
+        }
+      }
+    }
   }
 }
