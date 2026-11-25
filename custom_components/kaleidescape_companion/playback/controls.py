@@ -13,7 +13,6 @@ from contextlib import asynccontextmanager
 from dataclasses import asdict, dataclass
 
 from homeassistant.helpers.aiohttp_client import DATA_RESOLVER
-from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.storage import Store
 
 from ..const import DOMAIN
@@ -468,7 +467,6 @@ class PlaybackControls:
                 {"seed": self._seed_key(), "devices": self.devices}
             )
             self._ready(authorize)
-            async_dispatcher_send(self.hass, f"{DOMAIN}_control_players")
             _LOGGER.info(
                 "Device discovery completed: %s devices found", len(self.devices)
             )

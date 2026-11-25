@@ -74,6 +74,51 @@ start may be acknowledged before playback can be observed. Launching a title
 does not itself create a completed Journal viewing; recording still depends on
 the separately configured HA observation source.
 
+## Migrate player actions from 0.6.0-alpha
+
+**Breaking change:** Companion player actions now select the player device from
+Home Assistant's built-in Kaleidescape integration. Companion removes its old
+player device entries when the integration starts. Automations, scripts and
+button helpers that saved one of those old device IDs must be updated; they are
+not rewritten automatically. Companion creates a notification and a persistent
+Repair with the migration instructions. When HA can identify related loaded
+automations or scripts, their entity IDs are listed; templates, invalid or
+unloaded configurations, dashboards and external clients may not be detected.
+Open the Repair and choose **Fix → Check again** to refresh the list after
+updating actions. Where registry information is available, listed automations
+and scripts link to their HA editors. A clear scan does not cover every type of
+configuration, so review the remaining places below and choose **Dismiss** in
+the Repair when finished; this also dismisses the notification.
+
+1. Install and configure HA's built-in Kaleidescape integration for each player
+   you want to target, and enable playback controls and discover the same
+   players in Companion's **Settings → Playback**.
+2. In HA, open each automation, script or button helper using a
+   `kaleidescape_companion.player_*` action, `play_movie`, `keyboard_character`,
+   `set_player_input` or `open_movie_collection`.
+3. In each action's **Player** field, select the corresponding device supplied
+   by the built-in Kaleidescape integration. Save the automation, script or
+   helper. In YAML, replace the old `data.device_id` with the built-in device's
+   ID; leave the action name and any title, version or value unchanged. Find the
+   device ID in the built-in device's HA page URL or by selecting the device in
+   the editor and switching the action to YAML.
+4. If the player is missing or the action is rejected, check that both
+   integrations identify the same player and rerun Companion discovery. The
+   selected built-in serial must match one discovered movie player.
+
+For example, a play action keeps its other fields:
+
+```yaml
+action: kaleidescape_companion.play_movie
+data:
+  device_id: BUILT_IN_KALEIDESCAPE_DEVICE_ID
+  title: A Fictional Film
+```
+
+Companion still sends the command using its own control connection; this change
+only selects its target. The built-in media-player entity and Companion's
+service device remain in place.
+
 ## Recover from unavailable or unconfirmed controls
 
 | Symptom                         | What to check                                                                                                                                                                   |

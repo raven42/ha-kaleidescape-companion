@@ -1,6 +1,7 @@
 """Fictional pyk Device peers: identity, opt-ins, receipts and lifecycle gates."""
 
 import asyncio
+import json
 import unittest
 from types import MappingProxyType, SimpleNamespace
 from unittest.mock import AsyncMock, Mock, patch
@@ -368,36 +369,45 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
             remove_obsolete_control_entities(self.hass, self.entry)
         registry.async_remove.assert_called_once_with("button.old_player")
 
-    async def test_ha_actions_follow_discovered_players_without_player_entities(self):
+    async def builtin_devices(self, *serials):
         from homeassistant.helpers import device_registry as dr
-        from homeassistant.helpers.dispatcher import async_dispatcher_send
 
-        from custom_components.kaleidescape_companion.button import async_setup_entry
+        dr.async_setup(self.hass)
+        await dr.async_load(self.hass, load_empty=True)
+        builtin = backend.entry()
+        object.__setattr__(builtin, "domain", "kaleidescape")
+        self.hass.config_entries.async_get_entry.side_effect = lambda entry_id: (
+            self.entry
+            if entry_id == self.entry.entry_id
+            else builtin
+            if entry_id == builtin.entry_id
+            else None
+        )
+        registry = dr.async_get(self.hass)
+        return registry, [
+            registry.async_get_or_create(
+                config_entry_id=builtin.entry_id,
+                identifiers={("kaleidescape", serial)},
+                name="Fictional cinema",
+            )
+            for serial in serials
+        ]
+
+    async def test_ha_actions_use_builtin_devices_and_discovered_players(self):
         from custom_components.kaleidescape_companion.playback.ha_controls import (
             FIXED_ACTIONS,
-            player_identifier,
         )
 
         await self.configure()
-        dr.async_setup(self.hass)
-        await dr.async_load(self.hass, load_empty=True)
-        added = []
-        await async_setup_entry(
-            self.hass, self.entry, lambda entities: added.extend(entities)
-        )
-        self.assertEqual(len(added), 3)
         await self.call("control/discover", **self.scope)
-        await self.hass.async_block_till_done()
-        registry = dr.async_get(self.hass)
-        device_id = dr.async_get_device_id_by_identifier(
-            self.hass,
-            (
-                "kaleidescape_companion",
-                player_identifier(self.entry.runtime_data.dataset_id, SERIAL),
-            ),
-            config_entry_id=self.entry.entry_id,
+        registry, (device, second) = await self.builtin_devices("000000001a2b", "2C3E")
+        from homeassistant.helpers import device_registry as dr
+
+        await self.call("control/discover", **self.scope)
+        self.assertEqual(
+            dr.async_entries_for_config_entry(registry, self.entry.entry_id), []
         )
-        self.assertEqual(len(added), 3)
+        self.assertIsNotNone(registry.async_get(device.id))
         for operation in FIXED_ACTIONS:
             with self.subTest(operation=operation):
                 self.peer.mode = 0
@@ -405,16 +415,11 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
                 await self.hass.services.async_call(
                     "kaleidescape_companion",
                     f"player_{operation}",
-                    {"device_id": device_id},
+                    {"device_id": device.id},
                     blocking=True,
                 )
                 self.assertEqual(len(self.peer.commands), before + 1)
                 self.assertEqual(self.peer.commands[-1][2]["target_serial"], SERIAL)
-        self.assertTrue(
-            self.hass.services.has_service(
-                "kaleidescape_companion", "player_screensaver_off"
-            )
-        )
         self.peer.alternative_serial = "2C3E"
         self.entry.runtime_data.controls.devices.append(
             {
@@ -425,79 +430,60 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
                 "is_player": True,
             }
         )
-        async_dispatcher_send(self.hass, "kaleidescape_companion_control_players")
-        await self.hass.async_block_till_done()
-        second_id = dr.async_get_device_id_by_identifier(
-            self.hass,
-            (
-                "kaleidescape_companion",
-                player_identifier(self.entry.runtime_data.dataset_id, "2C3E"),
-            ),
-            config_entry_id=self.entry.entry_id,
-        )
-        self.assertNotEqual(device_id, second_id)
-        self.assertIsNotNone(registry.async_get(second_id))
         await self.hass.services.async_call(
             "kaleidescape_companion",
             "player_screensaver_off",
-            {"device_id": second_id},
+            {"device_id": second.id},
             blocking=True,
         )
         self.assertEqual(self.peer.commands[-1][2]["target_serial"], "2C3E")
-        self.assertEqual(len(added), 3)
 
-    async def test_ha_service_player_selection_rejects_unknown_devices(self):
+    async def test_ha_service_player_selection_rejects_unmatched_and_ambiguous_devices(
+        self,
+    ):
         from homeassistant.exceptions import HomeAssistantError
 
-        from custom_components.kaleidescape_companion.playback import ha_controls
-
-        await self.configure()
-        await self.call("control/discover", **self.scope)
-        runtime = self.entry.runtime_data
-        registry = SimpleNamespace(
-            async_get=Mock(
-                return_value=SimpleNamespace(
-                    identifiers={
-                        (
-                            "kaleidescape_companion",
-                            ha_controls.player_identifier(runtime.dataset_id, SERIAL),
-                        )
-                    }
-                )
-            )
-        )
-        with patch.object(ha_controls.dr, "async_get", return_value=registry):
-            self.assertEqual(
-                ha_controls.resolve_player(self.hass, runtime, "fictional"), SERIAL
-            )
-            registry.async_get.return_value = SimpleNamespace(
-                identifiers={("other", "wrong")}
-            )
-            with self.assertRaises(HomeAssistantError):
-                ha_controls.resolve_player(self.hass, runtime, "fictional")
-
-    async def test_ha_action_targets_a_real_device_registry_entry(self):
-        from homeassistant.helpers import device_registry as dr
-
         from custom_components.kaleidescape_companion.playback.ha_controls import (
-            player_identifier,
+            resolve_player,
         )
 
         await self.configure()
         await self.call("control/discover", **self.scope)
-        dr.async_setup(self.hass)
-        await dr.async_load(self.hass, load_empty=True)
-        registry = dr.async_get(self.hass)
-        device = registry.async_get_or_create(
+        registry, (device, other) = await self.builtin_devices("000000001a2b", "BEEF")
+        runtime = self.entry.runtime_data
+        self.assertEqual(resolve_player(self.hass, runtime, device.id), SERIAL)
+        with self.assertRaises(HomeAssistantError):
+            resolve_player(self.hass, runtime, other.id)
+        with self.assertRaises(HomeAssistantError):
+            resolve_player(self.hass, runtime, "unknown")
+        impostor = registry.async_get_or_create(
+            config_entry_id=self.entry.entry_id,
+            identifiers={("kaleidescape", SERIAL)},
+            name="Not a built-in player",
+        )
+        with self.assertRaises(HomeAssistantError):
+            resolve_player(self.hass, runtime, impostor.id)
+        old = registry.async_get_or_create(
             config_entry_id=self.entry.entry_id,
             identifiers={
-                (
-                    "kaleidescape_companion",
-                    player_identifier(self.entry.runtime_data.dataset_id, SERIAL),
-                )
+                ("kaleidescape_companion", f"{runtime.dataset_id}:player:{SERIAL}")
             },
-            name="Fictional cinema",
+            name="Old Companion player",
         )
+        with self.assertRaises(HomeAssistantError):
+            resolve_player(self.hass, runtime, old.id)
+        runtime.controls.devices.append({"serial": "2C3E", "is_player": True})
+        ambiguous = registry.async_update_device(
+            device.id,
+            new_identifiers={("kaleidescape", SERIAL), ("kaleidescape", "2C3E")},
+        )
+        with self.assertRaises(HomeAssistantError):
+            resolve_player(self.hass, runtime, ambiguous.id)
+
+    async def test_ha_action_targets_a_builtin_device_registry_entry(self):
+        await self.configure()
+        await self.call("control/discover", **self.scope)
+        _, (device,) = await self.builtin_devices(SERIAL)
         await self.hass.services.async_call(
             "kaleidescape_companion",
             "keyboard_character",
@@ -505,6 +491,247 @@ class ControlsTest(unittest.IsolatedAsyncioTestCase):
             blocking=True,
         )
         self.assertEqual(self.peer.commands[-1][:2], ("KEYBOARD_LITERAL", ("A",)))
+
+    async def test_cleanup_removes_only_old_companion_player_devices(self):
+        from custom_components.kaleidescape_companion.playback.player_devices import (
+            remove_obsolete_player_devices,
+        )
+
+        await self.configure()
+        registry, (builtin,) = await self.builtin_devices(SERIAL)
+        dataset = self.entry.runtime_data.dataset_id
+
+        def add(identifier):
+            return registry.async_get_or_create(
+                config_entry_id=self.entry.entry_id,
+                identifiers={("kaleidescape_companion", identifier)},
+                name="Fictional",
+            )
+
+        old = add(f"{dataset}:player:{SERIAL}")
+        parent = add(dataset)
+        other = add("other-dataset:player:1A2B")
+        remove_obsolete_player_devices(self.hass, self.entry)
+        self.assertIsNone(registry.async_get(old.id))
+        for device in (builtin, parent, other):
+            self.assertIsNotNone(registry.async_get(device.id))
+
+    async def test_migration_warns_immediately_and_adds_later_loaded_references(self):
+        from homeassistant.helpers import issue_registry as ir
+
+        from custom_components.kaleidescape_companion.playback import player_devices
+
+        await self.configure()
+        registry, _ = await self.builtin_devices(SERIAL)
+        dataset = self.entry.runtime_data.dataset_id
+        old = registry.async_get_or_create(
+            config_entry_id=self.entry.entry_id,
+            identifiers={("kaleidescape_companion", f"{dataset}:player:{SERIAL}")},
+            name="Old player",
+        )
+        with (
+            patch.object(player_devices, "async_when_setup") as when_setup,
+            patch.object(
+                player_devices.persistent_notification, "async_create"
+            ) as notify,
+            patch.object(
+                player_devices.automation,
+                "automations_with_device",
+                return_value=["automation.movie_night"],
+            ) as automations,
+            patch.object(
+                player_devices.script,
+                "scripts_with_device",
+                return_value=["script.play_movie"],
+            ) as scripts,
+        ):
+            player_devices.remove_obsolete_player_devices(self.hass, self.entry)
+            self.assertIsNone(registry.async_get(old.id))
+            self.assertEqual(notify.call_count, 1)
+            self.assertIn("built-in Kaleidescape", notify.call_args.args[1])
+            self.assertIn("may not identify", notify.call_args.args[1])
+            repair = ir.async_get(self.hass).async_get_issue(
+                "kaleidescape_companion", player_devices.MIGRATION_ISSUE
+            )
+            self.assertTrue(repair.is_persistent)
+            self.assertTrue(repair.is_fixable)
+            self.assertEqual(json.loads(repair.data["device_ids"]), [old.id])
+            callbacks = {
+                call.args[1]: call.args[2] for call in when_setup.call_args_list
+            }
+            self.assertEqual(set(callbacks), {"automation", "script"})
+            await callbacks["automation"](self.hass, "automation")
+            await callbacks["script"](self.hass, "script")
+            automations.assert_called_once_with(self.hass, old.id)
+            scripts.assert_called_once_with(self.hass, old.id)
+            message = notify.call_args.args[1]
+            self.assertIn("automation.movie_night", message)
+            self.assertIn("script.play_movie", message)
+            repair = ir.async_get(self.hass).async_get_issue(
+                "kaleidescape_companion", player_devices.MIGRATION_ISSUE
+            )
+            self.assertIn(
+                "automation.movie_night", repair.translation_placeholders["references"]
+            )
+            self.assertIn(
+                "script.play_movie", repair.translation_placeholders["references"]
+            )
+            self.assertNotIn(old.id, message)
+
+    async def test_migration_repair_rechecks_and_requires_explicit_dismissal(self):
+        from homeassistant.helpers import issue_registry as ir
+
+        from custom_components.kaleidescape_companion import repairs
+        from custom_components.kaleidescape_companion.playback import player_devices
+
+        await self.configure()
+        registry, _ = await self.builtin_devices(SERIAL)
+        dataset = self.entry.runtime_data.dataset_id
+        old = registry.async_get_or_create(
+            config_entry_id=self.entry.entry_id,
+            identifiers={("kaleidescape_companion", f"{dataset}:player:{SERIAL}")},
+            name="Old player",
+        )
+        with patch.object(player_devices, "async_when_setup"):
+            player_devices.remove_obsolete_player_devices(self.hass, self.entry)
+        issue = ir.async_get(self.hass).async_get_issue(
+            "kaleidescape_companion", player_devices.MIGRATION_ISSUE
+        )
+        flow = await repairs.async_create_fix_flow(
+            self.hass, player_devices.MIGRATION_ISSUE, issue.data
+        )
+        flow.hass = self.hass
+        flow.data = issue.data
+        flow.handler = "kaleidescape_companion"
+        menu = await flow.async_step_init()
+        self.assertEqual(menu["menu_options"], ["check_again", "dismiss"])
+        with (
+            patch.object(
+                repairs,
+                "scan_migration_references",
+                side_effect=[({"script.play_movie"}, True), (set(), True)],
+            ) as scan,
+            patch.object(repairs.persistent_notification, "async_create"),
+            patch.object(repairs.persistent_notification, "async_dismiss") as dismiss,
+        ):
+            menu = await flow.async_step_check_again()
+            scan.assert_called_with(self.hass, [old.id])
+            self.assertIn(
+                "script.play_movie", menu["description_placeholders"]["references"]
+            )
+            menu = await flow.async_step_check_again()
+            self.assertIn(
+                "No references found", menu["description_placeholders"]["references"]
+            )
+            self.assertIsNotNone(
+                ir.async_get(self.hass).async_get_issue(
+                    "kaleidescape_companion", player_devices.MIGRATION_ISSUE
+                )
+            )
+            self.assertEqual((await flow.async_step_dismiss())["type"], "form")
+            self.assertEqual(
+                (await flow.async_step_dismiss({}))["type"], "create_entry"
+            )
+            dismiss.assert_called_once_with(self.hass, player_devices.MIGRATION_ISSUE)
+
+    async def test_migration_reference_editor_links_fall_back_to_entity_ids(self):
+        from homeassistant.helpers import entity_registry as er
+
+        from custom_components.kaleidescape_companion.playback.player_devices import (
+            reference_lines,
+        )
+
+        fake_registry = Mock()
+        fake_registry.async_get.side_effect = lambda entity_id: (
+            SimpleNamespace(unique_id="12345")
+            if entity_id == "automation.movie"
+            else None
+        )
+        with (
+            patch.dict(self.hass.data, {er.DATA_REGISTRY: fake_registry}),
+            patch.object(er, "async_get", return_value=fake_registry),
+        ):
+            lines = reference_lines(self.hass, {"automation.movie", "script.yaml_only"})
+        self.assertIn("[automation.movie](/config/automation/edit/12345)", lines)
+        self.assertIn("`script.yaml_only`", lines)
+
+    async def test_migration_reference_extraction_includes_action_data(self):
+        from homeassistant.helpers import config_validation as cv
+        from homeassistant.helpers.script import Script
+
+        sequence = cv.SCRIPT_SCHEMA(
+            [
+                {
+                    "if": [],
+                    "then": [
+                        {
+                            "action": "kaleidescape_companion.player_play",
+                            "data": {"device_id": "fictional-old-device"},
+                        }
+                    ],
+                },
+            ]
+        )
+        found = set()
+        Script._find_referenced_devices(found, sequence)
+        self.assertEqual(found, {"fictional-old-device"})
+
+    async def test_no_old_player_device_produces_no_migration_notice(self):
+        from custom_components.kaleidescape_companion.playback import player_devices
+
+        await self.configure()
+        await self.builtin_devices(SERIAL)
+        with patch.object(
+            player_devices.persistent_notification, "async_create"
+        ) as notify:
+            player_devices.remove_obsolete_player_devices(self.hass, self.entry)
+        notify.assert_not_called()
+
+    async def test_play_movie_with_builtin_device_uses_companion_connection(self):
+        await self.configure()
+        await self.call("control/discover", **self.scope)
+        _, (device,) = await self.builtin_devices(SERIAL)
+        await self.entry.runtime_data.repository.async_library_catalog(
+            "http://" + SEED,
+            [
+                {
+                    "source_handle": "0-S_aabbccdd",
+                    "source_group": "1",
+                    "title": "A Fictional Film",
+                    "year": 2025,
+                }
+            ],
+        )
+        await self.hass.services.async_call(
+            "kaleidescape_companion",
+            "play_movie",
+            {"device_id": device.id, "title": "A Fictional Film"},
+            blocking=True,
+        )
+        self.assertEqual(self.peer.commands[-1][:2], ("PLAY_MOVIE", (HANDLE,)))
+
+    async def test_player_action_selectors_target_builtin_integration(self):
+        from pathlib import Path
+
+        import yaml
+
+        from custom_components.kaleidescape_companion.playback.ha_services import (
+            PLAYER_SERVICES,
+        )
+
+        path = (
+            Path(__file__).resolve().parents[1]
+            / "custom_components/kaleidescape_companion/services.yaml"
+        )
+        descriptions = yaml.safe_load(path.read_text())
+        for action in PLAYER_SERVICES:
+            with self.subTest(action=action):
+                self.assertEqual(
+                    descriptions[action]["fields"]["device_id"]["selector"]["device"][
+                        "integration"
+                    ],
+                    "kaleidescape",
+                )
 
     async def test_ha_parameter_actions_and_play_movie_use_guarded_path(self):
         from homeassistant.exceptions import HomeAssistantError

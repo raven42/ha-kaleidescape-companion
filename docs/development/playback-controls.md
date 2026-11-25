@@ -63,23 +63,37 @@ individual command support need operator validation; a rejected command is
 reported without fallback. There is no automatic wake, command retry, HA service
 forwarding or generic raw-command endpoint. Enabled views read readiness on load
 and poll briefly after an explicit wake. Existing HA entities/actions are
-preserved; no replacement media player or new control service is registered.
+preserved; Companion does not create a replacement media player.
 
 ## Home Assistant player actions
 
-Each discovered movie player is registered as a Companion device without
-creating player-control button entities. Each fixed pyk and Companion control is
-available as a separate `kaleidescape_companion.player_*` action; select the
-player device in the action editor. For example, `player_screensaver_off`
-dismisses a player’s screensaver. You can use these actions in automations or
-attach them to your own button helpers. Existing Companion synchronization
-buttons remain available.
+Each fixed pyk and Companion control is available as a separate
+`kaleidescape_companion.player_*` action. Select the player device provided by
+Home Assistant's built-in Kaleidescape integration in the action editor. For
+example, `player_screensaver_off` dismisses a player's screensaver. You can use
+these actions in automations or attach them to your own button helpers. Existing
+Companion synchronization buttons remain available.
 
-Players are registered when discovered or restored from the discovery cache.
-Actions reject players that are no longer in the current discovery results. They
-use the same enabled-controls setting, verified identity, command receipts and
-uncertainty recovery as the remote. HA system contexts and active user contexts
-can run these actions; controls are rechecked before sending.
+Companion matches the selected built-in device's serial to exactly one current
+Companion-discovered movie player. Missing, invalid, unmatched or ambiguous
+identities are rejected; names and addresses are never used to guess. Actions
+still use Companion's own control connection, enabled-controls setting, verified
+identity, command receipts and uncertainty recovery. HA system contexts and
+active user contexts can run these actions; controls are rechecked before
+sending. Player entries without a matching built-in Kaleidescape device remain
+available in Companion's own remote but not as HA action targets.
+
+This changes the player `device_id` used in 0.6.0-alpha. Companion removes its
+former player device entries at startup. Update existing automations and scripts
+as described in the
+[migration guide](../guides/player-controls.md#migrate-player-actions-from-060-alpha).
+The Companion service device and built-in Kaleidescape devices are retained.
+Before removal, Companion publishes a notification and a persistent HA Repair.
+It checks the old IDs against HA's loaded automation and script reference
+helpers, including after those components start, and lists matching entity IDs.
+The notice remains useful even if no references are found: templated, invalid or
+unloaded configurations, dashboards and external clients may not be detected. No
+action configuration is modified automatically.
 
 Actions requiring a value also use the player device selector:
 
@@ -91,8 +105,8 @@ Actions requiring a value also use the player device selector:
   `value` appropriate to the command. Opening a named collection can interrupt
   playback, as documented by Kaleidescape.
 
-For example, select the player device in the HA action editor or use its HA
-`device_id` in YAML:
+For example, select the built-in Kaleidescape player device in the HA action
+editor or use its HA `device_id` in YAML:
 
 ```yaml
 action: kaleidescape_companion.play_movie

@@ -25,7 +25,7 @@ from .library.sync import LibrarySync
 from .playback.controls import PlaybackControls
 from .playback.ha_services import PLAYER_SERVICES
 from .playback.observer import PlaybackObserver
-from .playback.player_devices import register_player_devices
+from .playback.player_devices import remove_obsolete_player_devices
 from .services import (
     CALENDAR_SERVICE,
     CLEANUP_SERVICE,
@@ -197,7 +197,7 @@ async def async_setup_entry(
         else:
             # HA may load automation after this integration, or not load it at all.
             async_when_setup(hass, "automation", setup_blueprints)
-        register_player_devices(hass, entry)
+        remove_obsolete_player_devices(hass, entry)
         entry.async_on_unload(stop_listener)
     except BaseException as error:
 

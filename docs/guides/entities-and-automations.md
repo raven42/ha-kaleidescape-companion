@@ -1,16 +1,19 @@
 # Entities and automations
 
 Companion exposes 17 read-only sensors, three job-request buttons, three
-configuration switches and five actions under `kaleidescape_companion`. Five
-optional blueprints connect those features to HA automation. Installing
-Companion or a blueprint does not create or enable a scheduled automation.
+configuration switches, household actions and player-control actions under
+`kaleidescape_companion`. Five optional blueprints connect those features to HA
+automation. Installing Companion or a blueprint does not create or enable a
+scheduled automation.
 
 Open **HA Settings → Devices & services → Kaleidescape Companion** and its
-service device to find the entities. Use the entity IDs shown in your own HA
-installation; names can be changed and IDs can gain suffixes. Administrators
-configure Companion and call its actions interactively. HA entity permissions
-govern buttons and switches; trusted HA automations without a user context can
-call the actions.
+service device to find the entities. Player actions select the corresponding
+built-in Kaleidescape device; see the
+[player action migration guide](player-controls.md#migrate-player-actions-from-060-alpha).
+Use the entity IDs shown in your own HA installation; names can be changed and
+IDs can gain suffixes. Administrators configure Companion and call its actions
+interactively. HA entity permissions govern buttons and switches; trusted HA
+automations without a user context can call the actions.
 
 ## Read the sensors
 

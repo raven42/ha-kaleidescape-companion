@@ -3,6 +3,18 @@
 Entries record development history. Later entries can supersede earlier
 behavior; the [documentation index](docs/README.md) owns current contracts.
 
+## Unreleased — Breaking change: player action targets
+
+- Player actions now target devices from Home Assistant's built-in Kaleidescape
+  integration. Companion removes its former player device entries; actions saved
+  with those device IDs in 0.6.0-alpha must be updated. See the
+  [migration guide](docs/guides/player-controls.md#migrate-player-actions-from-060-alpha).
+  Companion continues to send these actions through its own control connection.
+- Create a migration notification and persistent Repair when old player devices
+  are removed, listing related loaded automations and scripts when HA can
+  identify them. The Repair can check again after updates and links to editors
+  when registry information is available.
+
 ## Unreleased — Alpha preparation tooling and documentation
 
 - Move maintained contributor contracts under `docs/development/`, consolidate

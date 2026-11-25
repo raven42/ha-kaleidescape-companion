@@ -96,6 +96,12 @@ new user preferences. Their text can be exposed through browser history, shared
 links and HTTP access logs. URL parameters are bounded and do not grant access;
 the purchase-information filter remains administrator-only on the backend.
 
+When obsolete Companion player devices are removed, a persistent notification
+and HA Repair may expose the entity IDs of related automations and scripts to
+users who can read HA notifications and Repairs. They do not include action
+contents or device serials. HA's reference helpers do not find every use, so the
+notice also directs users to check their configurations manually.
+
 Companion's HA configuration switches and sync buttons can be operated by users
 and automations allowed to control those entities by Home Assistant. They
 validate the same integration settings and invoke the same background sync

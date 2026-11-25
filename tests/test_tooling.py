@@ -154,6 +154,14 @@ class ToolingTest(unittest.TestCase):
             },
         )
 
+    def test_vscode_process_tasks_reveal_terminal_only_on_error(self):
+        data = json.loads((tasks.ROOT / ".vscode/tasks.json").read_text())
+        for task in data["tasks"]:
+            if task.get("type") == "process":
+                with self.subTest(task=task["label"]):
+                    self.assertEqual(task["presentation"]["reveal"], "silent")
+                    self.assertFalse(task["presentation"]["focus"])
+
     def test_wrappers_resolve_checkout_from_an_unrelated_directory(self):
         with tempfile.TemporaryDirectory() as directory:
             result = subprocess.run(

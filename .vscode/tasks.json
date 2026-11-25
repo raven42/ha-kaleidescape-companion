@@ -13,7 +13,11 @@
         "kind": "build",
         "isDefault": true
       },
-      "hide": true
+      "hide": true,
+      "presentation": {
+        "reveal": "silent",
+        "focus": false
+      }
     },
     {
       "label": "Post-build checks",
@@ -32,7 +36,11 @@
       "command": "${workspaceFolder}/scripts/test",
       "args": ["--python-only"],
       "problemMatcher": [],
-      "hide": true
+      "hide": true,
+      "presentation": {
+        "reveal": "silent",
+        "focus": false
+      }
     },
     {
       "label": "Post-build: Frontend tests",
@@ -40,7 +48,11 @@
       "command": "${workspaceFolder}/scripts/test",
       "args": ["--frontend-only"],
       "problemMatcher": [],
-      "hide": true
+      "hide": true,
+      "presentation": {
+        "reveal": "silent",
+        "focus": false
+      }
     },
     {
       "label": "Package",
@@ -48,7 +60,11 @@
       "command": "${workspaceFolder}/scripts/package",
       "problemMatcher": [],
       "group": "build",
-      "hide": true
+      "hide": true,
+      "presentation": {
+        "reveal": "silent",
+        "focus": false
+      }
     },
     {
       "label": "Maintainer: Deploy frontend",
@@ -60,7 +76,8 @@
       "problemMatcher": [],
       "presentation": {
         "panel": "dedicated",
-        "reveal": "silent"
+        "reveal": "silent",
+        "focus": false
       },
       "runOptions": {
         "instanceLimit": 1
@@ -73,7 +90,8 @@
       "problemMatcher": [],
       "presentation": {
         "panel": "dedicated",
-        "reveal": "silent"
+        "reveal": "silent",
+        "focus": false
       },
       "runOptions": {
         "instanceLimit": 1
@@ -87,7 +105,8 @@
       "problemMatcher": [],
       "presentation": {
         "panel": "dedicated",
-        "reveal": "silent"
+        "reveal": "silent",
+        "focus": false
       },
       "runOptions": {
         "instanceLimit": 1
