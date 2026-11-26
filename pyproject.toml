@@ -16,7 +16,7 @@ Homepage = "https://github.com/raven42/ha-kaleidescape-companion"
 Issues = "https://github.com/raven42/ha-kaleidescape-companion/issues"
 
 [project.optional-dependencies]
-dev = ["homeassistant==2026.11.2", "ruff==0.17.2", "flake8>=7.3,<8"]
+dev = ["homeassistant==2026.11.2", "ruff==0.17.6", "flake8>=7.3,<8"]
 audit = ["pip-audit>=2.10.1,<3"]
 
 [tool.setuptools]
