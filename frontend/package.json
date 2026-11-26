@@ -28,7 +28,7 @@
     "fake-indexeddb": "^6.2.8",
     "globals": "^17.14.0",
     "happy-dom": "^21.0.4",
-    "home-assistant-js-websocket": "^9.8.1",
+    "home-assistant-js-websocket": "^9.9.0",
     "markdownlint-cli2": "0.24.2",
     "prettier": "^3.10.1",
     "typescript": "~5.9.3",
